@@ -1,5 +1,17 @@
 import { useState, useEffect } from "react";
-import { Phone, Ambulance, Shield, Hospital, Users, AlertCircle, Plus, X, Edit2, Trash2, User } from "lucide-react";
+import {
+  Phone,
+  Ambulance,
+  Shield,
+  Hospital,
+  Users,
+  AlertCircle,
+  Plus,
+  X,
+  Edit2,
+  Trash2,
+  User,
+} from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
 
@@ -70,7 +82,10 @@ const EmergencyContacts = () => {
 
   // Save custom contacts to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("customEmergencyContacts", JSON.stringify(customContacts));
+    localStorage.setItem(
+      "customEmergencyContacts",
+      JSON.stringify(customContacts),
+    );
   }, [customContacts]);
 
   const handleCall = (number) => {
@@ -105,7 +120,7 @@ const EmergencyContacts = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.phoneNumber) {
       alert("Please fill in all required fields.");
       return;
@@ -115,10 +130,8 @@ const EmergencyContacts = () => {
       // Update existing contact
       setCustomContacts(
         customContacts.map((c) =>
-          c.id === editingContact.id
-            ? { ...editingContact, ...formData }
-            : c
-        )
+          c.id === editingContact.id ? { ...editingContact, ...formData } : c,
+        ),
       );
     } else {
       // Add new contact
@@ -160,7 +173,9 @@ const EmergencyContacts = () => {
       {/* Custom Emergency Contacts */}
       {customContacts.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-white mb-3">My Emergency Contacts ({customContacts.length}/3)</h3>
+          <h3 className="text-lg font-bold text-white mb-3">
+            My Emergency Contacts ({customContacts.length}/3)
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {customContacts.map((contact) => (
               <div
@@ -175,7 +190,9 @@ const EmergencyContacts = () => {
                     <div>
                       <h4 className="text-white font-bold">{contact.name}</h4>
                       {contact.relationship && (
-                        <p className="text-xs text-gray-400">{contact.relationship}</p>
+                        <p className="text-xs text-gray-400">
+                          {contact.relationship}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -220,7 +237,9 @@ const EmergencyContacts = () => {
 
       {/* Default Emergency Services */}
       <div>
-        <h3 className="text-lg font-bold text-white mb-3">Emergency Services</h3>
+        <h3 className="text-lg font-bold text-white mb-3">
+          Emergency Services
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {defaultEmergencyContacts.map((contact) => {
             const Icon = contact.icon;
@@ -266,8 +285,9 @@ const EmergencyContacts = () => {
           <div>
             <h4 className="text-white font-bold mb-2">Important Notice</h4>
             <p className="text-gray-300 text-sm">
-              In case of a life-threatening emergency, always call 911 immediately.
-              These contacts are provided for quick reference and non-emergency situations.
+              In case of a life-threatening emergency, always call 911
+              immediately. These contacts are provided for quick reference and
+              non-emergency situations.
             </p>
           </div>
         </div>
@@ -297,7 +317,9 @@ const EmergencyContacts = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="Enter contact name"
                   className="input-field"
                   required
@@ -311,7 +333,9 @@ const EmergencyContacts = () => {
                 <input
                   type="text"
                   value={formData.relationship}
-                  onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, relationship: e.target.value })
+                  }
                   placeholder="E.g., Mother, Father, Friend"
                   className="input-field"
                 />
@@ -324,7 +348,9 @@ const EmergencyContacts = () => {
                 <input
                   type="tel"
                   value={formData.phoneNumber}
-                  onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phoneNumber: e.target.value })
+                  }
                   placeholder="Enter phone number"
                   className="input-field"
                   required
