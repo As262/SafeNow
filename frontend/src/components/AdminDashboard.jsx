@@ -23,6 +23,9 @@ import {
 } from "../utils/mockApi";
 import MapView from "./MapView";
 import AnalyticsCharts from "./AnalyticsCharts";
+import Sidebar from "./Sidebar";
+import EmergencyContacts from "./EmergencyContacts";
+import Settings from "./Settings";
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -35,6 +38,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("requests"); // 'requests' or 'analytics'
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState("dashboard");
 
   useEffect(() => {
     loadRequests();
@@ -103,6 +107,11 @@ const AdminDashboard = () => {
     navigate("/login");
   };
 
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    window.location.hash = section;
+  };
+
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -119,56 +128,158 @@ const AdminDashboard = () => {
   const acceptedRequests = requests.filter((r) => r.status === "accepted");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950">
-      {/* Header */}
-      <header className="bg-dark-900/80 backdrop-blur-sm border-b border-dark-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">SafeNow Admin</h1>
-                <p className="text-xs text-gray-400">
-                  Emergency Response Dashboard
-                </p>
-              </div>
-            </div>
+    <div className="flex min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950">
+      {/* Sidebar */}
+      <Sidebar onNavigate={handleSectionChange} />
 
-            <div className="flex items-center gap-4">
-              {pendingRequests.length > 0 && (
-                <div className="relative">
-                  <Bell className="w-6 h-6 text-red-500 animate-pulse" />
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">
-                      {pendingRequests.length}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
-                <User className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-white font-medium">
-                  {user.name}
-                </span>
-                <span className="text-xs text-gray-500">(Admin)</span>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-white">Logout</span>
-              </button>
+      {/* Main Content */}
+      <main className="flex-1 p-8">
+        {/* Alert Badge */}
+        {pendingRequests.length > 0 && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-center gap-3">
+            <Bell className="w-6 h-6 text-red-500 animate-pulse" />
+            <div>
+              <p className="text-red-400 font-semibold">
+                {pendingRequests.length} Pending Emergency {pendingRequests.length === 1 ? 'Request' : 'Requests'}
+              </p>
+              <p className="text-red-400/70 text-sm">Immediate attention required</p>
             </div>
           </div>
-        </div>
-      </header>
+        )}
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Conditional Section Rendering */}
+        {activeSection === "contacts" ? (
+          <EmergencyContacts />
+        ) : activeSection === "settings" ? (
+          <Settings />
+        ) : activeSection === "map" ? (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Live Map</h2>
+              <p className="text-gray-400">Real-time emergency request locations</p>
+            </div>
+            <div className="card p-6" style={{ height: "600px" }}>
+              <MapView requests={requests} selectedRequest={selectedRequest} />
+            </div>
+          </div>
+        ) : activeSection === "emergency" ? (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Emergency Management</h2>
+              <p className="text-gray-400">Monitor and respond to emergency requests</p>
+            </div>
+            
+            {/* Emergency Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-400">
+                    Critical
+                  </h3>
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                </div>
+                <p className="text-3xl font-bold text-white">
+                  {pendingRequests.filter(r => r.type === "Ambulance").length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Medical emergencies</p>
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-400">
+                    Security
+                  </h3>
+                  <Shield className="w-5 h-5 text-blue-500" />
+                </div>
+                <p className="text-3xl font-bold text-white">
+                  {pendingRequests.filter(r => r.type === "Police").length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Police assistance</p>
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-400">
+                    Response Time
+                  </h3>
+                  <Clock className="w-5 h-5 text-green-500" />
+                </div>
+                <p className="text-3xl font-bold text-white">9.2m</p>
+                <p className="text-xs text-gray-500 mt-1">Average today</p>
+              </div>
+            </div>
+
+            {/* Pending Requests */}
+            <div className="card p-6">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                Active Emergency Requests
+              </h3>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-gray-400 mt-3">Loading requests...</p>
+                </div>
+              ) : pendingRequests.length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400">No pending requests</p>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  {pendingRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-4 bg-dark-800 rounded-lg hover:bg-dark-700 transition-all"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-semibold text-white">
+                            {request.userName}
+                          </p>
+                          <p className="text-sm text-gray-400 flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {request.userId}
+                          </p>
+                        </div>
+                        <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded">
+                          {request.type}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+                        <MapPin className="w-3 h-3" />
+                        <span>
+                          {request.location.address ||
+                            `${request.location.latitude.toFixed(4)}, ${request.location.longitude.toFixed(4)}`}
+                        </span>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAcceptRequest(request.id)}
+                          className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(request.id)}
+                          className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Dashboard Content */}
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="card p-6">
@@ -393,6 +504,8 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <AnalyticsCharts analytics={analytics} />
+        )}
+          </>
         )}
       </main>
     </div>

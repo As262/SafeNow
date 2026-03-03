@@ -28,13 +28,15 @@ const mockUsers = {
 
 // Mock OTP storage (in production, handled by backend)
 let otpStore = {};
+let userRegistrations = {}; // Store user data during registration
 
 /**
  * Send OTP to mobile number
  * @param {string} mobile - Mobile number
+ * @param {string} name - User's name (optional for new users)
  * @returns {Promise} - Success response
  */
-export const sendOTP = async (mobile) => {
+export const sendOTP = async (mobile, name = null) => {
   await delay(800);
 
   if (!mobile || mobile.length !== 10) {
@@ -44,6 +46,11 @@ export const sendOTP = async (mobile) => {
   // Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   otpStore[mobile] = otp;
+
+  // Store name if provided (for new user registration)
+  if (name) {
+    userRegistrations[mobile] = { name };
+  }
 
   // For demo purposes, log OTP to console
   console.log(`📱 OTP for ${mobile}: ${otp}`);
@@ -61,9 +68,10 @@ export const sendOTP = async (mobile) => {
  * Verify OTP
  * @param {string} mobile - Mobile number
  * @param {string} otp - OTP to verify
+ * @param {string} name - User's name (for new users)
  * @returns {Promise} - User data if successful
  */
-export const verifyOTP = async (mobile, otp) => {
+export const verifyOTP = async (mobile, otp, name = null) => {
   await delay(600);
 
   if (!otpStore[mobile]) {
@@ -78,12 +86,24 @@ export const verifyOTP = async (mobile, otp) => {
   delete otpStore[mobile];
 
   // Return user data or create new user
-  const user = mockUsers[mobile] || {
-    mobile,
-    name: "New User",
-    role: "user",
-    email: `${mobile}@safenow.com`,
-  };
+  let user = mockUsers[mobile];
+  
+  if (!user) {
+    // New user - use provided name or registration data
+    const userName = name || userRegistrations[mobile]?.name || "New User";
+    user = {
+      mobile,
+      name: userName,
+      role: "user",
+      email: `${mobile}@safenow.com`,
+    };
+    
+    // Store new user in mock database
+    mockUsers[mobile] = user;
+  }
+  
+  // Clean up registration data
+  delete userRegistrations[mobile];
 
   return {
     success: true,

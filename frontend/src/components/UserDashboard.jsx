@@ -12,10 +12,23 @@ import {
   Ambulance,
   Users,
   AlertTriangle,
+  Camera,
+  Upload,
+  Mic,
+  PhoneCall,
+  Image,
+  Video,
+  RefreshCw,
+  Navigation,
+  Plus,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { submitSOSRequest, getUserRequests } from "../utils/mockApi";
+import Sidebar from "./Sidebar";
+import EmergencyContacts from "./EmergencyContacts";
+import Settings from "./Settings";
+import MapView from "./MapView";
 
 const requestTypes = [
   { id: "ambulance", label: "Ambulance", icon: Ambulance, color: "bg-red-600" },
@@ -45,9 +58,29 @@ const UserDashboard = () => {
   const [requestHistory, setRequestHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [photos, setPhotos] = useState([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceMessage, setVoiceMessage] = useState(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const [stats, setStats] = useState({
+    activeAlerts: 12,
+    availableResponders: 0,
+    avgResponseTime: "5.2 min",
+    nearbyHelp: 0,
+  });
 
   useEffect(() => {
     loadRequestHistory();
+    // Set initial hash if not present
+    if (!window.location.hash) {
+      window.location.hash = "dashboard";
+    }
+    // Simulate online status check
+    const interval = setInterval(() => {
+      setIsOnline(navigator.onLine);
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadRequestHistory = async () => {
@@ -111,6 +144,67 @@ const UserDashboard = () => {
     navigate("/login");
   };
 
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    window.location.hash = section;
+  };
+
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (photos.length + files.length > 3) {
+      alert("Maximum 3 photos allowed");
+      return;
+    }
+    const newPhotos = files.map(file => ({
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name
+    }));
+    setPhotos([...photos, ...newPhotos]);
+  };
+
+  const handleCameraCapture = () => {
+    // In a real app, this would open the device camera
+    alert("Camera functionality would open here. In production, this would access the device camera.");
+  };
+
+  const handleRemovePhoto = (index) => {
+    setPhotos(photos.filter((_, i) => i !== index));
+  };
+
+  const handleStartRecording = () => {
+    setIsRecording(true);
+    // In a real app, start audio recording here
+    setTimeout(() => {
+      setIsRecording(false);
+      setVoiceMessage({
+        duration: "0:15",
+        timestamp: Date.now()
+      });
+      alert("Voice message recorded successfully!");
+    }, 3000);
+  };
+
+  const handleVoiceUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVoiceMessage({
+        file,
+        name: file.name,
+        timestamp: Date.now()
+      });
+      alert("Voice message uploaded successfully!");
+    }
+  };
+
+  const handleGetLocation = () => {
+    getLocation();
+  };
+
+  const handleEmergencyCall = () => {
+    window.location.href = "tel:911";
+  };
+
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -127,41 +221,12 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950">
-      {/* Header */}
-      <header className="bg-dark-900/80 backdrop-blur-sm border-b border-dark-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">SafeNow</h1>
-                <p className="text-xs text-gray-400">Emergency Help Platform</p>
-              </div>
-            </div>
+    <div className="flex min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950">
+      {/* Sidebar */}
+      <Sidebar onNavigate={handleSectionChange} />
 
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
-                <User className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-white font-medium">
-                  {user.name}
-                </span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-white">Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      {/* Main Content */}
+      <main className="flex-1 p-8 overflow-y-auto">
         {/* Success Message */}
         {successMessage && (
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500 rounded-lg flex items-center gap-3 animate-pulse">
@@ -170,105 +235,459 @@ const UserDashboard = () => {
           </div>
         )}
 
-        {/* SOS Section */}
-        <div className="mb-8">
-          <div className="card p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Emergency SOS
-            </h2>
-            <p className="text-gray-400 mb-8">
-              Tap the button below if you need immediate help
-            </p>
-
-            {/* SOS Button */}
-            <div className="flex flex-col items-center mb-8">
-              <button
-                onClick={handleSOSClick}
-                disabled={sosActive}
-                className={`w-48 h-48 rounded-full bg-gradient-to-br from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-200 ${
-                  sosActive
-                    ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
-                    : "hover:scale-105 active:scale-95"
-                }`}
-              >
-                <div className="text-center">
-                  <AlertTriangle className="w-20 h-20 text-white mx-auto mb-2" />
-                  <span className="text-white text-2xl font-bold">SOS</span>
+        {/* Conditional Section Rendering */}
+        {activeSection === "contacts" ? (
+          <EmergencyContacts />
+        ) : activeSection === "settings" ? (
+          <Settings />
+        ) : activeSection === "map" ? (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Live Map</h2>
+              <p className="text-gray-400">Track emergency services in real-time</p>
+            </div>
+            <div className="card p-6" style={{ height: "600px" }}>
+              <MapView requests={requestHistory} />
+            </div>
+          </div>
+        ) : activeSection === "emergency" ? (
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Emergency Center Header */}
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg">
+                  <AlertTriangle className="w-8 h-8 text-white" />
                 </div>
-              </button>
+                <h2 className="text-3xl font-bold text-white">Emergency Center</h2>
+              </div>
+              <p className="text-gray-400 text-lg">
+                Quick access to emergency services and immediate assistance
+              </p>
+            </div>
 
-              {sosActive && (
-                <div className="mt-4 flex items-center gap-2 text-green-400">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-                  <span className="font-semibold">
-                    Alert Sent - Help is on the way!
-                  </span>
+            {/* Photo Evidence Section */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                    <Camera className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Photo Evidence</h3>
+                    <p className="text-sm text-gray-400">{photos.length}/3 photos</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-semibold">
+                      <Upload className="w-4 h-4" />
+                      Upload
+                    </div>
+                  </label>
+                  <button
+                    onClick={handleCameraCapture}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
+                  >
+                    <Camera className="w-4 h-4" />
+                    Camera
+                  </button>
+                </div>
+              </div>
+
+              {/* Photo Grid */}
+              {photos.length > 0 && (
+                <div className="grid grid-cols-3 gap-3 mt-4">
+                  {photos.map((photo, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={photo.url}
+                        alt={`Evidence ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => handleRemovePhoto(index)}
+                        className="absolute top-2 right-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <span className="text-white text-xs">×</span>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Request Type Selection */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {requestTypes.map((type) => {
-                const Icon = type.icon;
-                return (
+            {/* Voice Message Section */}
+            <div className="card p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                    <Mic className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Voice Message</h3>
+                    <p className="text-sm text-gray-400">
+                      {voiceMessage ? "Message recorded" : "Record voice message"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={handleVoiceUpload}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold">
+                      <Upload className="w-4 h-4" />
+                      Upload
+                    </div>
+                  </label>
                   <button
-                    key={type.id}
-                    onClick={() => setSelectedType(type.id)}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                      selectedType === type.id
-                        ? "bg-dark-800 border-primary-600 shadow-lg"
-                        : "bg-dark-900/50 border-dark-700 hover:border-dark-600"
+                    onClick={handleStartRecording}
+                    disabled={isRecording}
+                    className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-semibold ${
+                      isRecording
+                        ? "bg-red-700 animate-pulse cursor-not-allowed"
+                        : "bg-red-600 hover:bg-red-700"
                     }`}
                   >
-                    <Icon
-                      className={`w-8 h-8 mx-auto mb-2 ${
+                    <Mic className="w-4 h-4" />
+                    {isRecording ? "Recording..." : "Record"}
+                  </button>
+                </div>
+              </div>
+
+              {voiceMessage && (
+                <div className="mt-4 p-3 bg-dark-800 rounded-lg flex items-center gap-3">
+                  <Mic className="w-5 h-5 text-purple-500" />
+                  <div className="flex-1">
+                    <p className="text-white text-sm font-medium">
+                      {voiceMessage.name || "Voice recording"}
+                    </p>
+                    {voiceMessage.duration && (
+                      <p className="text-gray-400 text-xs">{voiceMessage.duration}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setVoiceMessage(null)}
+                    className="text-red-400 hover:text-red-300 text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* SOS Button */}
+            <div className="card p-8 text-center">
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={handleSOSClick}
+                  disabled={sosActive}
+                  className={`w-56 h-56 rounded-full bg-gradient-to-br from-red-500 to-red-700 shadow-[0_0_40px_rgba(239,68,68,0.4)] flex items-center justify-center transition-all duration-300 ${
+                    sosActive
+                      ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
+                      : "hover:scale-105 active:scale-95 hover:shadow-[0_0_60px_rgba(239,68,68,0.6)]"
+                  }`}
+                >
+                  <span className="text-white text-4xl font-bold">SOS</span>
+                </button>
+
+                <p className="text-gray-400 mt-6 text-lg">
+                  {sosActive ? "Help is on the way!" : "Tap for emergency assistance"}
+                </p>
+
+                {sosActive && (
+                  <div className="mt-4 flex items-center gap-2 text-green-400">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
+                    <span className="font-semibold">Alert sent to emergency services</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Emergency Call Button */}
+            <button
+              onClick={handleEmergencyCall}
+              className="w-full p-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl"
+            >
+              <div className="flex items-center justify-center gap-3">
+                <PhoneCall className="w-6 h-6 text-white" />
+                <div className="text-left">
+                  <p className="text-white text-lg font-bold">Emergency Call</p>
+                  <p className="text-red-100 text-sm">Dial 911 - Emergency Services</p>
+                </div>
+              </div>
+            </button>
+
+            {/* Request Type Selection */}
+            <div className="card p-6">
+              <h3 className="text-lg font-bold text-white mb-4">Select Emergency Type</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {requestTypes.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => setSelectedType(type.id)}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                         selectedType === type.id
-                          ? "text-primary-500"
-                          : "text-gray-400"
-                      }`}
-                    />
-                    <span
-                      className={`text-sm font-semibold ${
-                        selectedType === type.id
-                          ? "text-white"
-                          : "text-gray-400"
+                          ? "bg-dark-800 border-primary-600 shadow-lg"
+                          : "bg-dark-900/50 border-dark-700 hover:border-dark-600"
                       }`}
                     >
-                      {type.label}
-                    </span>
-                  </button>
-                );
-              })}
+                      <Icon
+                        className={`w-8 h-8 mx-auto mb-2 ${
+                          selectedType === type.id
+                            ? "text-primary-500"
+                            : "text-gray-400"
+                        }`}
+                      />
+                      <span
+                        className={`text-sm font-semibold ${
+                          selectedType === type.id
+                            ? "text-white"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {type.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Dashboard Content */}
+            
+            {/* Welcome Header */}
+            <div className="mb-6 card p-6 border-dark-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    Welcome back, {user.name}!
+                  </h2>
+                  <p className="text-gray-400">
+                    Stay safe and connected with emergency services
+                  </p>
+                </div>
+                <div className={`px-4 py-2 rounded-full font-semibold ${isOnline ? 'bg-green-600' : 'bg-gray-600'} text-white`}>
+                  {isOnline ? 'Online' : 'Offline'}
+                </div>
+              </div>
+            </div>
 
-        {/* Profile Card */}
-        <div className="mb-8 card p-6">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <User className="w-5 h-5" />
-            Your Profile
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-dark-800 rounded-lg">
-              <User className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-400">Name</p>
-                <p className="text-sm font-semibold text-white">{user.name}</p>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Active Alerts */}
+              <div className="card p-6 bg-dark-800 border-dark-700">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center">
+                    <AlertTriangle className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Active Alerts</p>
+                    <p className="text-3xl font-bold text-white">{stats.activeAlerts}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Available Responders */}
+              <div className="card p-6 bg-dark-800 border-dark-700">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-green-600 rounded-2xl flex items-center justify-center">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Available Responders</p>
+                    <p className="text-3xl font-bold text-white">{stats.availableResponders}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Avg Response Time */}
+              <div className="card p-6 bg-dark-800 border-dark-700">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center">
+                    <Clock className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Avg Response Time</p>
+                    <p className="text-3xl font-bold text-white">{stats.avgResponseTime}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nearby Help */}
+              <div className="card p-6 bg-dark-800 border-dark-700">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-purple-600 rounded-2xl flex items-center justify-center">
+                    <MapPin className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">Nearby Help</p>
+                    <p className="text-3xl font-bold text-white">{stats.nearbyHelp}</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-dark-800 rounded-lg">
-              <Phone className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-400">Mobile</p>
-                <p className="text-sm font-semibold text-white">
-                  {user.mobile}
-                </p>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              {/* Emergency Assistance - Takes 2 columns */}
+              <div className="lg:col-span-2">
+                <div className="card p-8 bg-dark-900 border-dark-800">
+                  <h3 className="text-2xl font-bold text-white mb-2 text-center">
+                    Emergency Assistance
+                  </h3>
+                  <p className="text-gray-400 text-center mb-8">
+                    Tap the SOS button below to instantly alert emergency services to your location
+                  </p>
+
+                  {/* SOS Button */}
+                  <div className="flex flex-col items-center mb-6">
+                    <button
+                      onClick={handleSOSClick}
+                      disabled={sosActive}
+                      className={`w-56 h-56 rounded-full bg-gradient-to-br from-red-500 to-red-700 shadow-[0_0_50px_rgba(239,68,68,0.4)] flex items-center justify-center transition-all duration-300 ${
+                        sosActive
+                          ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
+                          : "hover:scale-105 active:scale-95 hover:shadow-[0_0_70px_rgba(239,68,68,0.6)]"
+                      }`}
+                    >
+                      <span className="text-white text-5xl font-bold">SOS</span>
+                    </button>
+
+                    <p className="text-gray-400 mt-6 text-lg">
+                      {sosActive ? "Help is on the way!" : "Tap for emergency assistance"}
+                    </p>
+
+                    {sosActive && (
+                      <div className="mt-4 flex items-center gap-2 text-green-400">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="font-semibold">Alert sent to emergency services</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Location Status */}
+                <div className="card p-6 bg-dark-900 border-dark-800">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin className="w-5 h-5 text-primary-500" />
+                    <h3 className="text-lg font-bold text-white">Location Status</h3>
+                  </div>
+
+                  <div className="p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="w-5 h-5 text-yellow-500" />
+                      <p className="font-semibold text-white">
+                        {location ? "Location Acquired" : "Location Unknown"}
+                      </p>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      {location
+                        ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
+                        : "Tap to get your current location"}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleGetLocation}
+                    disabled={locationLoading}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${locationLoading ? 'animate-spin' : ''}`} />
+                    {locationLoading ? "Getting Location..." : "Get Location"}
+                  </button>
+                </div>
+
+                {/* Emergency Contacts Card */}
+                <div className="card p-6 bg-dark-900 border-dark-800">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
+                        <Phone className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white">Emergency Contacts</h3>
+                    </div>
+                    <button
+                      onClick={() => setActiveSection('contacts')}
+                      className="w-10 h-10 bg-primary-600 hover:bg-primary-700 rounded-lg flex items-center justify-center transition-colors"
+                    >
+                      <Plus className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => window.location.href = 'tel:911'}
+                      className="w-full p-3 bg-red-900/20 hover:bg-red-900/30 border border-red-700 rounded-lg text-left transition-colors"
+                    >
+                      <p className="font-semibold text-red-400">Emergency Services</p>
+                      <p className="text-sm text-gray-400">911</p>
+                    </button>
+                    <button
+                      onClick={() => window.location.href = 'tel:1800AMBULANCE'}
+                      className="w-full p-3 bg-blue-900/20 hover:bg-blue-900/30 border border-blue-700 rounded-lg text-left transition-colors"
+                    >
+                      <p className="font-semibold text-blue-400">Ambulance</p>
+                      <p className="text-sm text-gray-400">1-800-AMBULANCE</p>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+
+            {/* Request Type Selection */}
+            <div className="card p-6 mb-6 bg-dark-900 border-dark-800">
+              <h3 className="text-xl font-bold text-white mb-4">Select Emergency Type</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {requestTypes.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => setSelectedType(type.id)}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                        selectedType === type.id
+                          ? "bg-dark-800 border-primary-600 shadow-lg"
+                          : "bg-dark-900/50 border-dark-700 hover:border-dark-600"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-8 h-8 mx-auto mb-2 ${
+                          selectedType === type.id
+                            ? "text-primary-500"
+                            : "text-gray-400"
+                        }`}
+                      />
+                      <span
+                        className={`text-sm font-semibold ${
+                          selectedType === type.id
+                            ? "text-white"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {type.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
         {/* Request History */}
         <div className="card p-6">
@@ -346,6 +765,8 @@ const UserDashboard = () => {
             </div>
           )}
         </div>
+          </>
+        )}
       </main>
 
       {/* SOS Confirmation Modal */}
