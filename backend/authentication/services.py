@@ -15,30 +15,25 @@ def generate_otp():
 
 
 def send_otp_via_twilio(mobile, otp_code):
-    """
-    Send OTP via Twilio SMS.
-    Falls back to console logging if Twilio credentials are not configured.
-    """
-    full_number = f"{settings.PHONE_COUNTRY_CODE}{mobile}"
+    """Send OTP via Twilio SMS."""
+    # Ensure the number always has country code prefix
+    if mobile.startswith('+'):
+        full_number = mobile
+    else:
+        full_number = f"{settings.PHONE_COUNTRY_CODE}{mobile}"
 
-    # Check if Twilio is configured
     if not all([settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN, settings.TWILIO_PHONE_NUMBER]):
-        logger.warning(
-            f"Twilio not configured. OTP for {mobile}: {otp_code}. "
-            f"Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER env vars."
+        raise Exception(
+            "Twilio credentials are not configured. "
+            "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in your .env file."
         )
-        return {
-            'success': True,
-            'message': 'OTP sent (dev mode - check console)',
-            'dev_otp': otp_code if settings.DEBUG else None,
-        }
 
     try:
         from twilio.rest import Client
 
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         message = client.messages.create(
-            body=f"Your SafeNow verification code is: {otp_code}. Valid for {settings.OTP_EXPIRY_MINUTES} minutes.",
+            body=f"Your SafeNow verification code is: {otp_code}. Valid for {settings.OTP_EXPIRY_MINUTES} minutes. Do not share this with anyone.",
             from_=settings.TWILIO_PHONE_NUMBER,
             to=full_number,
         )
@@ -52,15 +47,7 @@ def send_otp_via_twilio(mobile, otp_code):
 
     except Exception as e:
         logger.error(f"Twilio error sending OTP to {mobile}: {str(e)}")
-        # In dev mode, fall back to console
-        if settings.DEBUG:
-            logger.info(f"DEV FALLBACK - OTP for {mobile}: {otp_code}")
-            return {
-                'success': True,
-                'message': 'OTP sent (dev fallback - check console)',
-                'dev_otp': otp_code,
-            }
-        raise Exception(f"Failed to send OTP: {str(e)}")
+        raise Exception(f"Failed to send OTP via SMS: {str(e)}")
 
 
 def create_otp(mobile):

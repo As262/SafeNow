@@ -40,9 +40,6 @@ def send_otp_view(request):
             'success': True,
             'message': result.get('message', 'OTP sent successfully'),
         }
-        # In debug mode, include OTP for testing
-        if result.get('dev_otp'):
-            response_data['otp'] = result['dev_otp']
 
         return Response(response_data, status=status.HTTP_200_OK)
 
