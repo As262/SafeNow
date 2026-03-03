@@ -272,9 +272,7 @@ const UserDashboard = () => {
               </h2>
               <p className="text-gray-400">{tMap.subtitle}</p>
             </div>
-            <div className="card p-6" style={{ height: "600px" }}>
-              <MapView requests={requestHistory} />
-            </div>
+            <MapView requests={requestHistory} />
           </div>
         ) : activeSection === "emergency" ? (
           <div className="max-w-4xl mx-auto space-y-6">

@@ -38,12 +38,14 @@ const Sidebar = ({ onNavigate }) => {
       path: "#",
       section: "emergency",
       highlight: true,
+      showForAdmin: false, // Hide for admin users
     },
     {
       name: t.contacts,
       icon: Phone,
       path: "#",
       section: "contacts",
+      showForAdmin: false, // Hide for admin users
     },
     {
       name: t.map,
@@ -57,7 +59,13 @@ const Sidebar = ({ onNavigate }) => {
       path: "#",
       section: "settings",
     },
-  ];
+  ].filter((item) => {
+    // Filter out items that shouldn't be shown to admin users
+    if (isAdmin && item.showForAdmin === false) {
+      return false;
+    }
+    return true;
+  });
 
   const handleNavigation = (item) => {
     if (onNavigate) {
