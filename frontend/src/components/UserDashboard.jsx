@@ -53,7 +53,6 @@ const UserDashboard = () => {
   } = useGeolocation();
 
   const [selectedType, setSelectedType] = useState("ambulance");
-  const [showSOSModal, setShowSOSModal] = useState(false);
   const [sosActive, setSosActive] = useState(false);
   const [requestHistory, setRequestHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -92,50 +91,60 @@ const UserDashboard = () => {
     }
   };
 
-  const handleSOSClick = () => {
-    setShowSOSModal(true);
-    getLocation();
-  };
-
-  const handleConfirmSOS = async () => {
-    if (!location) {
-      alert("Please enable location access to send SOS");
-      return;
-    }
-
+  const handleSOSClick = async () => {
+    // First, fetch the location
     setLoading(true);
     setSosActive(true);
 
     try {
-      const requestData = {
-        userId: user.mobile,
-        userName: user.name,
-        type: requestTypes.find((t) => t.id === selectedType).label,
-        location: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          accuracy: location.accuracy,
-        },
-      };
+      // Get location first
+      await getLocation();
 
-      const response = await submitSOSRequest(requestData);
+      // Wait a bit for location to be set in state, then send automatically
+      setTimeout(async () => {
+        if (!location) {
+          alert("Failed to get location. Please enable location services.");
+          setLoading(false);
+          setSosActive(false);
+          return;
+        }
 
-      setSuccessMessage(response.message);
-      setShowSOSModal(false);
+        try {
+          const requestData = {
+            userId: user.mobile,
+            userName: user.name,
+            type: requestTypes.find((t) => t.id === selectedType).label,
+            location: {
+              latitude: location.latitude,
+              longitude: location.longitude,
+              accuracy: location.accuracy,
+            },
+          };
 
-      // Reload history
-      loadRequestHistory();
+          // Automatically send request to admin
+          const response = await submitSOSRequest(requestData);
 
-      // Reset after 5 seconds
-      setTimeout(() => {
-        setSosActive(false);
-        setSuccessMessage("");
-      }, 5000);
+          setSuccessMessage(response.message);
+
+          // Reload history
+          loadRequestHistory();
+
+          // Reset after 5 seconds
+          setTimeout(() => {
+            setSosActive(false);
+            setSuccessMessage("");
+          }, 5000);
+        } catch (error) {
+          alert("Error sending SOS: " + error.message);
+          setSosActive(false);
+        } finally {
+          setLoading(false);
+        }
+      }, 1500);
     } catch (error) {
-      alert("Error sending SOS: " + error.message);
-      setSosActive(false);
-    } finally {
       setLoading(false);
+      setSosActive(false);
+      alert("Failed to get location. Please enable location services.");
     }
   };
 
@@ -155,17 +164,19 @@ const UserDashboard = () => {
       alert("Maximum 3 photos allowed");
       return;
     }
-    const newPhotos = files.map(file => ({
+    const newPhotos = files.map((file) => ({
       file,
       url: URL.createObjectURL(file),
-      name: file.name
+      name: file.name,
     }));
     setPhotos([...photos, ...newPhotos]);
   };
 
   const handleCameraCapture = () => {
     // In a real app, this would open the device camera
-    alert("Camera functionality would open here. In production, this would access the device camera.");
+    alert(
+      "Camera functionality would open here. In production, this would access the device camera.",
+    );
   };
 
   const handleRemovePhoto = (index) => {
@@ -179,7 +190,7 @@ const UserDashboard = () => {
       setIsRecording(false);
       setVoiceMessage({
         duration: "0:15",
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       alert("Voice message recorded successfully!");
     }, 3000);
@@ -191,7 +202,7 @@ const UserDashboard = () => {
       setVoiceMessage({
         file,
         name: file.name,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       alert("Voice message uploaded successfully!");
     }
@@ -244,7 +255,9 @@ const UserDashboard = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">Live Map</h2>
-              <p className="text-gray-400">Track emergency services in real-time</p>
+              <p className="text-gray-400">
+                Track emergency services in real-time
+              </p>
             </div>
             <div className="card p-6" style={{ height: "600px" }}>
               <MapView requests={requestHistory} />
@@ -258,7 +271,9 @@ const UserDashboard = () => {
                 <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg">
                   <AlertTriangle className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold text-white">Emergency Center</h2>
+                <h2 className="text-3xl font-bold text-white">
+                  Emergency Center
+                </h2>
               </div>
               <p className="text-gray-400 text-lg">
                 Quick access to emergency services and immediate assistance
@@ -273,8 +288,12 @@ const UserDashboard = () => {
                     <Camera className="w-6 h-6 text-blue-500" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Photo Evidence</h3>
-                    <p className="text-sm text-gray-400">{photos.length}/3 photos</p>
+                    <h3 className="text-lg font-bold text-white">
+                      Photo Evidence
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      {photos.length}/3 photos
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -331,9 +350,13 @@ const UserDashboard = () => {
                     <Mic className="w-6 h-6 text-red-500" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Voice Message</h3>
+                    <h3 className="text-lg font-bold text-white">
+                      Voice Message
+                    </h3>
                     <p className="text-sm text-gray-400">
-                      {voiceMessage ? "Message recorded" : "Record voice message"}
+                      {voiceMessage
+                        ? "Message recorded"
+                        : "Record voice message"}
                     </p>
                   </div>
                 </div>
@@ -373,7 +396,9 @@ const UserDashboard = () => {
                       {voiceMessage.name || "Voice recording"}
                     </p>
                     {voiceMessage.duration && (
-                      <p className="text-gray-400 text-xs">{voiceMessage.duration}</p>
+                      <p className="text-gray-400 text-xs">
+                        {voiceMessage.duration}
+                      </p>
                     )}
                   </div>
                   <button
@@ -391,24 +416,32 @@ const UserDashboard = () => {
               <div className="flex flex-col items-center">
                 <button
                   onClick={handleSOSClick}
-                  disabled={sosActive}
+                  disabled={sosActive || loading}
                   className={`w-56 h-56 rounded-full bg-gradient-to-br from-red-500 to-red-700 shadow-[0_0_40px_rgba(239,68,68,0.4)] flex items-center justify-center transition-all duration-300 ${
-                    sosActive
+                    sosActive || loading
                       ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
                       : "hover:scale-105 active:scale-95 hover:shadow-[0_0_60px_rgba(239,68,68,0.6)]"
                   }`}
                 >
-                  <span className="text-white text-4xl font-bold">SOS</span>
+                  <span className="text-white text-4xl font-bold">
+                    {loading ? "..." : "SOS"}
+                  </span>
                 </button>
 
                 <p className="text-gray-400 mt-6 text-lg">
-                  {sosActive ? "Help is on the way!" : "Tap for emergency assistance"}
+                  {loading
+                    ? "Sending emergency alert..."
+                    : sosActive
+                      ? "Help is on the way!"
+                      : "Tap for emergency assistance"}
                 </p>
 
-                {sosActive && (
+                {sosActive && !loading && (
                   <div className="mt-4 flex items-center gap-2 text-green-400">
                     <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-                    <span className="font-semibold">Alert sent to emergency services</span>
+                    <span className="font-semibold">
+                      Alert sent to emergency services
+                    </span>
                   </div>
                 )}
               </div>
@@ -423,14 +456,18 @@ const UserDashboard = () => {
                 <PhoneCall className="w-6 h-6 text-white" />
                 <div className="text-left">
                   <p className="text-white text-lg font-bold">Emergency Call</p>
-                  <p className="text-red-100 text-sm">Dial 911 - Emergency Services</p>
+                  <p className="text-red-100 text-sm">
+                    Dial 911 - Emergency Services
+                  </p>
                 </div>
               </div>
             </button>
 
             {/* Request Type Selection */}
             <div className="card p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Select Emergency Type</h3>
+              <h3 className="text-lg font-bold text-white mb-4">
+                Select Emergency Type
+              </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {requestTypes.map((type) => {
                   const Icon = type.icon;
@@ -469,7 +506,7 @@ const UserDashboard = () => {
         ) : (
           <>
             {/* Dashboard Content */}
-            
+
             {/* Welcome Header */}
             <div className="mb-6 card p-6 border-dark-800">
               <div className="flex items-center justify-between">
@@ -481,8 +518,10 @@ const UserDashboard = () => {
                     Stay safe and connected with emergency services
                   </p>
                 </div>
-                <div className={`px-4 py-2 rounded-full font-semibold ${isOnline ? 'bg-green-600' : 'bg-gray-600'} text-white`}>
-                  {isOnline ? 'Online' : 'Offline'}
+                <div
+                  className={`px-4 py-2 rounded-full font-semibold ${isOnline ? "bg-green-600" : "bg-gray-600"} text-white`}
+                >
+                  {isOnline ? "Online" : "Offline"}
                 </div>
               </div>
             </div>
@@ -497,7 +536,9 @@ const UserDashboard = () => {
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-1">Active Alerts</p>
-                    <p className="text-3xl font-bold text-white">{stats.activeAlerts}</p>
+                    <p className="text-3xl font-bold text-white">
+                      {stats.activeAlerts}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -509,8 +550,12 @@ const UserDashboard = () => {
                     <Users className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">Available Responders</p>
-                    <p className="text-3xl font-bold text-white">{stats.availableResponders}</p>
+                    <p className="text-gray-400 text-sm mb-1">
+                      Available Responders
+                    </p>
+                    <p className="text-3xl font-bold text-white">
+                      {stats.availableResponders}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -522,8 +567,12 @@ const UserDashboard = () => {
                     <Clock className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">Avg Response Time</p>
-                    <p className="text-3xl font-bold text-white">{stats.avgResponseTime}</p>
+                    <p className="text-gray-400 text-sm mb-1">
+                      Avg Response Time
+                    </p>
+                    <p className="text-3xl font-bold text-white">
+                      {stats.avgResponseTime}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -536,7 +585,9 @@ const UserDashboard = () => {
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-1">Nearby Help</p>
-                    <p className="text-3xl font-bold text-white">{stats.nearbyHelp}</p>
+                    <p className="text-3xl font-bold text-white">
+                      {stats.nearbyHelp}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -551,31 +602,40 @@ const UserDashboard = () => {
                     Emergency Assistance
                   </h3>
                   <p className="text-gray-400 text-center mb-8">
-                    Tap the SOS button below to instantly alert emergency services to your location
+                    Tap the SOS button below to instantly alert emergency
+                    services to your location
                   </p>
 
                   {/* SOS Button */}
                   <div className="flex flex-col items-center mb-6">
                     <button
                       onClick={handleSOSClick}
-                      disabled={sosActive}
+                      disabled={sosActive || loading}
                       className={`w-56 h-56 rounded-full bg-gradient-to-br from-red-500 to-red-700 shadow-[0_0_50px_rgba(239,68,68,0.4)] flex items-center justify-center transition-all duration-300 ${
-                        sosActive
+                        sosActive || loading
                           ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
                           : "hover:scale-105 active:scale-95 hover:shadow-[0_0_70px_rgba(239,68,68,0.6)]"
                       }`}
                     >
-                      <span className="text-white text-5xl font-bold">SOS</span>
+                      <span className="text-white text-5xl font-bold">
+                        {loading ? "..." : "SOS"}
+                      </span>
                     </button>
 
                     <p className="text-gray-400 mt-6 text-lg">
-                      {sosActive ? "Help is on the way!" : "Tap for emergency assistance"}
+                      {loading
+                        ? "Sending emergency alert..."
+                        : sosActive
+                          ? "Help is on the way!"
+                          : "Tap for emergency assistance"}
                     </p>
 
-                    {sosActive && (
+                    {sosActive && !loading && (
                       <div className="mt-4 flex items-center gap-2 text-green-400">
                         <CheckCircle className="w-5 h-5" />
-                        <span className="font-semibold">Alert sent to emergency services</span>
+                        <span className="font-semibold">
+                          Alert sent to emergency services
+                        </span>
                       </div>
                     )}
                   </div>
@@ -588,7 +648,9 @@ const UserDashboard = () => {
                 <div className="card p-6 bg-dark-900 border-dark-800">
                   <div className="flex items-center gap-2 mb-4">
                     <MapPin className="w-5 h-5 text-primary-500" />
-                    <h3 className="text-lg font-bold text-white">Location Status</h3>
+                    <h3 className="text-lg font-bold text-white">
+                      Location Status
+                    </h3>
                   </div>
 
                   <div className="p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg mb-3">
@@ -610,7 +672,9 @@ const UserDashboard = () => {
                     disabled={locationLoading}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-4 h-4 ${locationLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`w-4 h-4 ${locationLoading ? "animate-spin" : ""}`}
+                    />
                     {locationLoading ? "Getting Location..." : "Get Location"}
                   </button>
                 </div>
@@ -622,10 +686,12 @@ const UserDashboard = () => {
                       <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
                         <Phone className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-bold text-white">Emergency Contacts</h3>
+                      <h3 className="text-lg font-bold text-white">
+                        Emergency Contacts
+                      </h3>
                     </div>
                     <button
-                      onClick={() => setActiveSection('contacts')}
+                      onClick={() => setActiveSection("contacts")}
                       className="w-10 h-10 bg-primary-600 hover:bg-primary-700 rounded-lg flex items-center justify-center transition-colors"
                     >
                       <Plus className="w-5 h-5 text-white" />
@@ -633,14 +699,18 @@ const UserDashboard = () => {
                   </div>
                   <div className="space-y-2">
                     <button
-                      onClick={() => window.location.href = 'tel:911'}
+                      onClick={() => (window.location.href = "tel:911")}
                       className="w-full p-3 bg-red-900/20 hover:bg-red-900/30 border border-red-700 rounded-lg text-left transition-colors"
                     >
-                      <p className="font-semibold text-red-400">Emergency Services</p>
+                      <p className="font-semibold text-red-400">
+                        Emergency Services
+                      </p>
                       <p className="text-sm text-gray-400">911</p>
                     </button>
                     <button
-                      onClick={() => window.location.href = 'tel:1800AMBULANCE'}
+                      onClick={() =>
+                        (window.location.href = "tel:1800AMBULANCE")
+                      }
                       className="w-full p-3 bg-blue-900/20 hover:bg-blue-900/30 border border-blue-700 rounded-lg text-left transition-colors"
                     >
                       <p className="font-semibold text-blue-400">Ambulance</p>
@@ -653,7 +723,9 @@ const UserDashboard = () => {
 
             {/* Request Type Selection */}
             <div className="card p-6 mb-6 bg-dark-900 border-dark-800">
-              <h3 className="text-xl font-bold text-white mb-4">Select Emergency Type</h3>
+              <h3 className="text-xl font-bold text-white mb-4">
+                Select Emergency Type
+              </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {requestTypes.map((type) => {
                   const Icon = type.icon;
@@ -689,176 +761,85 @@ const UserDashboard = () => {
               </div>
             </div>
 
-        {/* Request History */}
-        <div className="card p-6">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            Recent Requests
-          </h3>
+            {/* Request History */}
+            <div className="card p-6">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Recent Requests
+              </h3>
 
-          {requestHistory.length === 0 ? (
-            <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">No previous requests</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {requestHistory.map((request) => (
-                <div
-                  key={request.id}
-                  className="p-4 bg-dark-800 rounded-lg hover:bg-dark-700 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 ${
-                          request.status === "completed"
-                            ? "bg-green-600"
-                            : "bg-yellow-600"
-                        } rounded-full flex items-center justify-center`}
-                      >
-                        {request.status === "completed" ? (
-                          <CheckCircle className="w-5 h-5 text-white" />
-                        ) : (
-                          <Clock className="w-5 h-5 text-white" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-white">
-                          {request.type}
-                        </p>
-                        <p className="text-xs text-gray-400 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {request.location.address}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          request.status === "completed"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-yellow-500/20 text-yellow-400"
-                        }`}
-                      >
-                        {request.status}
-                      </span>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatTimestamp(request.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {request.respondedBy && (
-                    <div className="mt-2 pt-2 border-t border-dark-700">
-                      <p className="text-xs text-gray-400">
-                        Responded by{" "}
-                        <span className="text-white font-semibold">
-                          {request.respondedBy}
-                        </span>{" "}
-                        in {request.responseTime}
-                      </p>
-                    </div>
-                  )}
+              {requestHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400">No previous requests</p>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-3">
+                  {requestHistory.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-4 bg-dark-800 rounded-lg hover:bg-dark-700 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-10 h-10 ${
+                              request.status === "completed"
+                                ? "bg-green-600"
+                                : "bg-yellow-600"
+                            } rounded-full flex items-center justify-center`}
+                          >
+                            {request.status === "completed" ? (
+                              <CheckCircle className="w-5 h-5 text-white" />
+                            ) : (
+                              <Clock className="w-5 h-5 text-white" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white">
+                              {request.type}
+                            </p>
+                            <p className="text-xs text-gray-400 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {request.location.address}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                              request.status === "completed"
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-yellow-500/20 text-yellow-400"
+                            }`}
+                          >
+                            {request.status}
+                          </span>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatTimestamp(request.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {request.respondedBy && (
+                        <div className="mt-2 pt-2 border-t border-dark-700">
+                          <p className="text-xs text-gray-400">
+                            Responded by{" "}
+                            <span className="text-white font-semibold">
+                              {request.respondedBy}
+                            </span>{" "}
+                            in {request.responseTime}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
           </>
         )}
       </main>
-
-      {/* SOS Confirmation Modal */}
-      {showSOSModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-dark-900 rounded-2xl p-6 max-w-md w-full border border-dark-700 shadow-2xl">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <AlertTriangle className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">
-                Confirm Emergency SOS
-              </h3>
-              <p className="text-gray-400">
-                This will send an alert to emergency services with your current
-                location
-              </p>
-            </div>
-
-            {/* Location Status */}
-            <div className="mb-6 p-4 bg-dark-800 rounded-lg">
-              {locationLoading ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                  <span className="text-gray-400">
-                    Getting your location...
-                  </span>
-                </div>
-              ) : locationError ? (
-                <div className="flex items-center gap-3 text-red-400">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="text-sm">{locationError}</span>
-                </div>
-              ) : location ? (
-                <div className="flex items-center gap-3 text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  <div>
-                    <p className="text-sm font-semibold">Location acquired</p>
-                    <p className="text-xs text-gray-400">
-                      {location.latitude.toFixed(6)},{" "}
-                      {location.longitude.toFixed(6)}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Selected Type */}
-            <div className="mb-6">
-              <p className="text-sm text-gray-400 mb-2">Request Type:</p>
-              <div className="flex items-center gap-3 p-3 bg-dark-800 rounded-lg">
-                {(() => {
-                  const type = requestTypes.find((t) => t.id === selectedType);
-                  const Icon = type.icon;
-                  return (
-                    <>
-                      <Icon className="w-6 h-6 text-primary-500" />
-                      <span className="text-white font-semibold">
-                        {type.label}
-                      </span>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSOSModal(false)}
-                className="flex-1 px-4 py-3 bg-dark-800 hover:bg-dark-700 text-white font-semibold rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmSOS}
-                disabled={!location || loading}
-                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  "Confirm SOS"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
