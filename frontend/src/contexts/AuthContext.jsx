@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { logoutUser } from "../utils/api";
 
 const AuthContext = createContext(null);
 
@@ -15,27 +16,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem("safeNowUser");
+    // Check if user is stored in sessionStorage (per-window session)
+    const storedUser = sessionStorage.getItem("safeNowUser");
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
         console.error("Error parsing stored user:", error);
-        localStorage.removeItem("safeNowUser");
+        sessionStorage.removeItem("safeNowUser");
       }
     }
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem("safeNowUser", JSON.stringify(userData));
+  const login = (userData, token, refresh) => {
+    // Store user data along with tokens
+    const userWithToken = {
+      ...userData,
+      token,
+      refresh,
+    };
+    setUser(userWithToken);
+    sessionStorage.setItem("safeNowUser", JSON.stringify(userWithToken));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await logoutUser();
+    } catch {
+      // Continue logout even if API call fails
+    }
     setUser(null);
-    localStorage.removeItem("safeNowUser");
+    sessionStorage.removeItem("safeNowUser");
   };
 
   const value = {

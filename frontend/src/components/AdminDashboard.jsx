@@ -13,7 +13,6 @@ import {
   Activity,
   TrendingUp,
   AlertCircle,
-  Navigation,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -21,12 +20,9 @@ import {
   getAllSOSRequests,
   updateRequestStatus,
   getAnalytics,
-} from "../utils/mockApi";
+} from "../utils/api";
 import MapView from "./MapView";
 import AnalyticsCharts from "./AnalyticsCharts";
-import Sidebar from "./Sidebar";
-import EmergencyContacts from "./EmergencyContacts";
-import Settings from "./Settings";
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -39,7 +35,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("requests"); // 'requests' or 'analytics'
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState("dashboard");
 
   useEffect(() => {
     loadRequests();
@@ -47,9 +42,18 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
-    // Update requests from WebSocket
+    // Merge WebSocket requests with existing, deduplicating by ID
     if (wsRequests.length > 0) {
-      setRequests(wsRequests);
+      setRequests((prev) => {
+        const merged = new Map();
+        // Existing requests first
+        prev.forEach((r) => merged.set(r.id, r));
+        // WebSocket requests overwrite (fresher data)
+        wsRequests.forEach((r) => merged.set(r.id, r));
+        return Array.from(merged.values()).sort(
+          (a, b) => new Date(b.timestamp || b.created_at) - new Date(a.timestamp || a.created_at)
+        );
+      });
     }
   }, [wsRequests]);
 
@@ -103,20 +107,9 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
-  };
-
-  // Function to open Google Maps directions
-  const openDirections = (latitude, longitude) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    window.open(url, "_blank");
-  };
-
-  const handleSectionChange = (section) => {
-    setActiveSection(section);
-    window.location.hash = section;
   };
 
   const formatTimestamp = (timestamp) => {
@@ -135,289 +128,280 @@ const AdminDashboard = () => {
   const acceptedRequests = requests.filter((r) => r.status === "accepted");
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950">
-      {/* Sidebar */}
-      <Sidebar onNavigate={handleSectionChange} />
+    <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950">
+      {/* Header */}
+      <header className="bg-dark-900/80 backdrop-blur-sm border-b border-dark-800 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">SafeNow Admin</h1>
+                <p className="text-xs text-gray-400">
+                  Emergency Response Dashboard
+                </p>
+              </div>
+            </div>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        {/* Alert Badge */}
-        {pendingRequests.length > 0 && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-center gap-3">
-            <Bell className="w-6 h-6 text-red-500 animate-pulse" />
-            <div>
-              <p className="text-red-400 font-semibold">
-                {pendingRequests.length} Pending Emergency{" "}
-                {pendingRequests.length === 1 ? "Request" : "Requests"}
-              </p>
-              <p className="text-red-400/70 text-sm">
-                Immediate attention required
-              </p>
+            <div className="flex items-center gap-4">
+              {pendingRequests.length > 0 && (
+                <div className="relative">
+                  <Bell className="w-6 h-6 text-red-500 animate-pulse" />
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">
+                      {pendingRequests.length}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
+                <User className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-white font-medium">
+                  {user.name}
+                </span>
+                <span className="text-xs text-gray-500">(Admin)</span>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-white">Logout</span>
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      </header>
 
-        {/* Conditional Section Rendering */}
-        {activeSection === "contacts" ? (
-          <EmergencyContacts />
-        ) : activeSection === "settings" ? (
-          <Settings />
-        ) : activeSection === "map" ? (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Live Map</h2>
-              <p className="text-gray-400">
-                Real-time emergency request locations
-              </p>
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-400">
+                Active Requests
+              </h3>
+              <Activity className="w-5 h-5 text-red-500" />
             </div>
-            <MapView requests={requests} selectedRequest={selectedRequest} />
+            <p className="text-3xl font-bold text-white">
+              {pendingRequests.length}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Awaiting response</p>
+          </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-400">
+                Accepted Today
+              </h3>
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            </div>
+            <p className="text-3xl font-bold text-white">
+              {analytics?.completedToday || 23}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">+12% from yesterday</p>
+          </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-400">
+                Avg Response
+              </h3>
+              <Clock className="w-5 h-5 text-blue-500" />
+            </div>
+            <p className="text-3xl font-bold text-white">
+              {analytics?.averageResponseTime || "9.5m"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Target: &lt;10 min</p>
+          </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-400">
+                Total Requests
+              </h3>
+              <TrendingUp className="w-5 h-5 text-purple-500" />
+            </div>
+            <p className="text-3xl font-bold text-white">
+              {analytics?.totalRequests || 1247}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">All time</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-6 flex gap-2 border-b border-dark-800">
+          <button
+            onClick={() => setActiveTab("requests")}
+            className={`px-6 py-3 font-semibold transition-colors relative ${
+              activeTab === "requests"
+                ? "text-white"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            SOS Requests
+            {activeTab === "requests" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`px-6 py-3 font-semibold transition-colors relative ${
+              activeTab === "analytics"
+                ? "text-white"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            Analytics
+            {activeTab === "analytics" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
+            )}
+          </button>
+        </div>
+
+        {/* Content */}
+        {activeTab === "requests" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Requests List */}
+            <div className="space-y-6">
+              <div className="card p-6">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  Pending Requests ({pendingRequests.length})
+                </h3>
+
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-gray-400 mt-3">Loading requests...</p>
+                  </div>
+                ) : pendingRequests.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                    <p className="text-gray-400">No pending requests</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {pendingRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        onClick={() => setSelectedRequest(request)}
+                        className={`p-4 bg-dark-800 rounded-lg cursor-pointer transition-all hover:bg-dark-700 ${
+                          selectedRequest?.id === request.id
+                            ? "ring-2 ring-primary-600"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {request.userName}
+                            </p>
+                            <p className="text-sm text-gray-400 flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {request.userId}
+                            </p>
+                          </div>
+                          <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded">
+                            {request.type}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+                          <MapPin className="w-3 h-3" />
+                          <span>
+                            {request.location?.address ||
+                              `${request.location?.latitude?.toFixed?.(4) || '—'}, ${request.location?.longitude?.toFixed?.(4) || '—'}`}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Clock className="w-3 h-3" />
+                          {formatTimestamp(request.timestamp)}
+                        </div>
+
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAcceptRequest(request.id);
+                            }}
+                            className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            Accept
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRejectRequest(request.id);
+                            }}
+                            className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Accepted Requests */}
+              {acceptedRequests.length > 0 && (
+                <div className="card p-6">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Accepted Requests ({acceptedRequests.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {acceptedRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="p-4 bg-dark-800 rounded-lg opacity-75"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {request.userName}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              {request.type}
+                            </p>
+                          </div>
+                          <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
+                            Accepted
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Map View */}
+            <div
+              className="card p-6 lg:sticky lg:top-24"
+              style={{ height: "600px" }}
+            >
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary-500" />
+                Live Location Map
+              </h3>
+              <MapView
+                requests={pendingRequests}
+                selectedRequest={selectedRequest}
+              />
+            </div>
           </div>
         ) : (
-          <>
-            {/* Dashboard Content */}
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-400">
-                    Active Requests
-                  </h3>
-                  <Activity className="w-5 h-5 text-red-500" />
-                </div>
-                <p className="text-3xl font-bold text-white">
-                  {pendingRequests.length}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Awaiting response</p>
-              </div>
-
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-400">
-                    Accepted Today
-                  </h3>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                </div>
-                <p className="text-3xl font-bold text-white">
-                  {analytics?.completedToday || 23}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  +12% from yesterday
-                </p>
-              </div>
-
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-400">
-                    Avg Response
-                  </h3>
-                  <Clock className="w-5 h-5 text-blue-500" />
-                </div>
-                <p className="text-3xl font-bold text-white">
-                  {analytics?.averageResponseTime || "9.5m"}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Target: &lt;10 min</p>
-              </div>
-
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-400">
-                    Total Requests
-                  </h3>
-                  <TrendingUp className="w-5 h-5 text-purple-500" />
-                </div>
-                <p className="text-3xl font-bold text-white">
-                  {analytics?.totalRequests || 1247}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">All time</p>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="mb-6 flex gap-2 border-b border-dark-800">
-              <button
-                onClick={() => setActiveTab("requests")}
-                className={`px-6 py-3 font-semibold transition-colors relative ${
-                  activeTab === "requests"
-                    ? "text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                SOS Requests
-                {activeTab === "requests" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("analytics")}
-                className={`px-6 py-3 font-semibold transition-colors relative ${
-                  activeTab === "analytics"
-                    ? "text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Analytics
-                {activeTab === "analytics" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
-                )}
-              </button>
-            </div>
-
-            {/* Content */}
-            {activeTab === "requests" ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Requests List */}
-                <div className="space-y-6">
-                  <div className="card p-6">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                      <AlertCircle className="w-5 h-5 text-red-500" />
-                      Pending Requests ({pendingRequests.length})
-                    </h3>
-
-                    {loading ? (
-                      <div className="text-center py-8">
-                        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                        <p className="text-gray-400 mt-3">
-                          Loading requests...
-                        </p>
-                      </div>
-                    ) : pendingRequests.length === 0 ? (
-                      <div className="text-center py-8">
-                        <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                        <p className="text-gray-400">No pending requests</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {pendingRequests.map((request) => (
-                          <div
-                            key={request.id}
-                            onClick={() => setSelectedRequest(request)}
-                            className={`p-4 bg-dark-800 rounded-lg cursor-pointer transition-all hover:bg-dark-700 ${
-                              selectedRequest?.id === request.id
-                                ? "ring-2 ring-primary-600"
-                                : ""
-                            }`}
-                          >
-                            <div className="flex items-start justify-between mb-3">
-                              <div>
-                                <p className="font-semibold text-white">
-                                  {request.userName}
-                                </p>
-                                <p className="text-sm text-gray-400 flex items-center gap-1">
-                                  <Phone className="w-3 h-3" />
-                                  {request.userId}
-                                </p>
-                              </div>
-                              <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded">
-                                {request.type}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-                              <MapPin className="w-3 h-3" />
-                              <span>
-                                {request.location.address ||
-                                  `${request.location.latitude.toFixed(4)}, ${request.location.longitude.toFixed(4)}`}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <Clock className="w-3 h-3" />
-                              {formatTimestamp(request.timestamp)}
-                            </div>
-
-                            <div className="flex gap-2 mt-3">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAcceptRequest(request.id);
-                                }}
-                                className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                                Accept
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRejectRequest(request.id);
-                                }}
-                                className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
-                              >
-                                <XCircle className="w-4 h-4" />
-                                Reject
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openDirections(
-                                    request.location.latitude,
-                                    request.location.longitude,
-                                  );
-                                }}
-                                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
-                              >
-                                <Navigation className="w-4 h-4" />
-                                Directions
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Accepted Requests */}
-                  {acceptedRequests.length > 0 && (
-                    <div className="card p-6">
-                      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        Accepted Requests ({acceptedRequests.length})
-                      </h3>
-                      <div className="space-y-3">
-                        {acceptedRequests.map((request) => (
-                          <div
-                            key={request.id}
-                            className="p-4 bg-dark-800 rounded-lg opacity-75"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="font-semibold text-white">
-                                  {request.userName}
-                                </p>
-                                <p className="text-sm text-gray-400">
-                                  {request.type}
-                                </p>
-                              </div>
-                              <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
-                                Accepted
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Map View */}
-                <div
-                  className="card p-6 lg:sticky lg:top-24"
-                  style={{ height: "600px" }}
-                >
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-primary-500" />
-                    Live Location Map
-                  </h3>
-                  <MapView
-                    requests={pendingRequests}
-                    selectedRequest={selectedRequest}
-                  />
-                </div>
-              </div>
-            ) : (
-              <AnalyticsCharts analytics={analytics} />
-            )}
-          </>
+          <AnalyticsCharts analytics={analytics} />
         )}
       </main>
     </div>

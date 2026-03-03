@@ -68,26 +68,16 @@ A comprehensive React frontend for a real-time emergency help platform that conn
    http://localhost:5173
    ```
 
-## 🔐 Demo Credentials
+## 🔐 Authentication
 
-The application includes mock authentication for demonstration purposes:
+The application uses Twilio OTP-based authentication via the Django backend.
 
-### Admin Account
-
-- **Mobile**: `9876543210`
-- **OTP**: (Will be displayed on screen after clicking "Send OTP")
-
-### User Account
-
-- **Mobile**: `9123456789`
-- **OTP**: (Will be displayed on screen after clicking "Send OTP")
-
-### Testing Other Numbers
-
-You can also test with any 10-digit mobile number. The OTP will be displayed in:
-
-1. Browser console
-2. A blue info box on the OTP verification screen
+1. Enter any 10-digit mobile number
+2. Click "Send OTP"
+3. In development mode, the OTP will be shown in the API response and server console
+4. Enter the OTP and click "Verify & Login"
+5. First login with a number auto-creates an account (user role by default)
+6. To create an admin, use Django admin or management shell
 
 ## 📱 Features Demonstration
 

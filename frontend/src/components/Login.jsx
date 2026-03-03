@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, PhoneCall, AlertCircle, User } from "lucide-react";
-import { sendOTP, verifyOTP } from "../utils/mockApi";
+import { Shield, PhoneCall, AlertCircle } from "lucide-react";
+import { sendOTP, verifyOTP } from "../utils/api";
 import { useAuth } from "../contexts/AuthContext";
 
 const Login = () => {
   const [mobile, setMobile] = useState("");
-  const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState("mobile"); // 'mobile' or 'otp'
   const [loading, setLoading] = useState(false);
@@ -28,12 +27,7 @@ const Login = () => {
         throw new Error("Please enter a valid 10-digit mobile number");
       }
 
-      // Validate name
-      if (!name.trim() || name.trim().length < 2) {
-        throw new Error("Please enter your name (at least 2 characters)");
-      }
-
-      const response = await sendOTP(mobile, name.trim());
+      const response = await sendOTP(mobile);
       setDemoOtp(response.otp); // Store for demo display
       setOtpSent(true);
       setStep("otp");
@@ -54,10 +48,10 @@ const Login = () => {
         throw new Error("Please enter a valid 6-digit OTP");
       }
 
-      const response = await verifyOTP(mobile, otp, name.trim());
+      const response = await verifyOTP(mobile, otp);
 
-      // Login user
-      login(response.user);
+      // Login user with token
+      login(response.user, response.token, response.refresh);
 
       // Redirect based on role
       if (response.user.role === "admin") {
@@ -76,7 +70,7 @@ const Login = () => {
     setError("");
     setOtp("");
     try {
-      const response = await sendOTP(mobile, name.trim());
+      const response = await sendOTP(mobile);
       setDemoOtp(response.otp);
       setError("");
       alert("OTP resent successfully!");
@@ -107,7 +101,7 @@ const Login = () => {
                 Welcome Back
               </h2>
               <p className="text-gray-400 mb-6">
-                Enter your details to get started
+                Enter your mobile number to get started
               </p>
 
               {error && (
@@ -116,25 +110,6 @@ const Login = () => {
                   <p className="text-red-400 text-sm">{error}</p>
                 </div>
               )}
-
-              <div className="mb-4">
-                <label className="block text-gray-300 text-sm font-semibold mb-2">
-                  Your Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="w-5 h-5 text-gray-500" />
-                  </div>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="input-field pl-12"
-                    required
-                  />
-                </div>
-              </div>
 
               <div className="mb-6">
                 <label className="block text-gray-300 text-sm font-semibold mb-2">
@@ -163,7 +138,7 @@ const Login = () => {
 
               <button
                 type="submit"
-                disabled={loading || mobile.length !== 10 || !name.trim()}
+                disabled={loading || mobile.length !== 10}
                 className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (

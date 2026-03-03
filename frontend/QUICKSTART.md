@@ -19,23 +19,13 @@ npm run dev
 
 Open http://localhost:5173 in your browser
 
-## 🔐 Test Accounts
+## 🔐 Login
 
-### Admin Dashboard
-
-1. Mobile: `9876543210`
+1. Enter any 10-digit mobile number
 2. Click "Send OTP"
-3. Copy the OTP shown in the blue box
+3. In dev mode, the OTP is shown in the server console / API response
 4. Paste and click "Verify & Login"
-5. You'll be redirected to the Admin Dashboard
-
-### User Dashboard
-
-1. Mobile: `9123456789`
-2. Click "Send OTP"
-3. Copy the OTP shown in the blue box
-4. Paste and click "Verify & Login"
-5. You'll be redirected to the User Dashboard
+5. First login auto-creates a user account; promote to admin via Django shell if needed
 
 ## 📱 Key Features to Test
 
@@ -144,10 +134,10 @@ npm install
 
 ## 💡 Demo Tips
 
-- The OTP is always shown in a blue box on the verification screen
+- In dev mode, OTP is returned in the API response and printed to the server console
 - Use 10-digit Indian mobile numbers
-- Admin role: 9876543210
-- User role: Any other 10-digit number
+- First login auto-creates a user account
+- Promote a user to admin via Django shell: `User.objects.filter(mobile='...').update(role='admin', is_staff=True)`
 - Location permission must be granted for SOS to work
 
 ---

@@ -1,52 +1,94 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { io } from "socket.io-client";
 
-// Mock WebSocket URL - replace with actual backend URL
-const SOCKET_URL = "ws://localhost:3001";
+const WS_BASE_URL =
+  import.meta.env.VITE_WS_URL ||
+  `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws`;
 
 export const useWebSocket = (user) => {
   const [connected, setConnected] = useState(false);
   const [requests, setRequests] = useState([]);
   const socketRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
 
-    // For demo purposes, we'll use a mock connection
-    // In production, replace this with actual Socket.io connection
+    const connectWebSocket = () => {
+      const params = new URLSearchParams({
+        role: user.role || "user",
+        mobile: user.mobile || "",
+      });
 
-    // Mock connection simulation
-    setConnected(true);
+      const wsUrl = `${WS_BASE_URL}/sos/?${params.toString()}`;
 
-    // Simulate receiving mock data for admin
-    if (user.role === "admin") {
-      const mockRequests = [
-        {
-          id: "1",
-          userId: "9876543210",
-          userName: "Priya Sharma",
-          type: "Ambulance",
-          location: { latitude: 28.6139, longitude: 77.209 },
-          timestamp: new Date(Date.now() - 300000).toISOString(),
-          status: "pending",
-        },
-        {
-          id: "2",
-          userId: "9123456789",
-          userName: "Anita Desai",
-          type: "Police",
-          location: { latitude: 28.7041, longitude: 77.1025 },
-          timestamp: new Date(Date.now() - 120000).toISOString(),
-          status: "pending",
-        },
-      ];
-      setRequests(mockRequests);
-    }
+      try {
+        const ws = new WebSocket(wsUrl);
+        socketRef.current = ws;
 
-    // Cleanup
+        ws.onopen = () => {
+          console.log("WebSocket connected");
+          setConnected(true);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            switch (data.type) {
+              case "initial_requests":
+                setRequests(data.requests || []);
+                break;
+              case "new_request":
+                setRequests((prev) => [data.request, ...prev]);
+                break;
+              case "status_update":
+                setRequests((prev) =>
+                  prev.map((req) =>
+                    req.id === data.request.id ? data.request : req,
+                  ),
+                );
+                break;
+              case "pong":
+                break;
+              default:
+                console.log("Unknown WS message type:", data.type);
+            }
+          } catch (e) {
+            console.error("WS message parse error:", e);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log("WebSocket disconnected");
+          setConnected(false);
+          // Reconnect after 3 seconds
+          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+        };
+
+        ws.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          ws.close();
+        };
+      } catch (error) {
+        console.error("WebSocket connection failed:", error);
+        reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+      }
+    };
+
+    connectWebSocket();
+
+    // Ping to keep alive every 30 seconds
+    const pingInterval = setInterval(() => {
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 30000);
+
     return () => {
+      clearInterval(pingInterval);
+      clearTimeout(reconnectTimeoutRef.current);
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        socketRef.current.close();
       }
       setConnected(false);
     };
@@ -54,7 +96,6 @@ export const useWebSocket = (user) => {
 
   const sendSOSRequest = useCallback(
     (requestData) => {
-      // Mock sending SOS request
       const newRequest = {
         id: Date.now().toString(),
         ...requestData,
@@ -62,10 +103,6 @@ export const useWebSocket = (user) => {
         status: "pending",
       };
 
-      // In production, emit through socket
-      // socketRef.current?.emit('sos-request', newRequest);
-
-      // For demo, add to local state if admin
       if (user?.role === "admin") {
         setRequests((prev) => [newRequest, ...prev]);
       }
