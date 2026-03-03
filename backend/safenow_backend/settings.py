@@ -10,6 +10,10 @@ from dotenv import load_dotenv
 # Load .env file from the backend directory
 load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
+# Clear SSLKEYLOGFILE if set — it causes PermissionError on Python 3.14+ when
+# the path points to a locked volume (set by Fiddler/Wireshark/VPNs).
+os.environ.pop('SSLKEYLOGFILE', None)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
@@ -128,6 +132,8 @@ PHONE_COUNTRY_CODE = os.environ.get('PHONE_COUNTRY_CODE', '+91')
 # OTP Settings
 OTP_EXPIRY_MINUTES = 5
 OTP_LENGTH = 6
+# Fixed OTP used for admin accounts (bypasses Twilio)
+ADMIN_DEMO_OTP = os.environ.get('ADMIN_DEMO_OTP', '000000')
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'

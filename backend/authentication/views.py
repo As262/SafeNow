@@ -40,6 +40,9 @@ def send_otp_view(request):
             'success': True,
             'message': result.get('message', 'OTP sent successfully'),
         }
+        # Only expose OTP for admin accounts (demo mode)
+        if result.get('demo_otp'):
+            response_data['otp'] = result['demo_otp']
 
         return Response(response_data, status=status.HTTP_200_OK)
 

@@ -132,7 +132,7 @@ const Login = () => {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Demo: Try 9876543210 (Admin) or 9123456789 (User)
+                  Admin demo account: 9876543210 (OTP: 000000)
                 </p>
               </div>
 

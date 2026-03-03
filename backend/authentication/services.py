@@ -50,6 +50,13 @@ def send_otp_via_twilio(mobile, otp_code):
         raise Exception(f"Failed to send OTP via SMS: {str(e)}")
 
 
+def is_admin_mobile(mobile):
+    """Check if the mobile number belongs to an admin user."""
+    from .models import User
+    return User.objects.filter(mobile=mobile, role='admin').exists() or \
+           User.objects.filter(mobile=mobile, is_staff=True).exists()
+
+
 def create_otp(mobile):
     """Create and store a new OTP for the given mobile number."""
     from .models import OTP
@@ -57,6 +64,23 @@ def create_otp(mobile):
     # Invalidate any existing unused OTPs for this number
     OTP.objects.filter(mobile=mobile, is_verified=False).delete()
 
+    # Admin accounts use a fixed demo OTP — no Twilio needed
+    if is_admin_mobile(mobile):
+        otp_code = settings.ADMIN_DEMO_OTP
+        expires_at = timezone.now() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
+        otp = OTP.objects.create(
+            mobile=mobile,
+            otp_code=otp_code,
+            expires_at=expires_at,
+        )
+        logger.info(f"Admin demo OTP issued for {mobile}")
+        return otp, {
+            'success': True,
+            'message': 'Admin demo OTP ready',
+            'demo_otp': otp_code,
+        }
+
+    # Regular users — send real SMS via Twilio
     otp_code = generate_otp()
     expires_at = timezone.now() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
 
@@ -66,9 +90,7 @@ def create_otp(mobile):
         expires_at=expires_at,
     )
 
-    # Send via Twilio
     result = send_otp_via_twilio(mobile, otp_code)
-
     return otp, result
 
 
