@@ -13,42 +13,46 @@ import {
   Phone,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { translations } from "../utils/translations";
 
 const Sidebar = ({ onNavigate }) => {
   const { user, logout } = useAuth();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isAdmin = user?.role === "admin";
+  const t = translations[language].sidebar;
 
   const menuItems = [
     {
-      name: "Dashboard",
+      name: t.dashboard,
       icon: LayoutDashboard,
       path: isAdmin ? "/admin-dashboard" : "/user-dashboard",
       section: "dashboard",
     },
     {
-      name: "Emergency",
+      name: t.emergency,
       icon: AlertCircle,
       path: "#",
       section: "emergency",
       highlight: true,
     },
     {
-      name: "Emergency Contacts",
+      name: t.contacts,
       icon: Phone,
       path: "#",
       section: "contacts",
     },
     {
-      name: "Live Map",
+      name: t.map,
       icon: Map,
       path: "#",
       section: "map",
     },
     {
-      name: "Settings",
+      name: t.settings,
       icon: Settings,
       path: "#",
       section: "settings",
@@ -135,9 +139,12 @@ const Sidebar = ({ onNavigate }) => {
           <div className="space-y-1 px-3">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.hash === `#${item.section}` || 
-                             (item.section === "dashboard" && location.pathname === item.path && !location.hash);
-              
+              const isActive =
+                location.hash === `#${item.section}` ||
+                (item.section === "dashboard" &&
+                  location.pathname === item.path &&
+                  !location.hash);
+
               return (
                 <button
                   key={item.name}
@@ -146,8 +153,8 @@ const Sidebar = ({ onNavigate }) => {
                     isActive
                       ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30"
                       : item.highlight
-                      ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                      : "text-gray-400 hover:bg-dark-800 hover:text-white"
+                        ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                        : "text-gray-400 hover:bg-dark-800 hover:text-white"
                   }`}
                 >
                   <Icon
@@ -157,8 +164,8 @@ const Sidebar = ({ onNavigate }) => {
                       isActive
                         ? "text-white"
                         : item.highlight
-                        ? "text-red-400 group-hover:text-red-300"
-                        : "text-gray-400 group-hover:text-white"
+                          ? "text-red-400 group-hover:text-red-300"
+                          : "text-gray-400 group-hover:text-white"
                     }`}
                   />
                   {!isCollapsed && (
@@ -192,7 +199,7 @@ const Sidebar = ({ onNavigate }) => {
               } text-gray-400 group-hover:text-red-400`}
             />
             {!isCollapsed && (
-              <span className="font-medium text-sm">Logout</span>
+              <span className="font-medium text-sm">{t.logout}</span>
             )}
           </button>
         </div>

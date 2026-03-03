@@ -23,6 +23,8 @@ import {
   Plus,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { translations } from "../utils/translations";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { submitSOSRequest, getUserRequests } from "../utils/mockApi";
 import Sidebar from "./Sidebar";
@@ -30,20 +32,9 @@ import EmergencyContacts from "./EmergencyContacts";
 import Settings from "./Settings";
 import MapView from "./MapView";
 
-const requestTypes = [
-  { id: "ambulance", label: "Ambulance", icon: Ambulance, color: "bg-red-600" },
-  { id: "police", label: "Police", icon: Shield, color: "bg-blue-600" },
-  {
-    id: "medical",
-    label: "Medical Help",
-    icon: AlertCircle,
-    color: "bg-green-600",
-  },
-  { id: "ngo", label: "NGO Support", icon: Users, color: "bg-purple-600" },
-];
-
 const UserDashboard = () => {
   const { user, logout } = useAuth();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const {
     location,
@@ -51,6 +42,28 @@ const UserDashboard = () => {
     loading: locationLoading,
     getLocation,
   } = useGeolocation();
+
+  const t = translations[language].dashboard;
+  const tEmergency = translations[language].emergency;
+  const tMap = translations[language].map;
+  const tCommon = translations[language].common;
+
+  const requestTypes = [
+    {
+      id: "ambulance",
+      label: t.ambulance,
+      icon: Ambulance,
+      color: "bg-red-600",
+    },
+    { id: "police", label: t.police, icon: Shield, color: "bg-blue-600" },
+    {
+      id: "medical",
+      label: t.medicalHelp,
+      icon: AlertCircle,
+      color: "bg-green-600",
+    },
+    { id: "ngo", label: t.ngoSupport, icon: Users, color: "bg-purple-600" },
+  ];
 
   const [selectedType, setSelectedType] = useState("ambulance");
   const [sosActive, setSosActive] = useState(false);
@@ -254,10 +267,10 @@ const UserDashboard = () => {
         ) : activeSection === "map" ? (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Live Map</h2>
-              <p className="text-gray-400">
-                Track emergency services in real-time
-              </p>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {tMap.title}
+              </h2>
+              <p className="text-gray-400">{tMap.subtitle}</p>
             </div>
             <div className="card p-6" style={{ height: "600px" }}>
               <MapView requests={requestHistory} />
@@ -272,12 +285,10 @@ const UserDashboard = () => {
                   <AlertTriangle className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-white">
-                  Emergency Center
+                  {tEmergency.title}
                 </h2>
               </div>
-              <p className="text-gray-400 text-lg">
-                Quick access to emergency services and immediate assistance
-              </p>
+              <p className="text-gray-400 text-lg">{tEmergency.subtitle}</p>
             </div>
 
             {/* Photo Evidence Section */}
@@ -289,10 +300,10 @@ const UserDashboard = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white">
-                      Photo Evidence
+                      {tEmergency.photoEvidence}
                     </h3>
                     <p className="text-sm text-gray-400">
-                      {photos.length}/3 photos
+                      {photos.length}/3 {tEmergency.photos}
                     </p>
                   </div>
                 </div>
@@ -307,7 +318,7 @@ const UserDashboard = () => {
                     />
                     <div className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-semibold">
                       <Upload className="w-4 h-4" />
-                      Upload
+                      {tEmergency.upload}
                     </div>
                   </label>
                   <button
@@ -315,7 +326,7 @@ const UserDashboard = () => {
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
                   >
                     <Camera className="w-4 h-4" />
-                    Camera
+                    {tEmergency.camera}
                   </button>
                 </div>
               </div>
@@ -351,12 +362,12 @@ const UserDashboard = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white">
-                      Voice Message
+                      {tEmergency.voiceMessage}
                     </h3>
                     <p className="text-sm text-gray-400">
                       {voiceMessage
-                        ? "Message recorded"
-                        : "Record voice message"}
+                        ? tEmergency.messageRecorded
+                        : tEmergency.recordVoiceMessage}
                     </p>
                   </div>
                 </div>
@@ -370,7 +381,7 @@ const UserDashboard = () => {
                     />
                     <div className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold">
                       <Upload className="w-4 h-4" />
-                      Upload
+                      {tEmergency.upload}
                     </div>
                   </label>
                   <button
@@ -383,7 +394,7 @@ const UserDashboard = () => {
                     }`}
                   >
                     <Mic className="w-4 h-4" />
-                    {isRecording ? "Recording..." : "Record"}
+                    {isRecording ? tEmergency.recording : tEmergency.record}
                   </button>
                 </div>
               </div>
@@ -405,7 +416,7 @@ const UserDashboard = () => {
                     onClick={() => setVoiceMessage(null)}
                     className="text-red-400 hover:text-red-300 text-sm"
                   >
-                    Remove
+                    {tEmergency.remove}
                   </button>
                 </div>
               )}
@@ -424,24 +435,22 @@ const UserDashboard = () => {
                   }`}
                 >
                   <span className="text-white text-4xl font-bold">
-                    {loading ? "..." : "SOS"}
+                    {loading ? "..." : t.sosButton}
                   </span>
                 </button>
 
                 <p className="text-gray-400 mt-6 text-lg">
                   {loading
-                    ? "Sending emergency alert..."
+                    ? t.sendingAlert
                     : sosActive
-                      ? "Help is on the way!"
-                      : "Tap for emergency assistance"}
+                      ? t.helpOnWay
+                      : t.tapForHelp}
                 </p>
 
                 {sosActive && !loading && (
                   <div className="mt-4 flex items-center gap-2 text-green-400">
                     <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-                    <span className="font-semibold">
-                      Alert sent to emergency services
-                    </span>
+                    <span className="font-semibold">{t.alertSent}</span>
                   </div>
                 )}
               </div>
@@ -455,10 +464,10 @@ const UserDashboard = () => {
               <div className="flex items-center justify-center gap-3">
                 <PhoneCall className="w-6 h-6 text-white" />
                 <div className="text-left">
-                  <p className="text-white text-lg font-bold">Emergency Call</p>
-                  <p className="text-red-100 text-sm">
-                    Dial 911 - Emergency Services
+                  <p className="text-white text-lg font-bold">
+                    {tEmergency.emergencyCall}
                   </p>
+                  <p className="text-red-100 text-sm">{tEmergency.dial911}</p>
                 </div>
               </div>
             </button>
@@ -466,7 +475,7 @@ const UserDashboard = () => {
             {/* Request Type Selection */}
             <div className="card p-6">
               <h3 className="text-lg font-bold text-white mb-4">
-                Select Emergency Type
+                {t.selectEmergencyType}
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {requestTypes.map((type) => {
@@ -512,16 +521,14 @@ const UserDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-3xl font-bold text-white mb-2">
-                    Welcome back, {user.name}!
+                    {t.welcome}, {user.name}!
                   </h2>
-                  <p className="text-gray-400">
-                    Stay safe and connected with emergency services
-                  </p>
+                  <p className="text-gray-400">{t.subtitle}</p>
                 </div>
                 <div
                   className={`px-4 py-2 rounded-full font-semibold ${isOnline ? "bg-green-600" : "bg-gray-600"} text-white`}
                 >
-                  {isOnline ? "Online" : "Offline"}
+                  {isOnline ? t.online : t.offline}
                 </div>
               </div>
             </div>
@@ -535,7 +542,9 @@ const UserDashboard = () => {
                     <AlertTriangle className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">Active Alerts</p>
+                    <p className="text-gray-400 text-sm mb-1">
+                      {t.activeAlerts}
+                    </p>
                     <p className="text-3xl font-bold text-white">
                       {stats.activeAlerts}
                     </p>
@@ -551,7 +560,7 @@ const UserDashboard = () => {
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-1">
-                      Available Responders
+                      {t.availableResponders}
                     </p>
                     <p className="text-3xl font-bold text-white">
                       {stats.availableResponders}
@@ -568,7 +577,7 @@ const UserDashboard = () => {
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm mb-1">
-                      Avg Response Time
+                      {t.avgResponseTime}
                     </p>
                     <p className="text-3xl font-bold text-white">
                       {stats.avgResponseTime}
@@ -584,7 +593,7 @@ const UserDashboard = () => {
                     <MapPin className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm mb-1">Nearby Help</p>
+                    <p className="text-gray-400 text-sm mb-1">{t.nearbyHelp}</p>
                     <p className="text-3xl font-bold text-white">
                       {stats.nearbyHelp}
                     </p>
@@ -599,11 +608,10 @@ const UserDashboard = () => {
               <div className="lg:col-span-2">
                 <div className="card p-8 bg-dark-900 border-dark-800">
                   <h3 className="text-2xl font-bold text-white mb-2 text-center">
-                    Emergency Assistance
+                    {t.emergencyAssistance}
                   </h3>
                   <p className="text-gray-400 text-center mb-8">
-                    Tap the SOS button below to instantly alert emergency
-                    services to your location
+                    {t.sosDescription}
                   </p>
 
                   {/* SOS Button */}
@@ -618,24 +626,22 @@ const UserDashboard = () => {
                       }`}
                     >
                       <span className="text-white text-5xl font-bold">
-                        {loading ? "..." : "SOS"}
+                        {loading ? "..." : t.sosButton}
                       </span>
                     </button>
 
                     <p className="text-gray-400 mt-6 text-lg">
                       {loading
-                        ? "Sending emergency alert..."
+                        ? t.sendingAlert
                         : sosActive
-                          ? "Help is on the way!"
-                          : "Tap for emergency assistance"}
+                          ? t.helpOnWay
+                          : t.tapForHelp}
                     </p>
 
                     {sosActive && !loading && (
                       <div className="mt-4 flex items-center gap-2 text-green-400">
                         <CheckCircle className="w-5 h-5" />
-                        <span className="font-semibold">
-                          Alert sent to emergency services
-                        </span>
+                        <span className="font-semibold">{t.alertSent}</span>
                       </div>
                     )}
                   </div>
@@ -649,7 +655,7 @@ const UserDashboard = () => {
                   <div className="flex items-center gap-2 mb-4">
                     <MapPin className="w-5 h-5 text-primary-500" />
                     <h3 className="text-lg font-bold text-white">
-                      Location Status
+                      {t.locationStatus}
                     </h3>
                   </div>
 
@@ -657,13 +663,13 @@ const UserDashboard = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <AlertCircle className="w-5 h-5 text-yellow-500" />
                       <p className="font-semibold text-white">
-                        {location ? "Location Acquired" : "Location Unknown"}
+                        {location ? t.locationAcquired : t.locationUnknown}
                       </p>
                     </div>
                     <p className="text-sm text-gray-400">
                       {location
                         ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
-                        : "Tap to get your current location"}
+                        : t.tapToGetLocation}
                     </p>
                   </div>
 
@@ -675,7 +681,7 @@ const UserDashboard = () => {
                     <RefreshCw
                       className={`w-4 h-4 ${locationLoading ? "animate-spin" : ""}`}
                     />
-                    {locationLoading ? "Getting Location..." : "Get Location"}
+                    {locationLoading ? t.gettingLocation : t.getLocation}
                   </button>
                 </div>
 
@@ -687,7 +693,7 @@ const UserDashboard = () => {
                         <Phone className="w-5 h-5 text-white" />
                       </div>
                       <h3 className="text-lg font-bold text-white">
-                        Emergency Contacts
+                        {t.emergencyContacts}
                       </h3>
                     </div>
                     <button
@@ -703,7 +709,7 @@ const UserDashboard = () => {
                       className="w-full p-3 bg-red-900/20 hover:bg-red-900/30 border border-red-700 rounded-lg text-left transition-colors"
                     >
                       <p className="font-semibold text-red-400">
-                        Emergency Services
+                        {t.emergencyServices}
                       </p>
                       <p className="text-sm text-gray-400">911</p>
                     </button>
@@ -713,7 +719,9 @@ const UserDashboard = () => {
                       }
                       className="w-full p-3 bg-blue-900/20 hover:bg-blue-900/30 border border-blue-700 rounded-lg text-left transition-colors"
                     >
-                      <p className="font-semibold text-blue-400">Ambulance</p>
+                      <p className="font-semibold text-blue-400">
+                        {t.ambulance}
+                      </p>
                       <p className="text-sm text-gray-400">1-800-AMBULANCE</p>
                     </button>
                   </div>
@@ -724,7 +732,7 @@ const UserDashboard = () => {
             {/* Request Type Selection */}
             <div className="card p-6 mb-6 bg-dark-900 border-dark-800">
               <h3 className="text-xl font-bold text-white mb-4">
-                Select Emergency Type
+                {t.selectEmergencyType}
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {requestTypes.map((type) => {
@@ -765,13 +773,13 @@ const UserDashboard = () => {
             <div className="card p-6">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Clock className="w-5 h-5" />
-                Recent Requests
+                {t.recentRequests}
               </h3>
 
               {requestHistory.length === 0 ? (
                 <div className="text-center py-8">
                   <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400">No previous requests</p>
+                  <p className="text-gray-400">{t.noPreviousRequests}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
