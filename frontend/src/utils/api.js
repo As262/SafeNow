@@ -172,6 +172,18 @@ export const getAnalytics = async () => {
 };
 
 /**
+ * Send message to AI Safety Chatbot
+ * @param {string} message - User message
+ * @returns {Promise} - AI response
+ */
+export const sendChatbotMessage = async (message) => {
+  return apiRequest("/sos/chatbot/", {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+};
+
+/**
  * Logout
  * @returns {Promise}
  */

@@ -1,10 +1,11 @@
 import json
 import logging
 import threading
+import os
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 
@@ -156,3 +157,118 @@ def update_request_status(request, request_id):
         'requestId': str(sos.id),
         'status': new_status,
     })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def chatbot_response(request):
+    """
+    AI Safety Chatbot endpoint.
+    Provides safety guidance and emergency advice using Google Gemini AI.
+    """
+    user_message = request.data.get('message', '').strip()
+
+    if not user_message:
+        return Response(
+            {'success': False, 'error': 'Message is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # Import Gemini AI
+        import google.generativeai as genai
+
+        # Configure API key from environment
+        api_key = os.environ.get('GEMINI_API_KEY')
+        if not api_key:
+            # Fallback response when API key is not configured
+            return Response({
+                'success': True,
+                'response': get_fallback_response(user_message),
+            })
+
+        genai.configure(api_key=api_key)
+
+        # Initialize the model
+        model = genai.GenerativeModel('gemini-1.5-flash')
+
+        # System instruction for safety assistant
+        system_instruction = """You are a helpful safety assistant for an emergency SOS application called SafeNow. 
+Your role is to provide short, practical, and clear advice for safety situations.
+
+Guidelines:
+- Keep responses brief (2-4 sentences maximum)
+- Focus on immediate, actionable steps
+- Be calm and reassuring
+- Cover topics like: minor injuries (cuts, burns, sprains), safety precautions, harassment, accidents, fires, medical emergencies
+- If the situation sounds like a MINOR issue that needs professional help (not life-threatening), suggest they can send an SOS alert
+- For life-threatening emergencies, remind them to call emergency services immediately (they shouldn't be chatting)
+- Use simple, clear language
+- Prioritize safety above all
+
+Examples of good responses:
+User: "I have a small cut on my hand"
+You: "For a small cut, wash it with clean water and soap, apply pressure with a clean cloth to stop bleeding, then cover with a bandage. If bleeding persists or the cut is deep, consider seeking medical attention."
+
+User: "Someone is following me"
+You: "Stay in well-lit public areas, keep walking toward crowded places, call a trusted contact, and if you feel threatened, use your SOS alert to get help immediately."
+
+Remember: This chatbot is for MINOR safety concerns and guidance, not life-threatening emergencies."""
+
+        # Generate response
+        prompt = f"{system_instruction}\n\nUser: {user_message}\nAssistant:"
+        response = model.generate_content(prompt)
+
+        ai_response = response.text if response.text else "I'm here to help with safety questions. Could you please provide more details about your situation?"
+
+        return Response({
+            'success': True,
+            'response': ai_response,
+        })
+
+    except ImportError:
+        logger.error("google-generativeai library not installed")
+        return Response({
+            'success': True,
+            'response': get_fallback_response(user_message),
+        })
+    except Exception as e:
+        logger.error(f"Chatbot error: {str(e)}")
+        return Response({
+            'success': True,
+            'response': get_fallback_response(user_message),
+        })
+
+
+def get_fallback_response(user_message):
+    """Provide basic safety responses when AI is unavailable."""
+    message_lower = user_message.lower()
+
+    # Basic keyword matching for common scenarios
+    if any(word in message_lower for word in ['cut', 'bleeding', 'wound']):
+        return "For minor cuts: Clean with water and soap, apply pressure with a clean cloth, and cover with a bandage. If bleeding doesn't stop or the cut is deep, seek medical help."
+
+    elif any(word in message_lower for word in ['burn', 'burnt', 'burning']):
+        return "For minor burns: Cool the burn under running water for 10-15 minutes, cover with a clean cloth, and avoid ice or butter. For severe burns, seek medical attention immediately."
+
+    elif any(word in message_lower for word in ['following', 'stalking', 'harass']):
+        return "If you feel unsafe: Stay in well-lit public areas, move toward crowded places, call a trusted contact, and use the SOS button if you're in danger."
+
+    elif any(word in message_lower for word in ['accident', 'crash', 'collision']):
+        return "After an accident: Ensure you're safe, check for injuries, call emergency services if needed, and document the scene. Use the SOS button for immediate assistance."
+
+    elif any(word in message_lower for word in ['fire', 'smoke']):
+        return "In case of fire: Get out immediately, stay low to avoid smoke, close doors behind you, and call fire services. Never go back inside a burning building."
+
+    elif any(word in message_lower for word in ['sprain', 'twisted', 'ankle', 'wrist']):
+        return "For sprains: Rest the injured area, apply ice wrapped in cloth for 15 minutes, compress with a bandage, and elevate it. If pain is severe, seek medical help."
+
+    elif any(word in message_lower for word in ['chest pain', 'heart', 'breathing']):
+        return "Chest pain or breathing difficulty can be serious. Sit down, stay calm, and call emergency services immediately. Do not ignore these symptoms."
+
+    elif any(word in message_lower for word in ['poison', 'swallowed', 'toxic']):
+        return "If someone swallowed poison: Do NOT make them vomit. Call poison control or emergency services immediately. Keep the substance container if possible."
+
+    else:
+        return "I'm here to help with safety questions. For minor injuries, stay calm and apply basic first aid. For serious emergencies, please use the SOS button or call emergency services immediately."
+

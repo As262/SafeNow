@@ -33,6 +33,7 @@ import { useGeolocation } from "../hooks/useGeolocation";
 import { useLanguage } from "../contexts/LanguageContext";
 import { submitSOSRequest, getUserRequests } from "../utils/api";
 import Sidebar from "./Sidebar";
+import SafetyChatbot from "./SafetyChatbot";
 
 const requestTypes = [
   { id: "ambulance", label: "Ambulance", icon: Ambulance, color: "bg-red-600" },
@@ -292,6 +293,69 @@ const UserDashboard = () => {
     }
   };
 
+  // Handle SOS request triggered from chatbot
+  const handleChatbotSOS = async (emergencyType) => {
+    if (submittingRef.current || sosActive || sendingRequest) return;
+
+    if (!location) {
+      alert(
+        "Unable to get your location. Please enable location access in your browser settings.",
+      );
+      return;
+    }
+
+    // Map emergency type to label
+    const typeMapping = {
+      ambulance: "Ambulance",
+      fire: "Fire Emergency",
+      ngo: "NGO Support",
+      police: "Police",
+      medical: "Medical Help",
+    };
+
+    const typeLabel = typeMapping[emergencyType] || "Ambulance";
+
+    submittingRef.current = true;
+    setSosActive(true);
+    setSendingRequest(true);
+    setLoading(true);
+
+    try {
+      const requestData = {
+        userId: user.mobile,
+        userName: user.name,
+        type: typeLabel,
+        location: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy,
+        },
+      };
+
+      const response = await submitSOSRequest(requestData);
+
+      setSuccessMessage(
+        response.message || "SOS Alert sent successfully! Help is on the way.",
+      );
+
+      // Reload history
+      loadRequestHistory();
+
+      // Reset after 5 seconds
+      setTimeout(() => {
+        setSosActive(false);
+        setSuccessMessage("");
+      }, 5000);
+    } catch (error) {
+      alert("Error sending SOS: " + error.message);
+      setSosActive(false);
+    } finally {
+      setLoading(false);
+      setSendingRequest(false);
+      submittingRef.current = false;
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate("/login");
@@ -348,57 +412,6 @@ const UserDashboard = () => {
           {/* Dashboard Section */}
           {activeSection === "dashboard" && (
             <>
-              {/* Quick Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-                <div className="bg-gradient-to-br from-primary-600/20 to-primary-700/20 backdrop-blur-sm border border-primary-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center">
-                      <BarChart3 className="w-6 h-6 text-primary-400" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    {statistics.total}
-                  </h3>
-                  <p className="text-sm text-gray-400">Total Requests</p>
-                </div>
-
-                <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-yellow-400" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    {statistics.pending}
-                  </h3>
-                  <p className="text-sm text-gray-400">Pending</p>
-                </div>
-
-                <div className="bg-gradient-to-br from-green-600/20 to-green-700/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-green-400" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    {statistics.completed}
-                  </h3>
-                  <p className="text-sm text-gray-400">Completed</p>
-                </div>
-
-                <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                      <MapPin className="w-6 h-6 text-blue-400" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    {location ? "✓" : "✗"}
-                  </h3>
-                  <p className="text-sm text-gray-400">Location</p>
-                </div>
-              </div>
-
               {/* SOS Section */}
               <div className="mb-8">
                 <div className="bg-gradient-to-br from-red-600/10 via-dark-900 to-dark-900 border-2 border-red-500/20 rounded-2xl p-8 sm:p-10 text-center shadow-2xl">
@@ -485,6 +498,57 @@ const UserDashboard = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <div className="bg-gradient-to-br from-primary-600/20 to-primary-700/20 backdrop-blur-sm border border-primary-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="w-6 h-6 text-primary-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {statistics.total}
+                  </h3>
+                  <p className="text-sm text-gray-400">Total Requests</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-yellow-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {statistics.pending}
+                  </h3>
+                  <p className="text-sm text-gray-400">Pending</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-600/20 to-green-700/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-green-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {statistics.completed}
+                  </h3>
+                  <p className="text-sm text-gray-400">Completed</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                      <MapPin className="w-6 h-6 text-blue-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {location ? "✓" : "✗"}
+                  </h3>
+                  <p className="text-sm text-gray-400">Location</p>
                 </div>
               </div>
 
@@ -1459,6 +1523,9 @@ const UserDashboard = () => {
           )}
         </div>
       </main>
+
+      {/* AI Safety Chatbot */}
+      <SafetyChatbot onSOSRequest={handleChatbotSOS} userLocation={location} />
     </div>
   );
 };

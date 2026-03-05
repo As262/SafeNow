@@ -6,4 +6,5 @@ urlpatterns = [
     path('user-requests/', views.user_requests, name='user-requests'),
     path('all-requests/', views.all_sos_requests, name='all-requests'),
     path('request/<uuid:request_id>/status/', views.update_request_status, name='update-request-status'),
+    path('chatbot/', views.chatbot_response, name='chatbot'),
 ]
