@@ -323,11 +323,24 @@ const UserDashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              Welcome back,{" "}
+              <span className="text-primary-500">{user.name}</span>
+            </h1>
+            <p className="text-gray-400">
+              Stay safe and connected with emergency services
+            </p>
+          </div>
+
           {/* Success Message */}
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-500/10 border border-green-500 rounded-lg flex items-center gap-3 animate-pulse">
-              <CheckCircle className="w-6 h-6 text-green-500" />
+            <div className="mb-6 p-4 bg-gradient-to-r from-green-500/20 to-green-600/20 border border-green-500/50 rounded-xl flex items-center gap-3 animate-pulse backdrop-blur-sm">
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
               <p className="text-green-400 font-semibold">{successMessage}</p>
             </div>
           )}
@@ -335,73 +348,451 @@ const UserDashboard = () => {
           {/* Dashboard Section */}
           {activeSection === "dashboard" && (
             <>
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <div className="bg-gradient-to-br from-primary-600/20 to-primary-700/20 backdrop-blur-sm border border-primary-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="w-6 h-6 text-primary-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {statistics.total}
+                  </h3>
+                  <p className="text-sm text-gray-400">Total Requests</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-yellow-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {statistics.pending}
+                  </h3>
+                  <p className="text-sm text-gray-400">Pending</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-600/20 to-green-700/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-green-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {statistics.completed}
+                  </h3>
+                  <p className="text-sm text-gray-400">Completed</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                      <MapPin className="w-6 h-6 text-blue-400" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    {location ? "✓" : "✗"}
+                  </h3>
+                  <p className="text-sm text-gray-400">Location</p>
+                </div>
+              </div>
+
               {/* SOS Section */}
               <div className="mb-8">
-                <div className="card p-8 text-center">
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    Emergency SOS
-                  </h2>
-                  <p className="text-gray-400 mb-8">
-                    Tap the button below if you need immediate help
-                  </p>
+                <div className="bg-gradient-to-br from-red-600/10 via-dark-900 to-dark-900 border-2 border-red-500/20 rounded-2xl p-8 sm:p-10 text-center shadow-2xl">
+                  <div className="max-w-3xl mx-auto">
+                    <div className="inline-block p-3 bg-red-500/10 rounded-full mb-4">
+                      <AlertTriangle className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                      Emergency SOS
+                    </h2>
+                    <p className="text-gray-400 mb-10">
+                      Tap the button below for immediate emergency assistance
+                    </p>
 
-                  {/* SOS Button */}
-                  <div className="flex flex-col items-center mb-8">
-                    <button
-                      onClick={handleSOSClick}
-                      disabled={sosActive || loading}
-                      className={`w-48 h-48 rounded-full bg-gradient-to-br from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-200 ${
-                        sosActive || loading
-                          ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
-                          : "hover:scale-105 active:scale-95"
+                    {/* SOS Button */}
+                    <div className="flex flex-col items-center mb-10">
+                      <button
+                        onClick={handleSOSClick}
+                        disabled={sosActive || loading}
+                        className={`relative w-56 h-56 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-300 ${
+                          sosActive || loading
+                            ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
+                            : "hover:scale-110 hover:shadow-red-500/50 active:scale-95"
+                        }`}
+                      >
+                        <div className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-20" />
+                        <div className="text-center relative z-10">
+                          <AlertTriangle className="w-24 h-24 text-white mx-auto mb-3 drop-shadow-lg" />
+                          <span className="text-white text-2xl font-black tracking-wider">
+                            {loading ? "SENDING" : "SOS"}
+                          </span>
+                        </div>
+                      </button>
+
+                      {(sosActive || loading) && (
+                        <div className="mt-6 flex items-center gap-3 px-6 py-3 bg-green-500/20 border border-green-500/50 rounded-full">
+                          <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
+                          <span className="font-semibold text-green-400 text-lg">
+                            {loading
+                              ? "Sending emergency alert..."
+                              : "Alert Sent - Help is on the way!"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Request Type Selection */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-5 text-left">
+                        Select Emergency Type
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                        {requestTypes.map((type) => {
+                          const Icon = type.icon;
+                          return (
+                            <button
+                              key={type.id}
+                              onClick={() => setSelectedType(type.id)}
+                              className={`p-5 rounded-xl border-2 transition-all duration-200 group ${
+                                selectedType === type.id
+                                  ? "bg-gradient-to-br from-primary-600/30 to-primary-700/30 border-primary-500 shadow-lg shadow-primary-500/20 scale-105"
+                                  : "bg-dark-800/50 border-dark-700 hover:border-primary-500/50 hover:bg-dark-800"
+                              }`}
+                            >
+                              <Icon
+                                className={`w-10 h-10 mx-auto mb-3 transition-transform group-hover:scale-110 ${
+                                  selectedType === type.id
+                                    ? "text-primary-400"
+                                    : "text-gray-400"
+                                }`}
+                              />
+                              <span
+                                className={`text-xs sm:text-sm font-semibold block ${
+                                  selectedType === type.id
+                                    ? "text-white"
+                                    : "text-gray-400"
+                                }`}
+                              >
+                                {type.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile & Location Card */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Profile Info */}
+                <div className="lg:col-span-2 bg-gradient-to-br from-dark-900 to-dark-800 border border-dark-700 rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center shadow-lg">
+                      <User className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        Your Profile
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        Account information
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-500/50 transition-colors">
+                      <div className="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">Name</p>
+                        <p className="text-sm font-semibold text-white">
+                          {user.name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-500/50 transition-colors">
+                      <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                        <Phone className="w-5 h-5 text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">Mobile</p>
+                        <p className="text-sm font-semibold text-white">
+                          {user.mobile}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location Status */}
+                <div className="bg-gradient-to-br from-dark-900 to-dark-800 border border-dark-700 rounded-xl p-6 shadow-lg">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        location ? "bg-green-500/20" : "bg-red-500/20"
                       }`}
                     >
-                      <div className="text-center">
-                        <AlertTriangle className="w-20 h-20 text-white mx-auto mb-2" />
-                        <span className="text-white text-2xl font-bold">
-                          {loading ? "SENDING..." : "SOS"}
-                        </span>
+                      <MapPin
+                        className={`w-6 h-6 ${
+                          location ? "text-green-400" : "text-red-400"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white">
+                        Location
+                      </h3>
+                      <p
+                        className={`text-sm font-semibold ${
+                          location ? "text-green-400" : "text-red-400"
+                        }`}
+                      >
+                        {location ? "Active" : "Inactive"}
+                      </p>
+                    </div>
+                  </div>
+                  {location ? (
+                    <div className="space-y-2">
+                      <div className="p-2 bg-dark-800 rounded text-xs">
+                        <p className="text-gray-400">
+                          Lat:{" "}
+                          <span className="text-white font-mono">
+                            {location.latitude.toFixed(4)}
+                          </span>
+                        </p>
                       </div>
+                      <div className="p-2 bg-dark-800 rounded text-xs">
+                        <p className="text-gray-400">
+                          Long:{" "}
+                          <span className="text-white font-mono">
+                            {location.longitude.toFixed(4)}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={getLocation}
+                      className="w-full mt-2 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                    >
+                      Enable Location
                     </button>
+                  )}
+                </div>
+              </div>
 
-                    {(sosActive || loading) && (
-                      <div className="mt-4 flex items-center gap-2 text-green-400">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-                        <span className="font-semibold">
-                          {loading
-                            ? "Sending alert..."
-                            : "Alert Sent - Help is on the way!"}
-                        </span>
+              {/* Request History */}
+              <div className="bg-gradient-to-br from-dark-900 to-dark-800 border border-dark-700 rounded-xl p-6 sm:p-8 shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-primary-400" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white">
+                      Recent Requests
+                    </h3>
+                  </div>
+                  {requestHistory.length > 0 && (
+                    <span className="px-3 py-1 bg-primary-500/20 text-primary-400 rounded-full text-sm font-semibold">
+                      {requestHistory.length}
+                    </span>
+                  )}
+                </div>
+
+                {requestHistory.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="w-20 h-20 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <AlertCircle className="w-10 h-10 text-gray-600" />
+                    </div>
+                    <p className="text-gray-400 text-lg font-medium">
+                      No previous requests
+                    </p>
+                    <p className="text-gray-500 text-sm mt-2">
+                      Your emergency requests will appear here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {requestHistory.slice(0, 5).map((request) => (
+                      <div
+                        key={request.id}
+                        className="p-5 bg-dark-800 border border-dark-700 rounded-xl hover:border-primary-500/50 hover:shadow-lg transition-all duration-200 group"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div
+                              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                                request.status === "completed"
+                                  ? "bg-green-500/20 border border-green-500/30"
+                                  : request.status === "pending"
+                                    ? "bg-yellow-500/20 border border-yellow-500/30"
+                                    : "bg-red-500/20 border border-red-500/30"
+                              }`}
+                            >
+                              {request.status === "completed" ? (
+                                <CheckCircle className="w-6 h-6 text-green-400" />
+                              ) : request.status === "pending" ? (
+                                <Clock className="w-6 h-6 text-yellow-400" />
+                              ) : (
+                                <X className="w-6 h-6 text-red-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-white text-base mb-1">
+                                {request.type}
+                              </p>
+                              <p className="text-sm text-gray-400 flex items-center gap-2 mb-2">
+                                <MapPin className="w-4 h-4 shrink-0" />
+                                <span className="truncate">
+                                  {request.location?.address ||
+                                    `${request.location?.latitude?.toFixed?.(4) || "—"}, ${request.location?.longitude?.toFixed?.(4) || "—"}`}
+                                </span>
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-3 h-3 text-gray-500" />
+                                <p className="text-xs text-gray-500">
+                                  {formatTimestamp(request.timestamp)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <span
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 ${
+                              request.status === "completed"
+                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                : request.status === "pending"
+                                  ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                  : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            }`}
+                          >
+                            {request.status}
+                          </span>
+                        </div>
+
+                        {(request.respondedBy || request.respondedByName) && (
+                          <div className="mt-4 pt-4 border-t border-dark-700">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-primary-500/20 rounded-full flex items-center justify-center">
+                                <User className="w-3 h-3 text-primary-400" />
+                              </div>
+                              <p className="text-sm text-gray-400">
+                                Responded by{" "}
+                                <span className="text-white font-semibold">
+                                  {request.respondedBy ||
+                                    request.respondedByName}
+                                </span>
+                                {(request.responseTime ||
+                                  request.response_time) && (
+                                  <span className="text-gray-500">
+                                    {" "}
+                                    in{" "}
+                                    {request.responseTime ||
+                                      request.response_time}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
+                    ))}
+                    {requestHistory.length > 5 && (
+                      <button
+                        onClick={() => handleNavigation("history")}
+                        className="w-full py-3 text-center text-primary-400 hover:text-primary-300 font-semibold text-sm transition-colors"
+                      >
+                        View All {requestHistory.length} Requests →
+                      </button>
                     )}
                   </div>
+                )}
+              </div>
+            </>
+          )}
 
-                  {/* Request Type Selection */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Emergency Section */}
+          {activeSection === "emergency" && (
+            <div className="bg-gradient-to-br from-red-600/10 via-dark-900 to-dark-900 border-2 border-red-500/20 rounded-2xl p-8 sm:p-12 text-center shadow-2xl">
+              <div className="max-w-4xl mx-auto">
+                <div className="inline-block p-4 bg-red-500/10 rounded-full mb-6">
+                  <AlertTriangle className="w-12 h-12 text-red-500" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                  Emergency SOS
+                </h2>
+                <p className="text-gray-400 mb-12 max-w-2xl mx-auto">
+                  Quickly send emergency alerts to nearby services with one tap
+                </p>
+
+                {/* SOS Button */}
+                <div className="flex flex-col items-center mb-12">
+                  <button
+                    onClick={handleSOSClick}
+                    disabled={sosActive || loading}
+                    className={`relative w-64 h-64 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-300 ${
+                      sosActive || loading
+                        ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
+                        : "hover:scale-110 hover:shadow-red-500/50 active:scale-95"
+                    }`}
+                  >
+                    <div className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-20" />
+                    <div className="text-center relative z-10">
+                      <AlertTriangle className="w-28 h-28 text-white mx-auto mb-4 drop-shadow-lg" />
+                      <span className="text-white text-2xl font-black tracking-widest">
+                        {loading ? "SENDING" : "SOS"}
+                      </span>
+                    </div>
+                  </button>
+
+                  {(sosActive || loading) && (
+                    <div className="mt-8 flex items-center gap-3 px-8 py-4 bg-green-500/20 border border-green-500/50 rounded-full">
+                      <div className="w-4 h-4 bg-green-500 rounded-full animate-ping" />
+                      <span className="font-bold text-green-400">
+                        {loading
+                          ? "Sending emergency alert..."
+                          : "Alert Sent - Help is on the way!"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Request Type Selection */}
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-6 text-left">
+                    Select Emergency Type
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {requestTypes.map((type) => {
                       const Icon = type.icon;
                       return (
                         <button
                           key={type.id}
                           onClick={() => setSelectedType(type.id)}
-                          className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                          className={`p-6 rounded-2xl border-2 transition-all duration-200 group text-left ${
                             selectedType === type.id
-                              ? "bg-dark-800 border-primary-600 shadow-lg"
-                              : "bg-dark-900/50 border-dark-700 hover:border-dark-600"
+                              ? "bg-gradient-to-br from-primary-600/30 to-primary-700/30 border-primary-500 shadow-lg shadow-primary-500/20 scale-105"
+                              : "bg-dark-800/50 border-dark-700 hover:border-primary-500/50 hover:bg-dark-800 hover:scale-105"
                           }`}
                         >
                           <Icon
-                            className={`w-8 h-8 mx-auto mb-2 ${
+                            className={`w-12 h-12 mb-4 transition-transform group-hover:scale-110 ${
                               selectedType === type.id
-                                ? "text-primary-500"
+                                ? "text-primary-400"
                                 : "text-gray-400"
                             }`}
                           />
                           <span
-                            className={`text-sm font-semibold ${
+                            className={`text-lg font-bold block ${
                               selectedType === type.id
                                 ? "text-white"
-                                : "text-gray-400"
+                                : "text-gray-300"
                             }`}
                           >
                             {type.label}
@@ -412,218 +803,39 @@ const UserDashboard = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Profile Card */}
-              <div className="mb-8 card p-6">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Your Profile
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 p-3 bg-dark-800 rounded-lg">
-                    <User className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-xs text-gray-400">Name</p>
-                      <p className="text-sm font-semibold text-white">
-                        {user.name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-dark-800 rounded-lg">
-                    <Phone className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-xs text-gray-400">Mobile</p>
-                      <p className="text-sm font-semibold text-white">
-                        {user.mobile}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Request History */}
-              <div className="card p-6">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Recent Requests
-                </h3>
-
-                {requestHistory.length === 0 ? (
-                  <div className="text-center py-8">
-                    <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-400">No previous requests</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {requestHistory.map((request) => (
-                      <div
-                        key={request.id}
-                        className="p-4 bg-dark-800 rounded-lg hover:bg-dark-700 transition-colors"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-10 h-10 ${
-                                request.status === "completed"
-                                  ? "bg-green-600"
-                                  : "bg-yellow-600"
-                              } rounded-full flex items-center justify-center`}
-                            >
-                              {request.status === "completed" ? (
-                                <CheckCircle className="w-5 h-5 text-white" />
-                              ) : (
-                                <Clock className="w-5 h-5 text-white" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-white">
-                                {request.type}
-                              </p>
-                              <p className="text-xs text-gray-400 flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {request.location?.address ||
-                                  `${request.location?.latitude?.toFixed?.(4) || "—"}, ${request.location?.longitude?.toFixed?.(4) || "—"}`}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                                request.status === "completed"
-                                  ? "bg-green-500/20 text-green-400"
-                                  : "bg-yellow-500/20 text-yellow-400"
-                              }`}
-                            >
-                              {request.status}
-                            </span>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {formatTimestamp(request.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-
-                        {(request.respondedBy || request.respondedByName) && (
-                          <div className="mt-2 pt-2 border-t border-dark-700">
-                            <p className="text-xs text-gray-400">
-                              Responded by{" "}
-                              <span className="text-white font-semibold">
-                                {request.respondedBy || request.respondedByName}
-                              </span>{" "}
-                              in {request.responseTime || request.response_time}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Emergency Section */}
-          {activeSection === "emergency" && (
-            <div className="card p-8">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-6 h-6 text-red-500" />
-                Emergency SOS
-              </h2>
-              <p className="text-gray-400 mb-8">
-                Quickly send emergency alerts to nearby services
-              </p>
-
-              {/* SOS Button */}
-              <div className="flex flex-col items-center mb-8">
-                <button
-                  onClick={handleSOSClick}
-                  disabled={sosActive || loading}
-                  className={`w-48 h-48 rounded-full bg-gradient-to-br from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-200 ${
-                    sosActive || loading
-                      ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
-                      : "hover:scale-105 active:scale-95"
-                  }`}
-                >
-                  <div className="text-center">
-                    <AlertTriangle className="w-20 h-20 text-white mx-auto mb-2" />
-                    <span className="text-white text-2xl font-bold">
-                      {loading ? "SENDING..." : "SOS"}
-                    </span>
-                  </div>
-                </button>
-
-                {(sosActive || loading) && (
-                  <div className="mt-4 flex items-center gap-2 text-green-400">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-                    <span className="font-semibold">
-                      {loading
-                        ? "Sending alert..."
-                        : "Alert Sent - Help is on the way!"}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Request Type Selection */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  Select Emergency Type:
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {requestTypes.map((type) => {
-                    const Icon = type.icon;
-                    return (
-                      <button
-                        key={type.id}
-                        onClick={() => setSelectedType(type.id)}
-                        className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                          selectedType === type.id
-                            ? "bg-dark-800 border-primary-600 shadow-lg"
-                            : "bg-dark-900/50 border-dark-700 hover:border-dark-600"
-                        }`}
-                      >
-                        <Icon
-                          className={`w-8 h-8 mx-auto mb-2 ${
-                            selectedType === type.id
-                              ? "text-primary-500"
-                              : "text-gray-400"
-                          }`}
-                        />
-                        <span
-                          className={`text-sm font-semibold block ${
-                            selectedType === type.id
-                              ? "text-white"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          {type.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           )}
 
           {/* Contacts Section */}
           {activeSection === "contacts" && (
-            <div className="card p-8">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <Phone className="w-6 h-6 text-primary-500" />
-                Emergency Contacts
-              </h2>
-              <p className="text-gray-400 mb-6">
-                Quick access to emergency services
-              </p>
+            <div className="bg-gradient-to-br from-dark-900 to-dark-800 border border-dark-700 rounded-2xl p-8 sm:p-10 shadow-lg">
+              <div className="mb-8">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
+                    <Phone className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Emergency Contacts
+                    </h2>
+                    <p className="text-gray-400">
+                      Quick access to emergency services
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-6 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-600 transition-colors">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
-                      <Ambulance className="w-6 h-6 text-white" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a
+                  href="tel:108"
+                  className="group p-8 bg-gradient-to-br from-red-600/10 to-red-700/10 border-2 border-red-500/30 rounded-2xl hover:border-red-500 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
+                >
+                  <div className="flex items-start gap-5 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <Ambulance className="w-8 h-8 text-white" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-2">
                         Ambulance
                       </h3>
                       <p className="text-sm text-gray-400">
@@ -631,41 +843,49 @@ const UserDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <a
-                    href="tel:108"
-                    className="text-2xl font-bold text-primary-500 hover:text-primary-400"
-                  >
-                    108
-                  </a>
-                </div>
+                  <div className="flex items-end justify-between">
+                    <span className="text-2xl font-black text-red-400 group-hover:text-red-300 transition-colors">
+                      108
+                    </span>
+                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
+                  </div>
+                </a>
 
-                <div className="p-6 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-600 transition-colors">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                      <Shield className="w-6 h-6 text-white" />
+                <a
+                  href="tel:100"
+                  className="group p-8 bg-gradient-to-br from-blue-600/10 to-blue-700/10 border-2 border-blue-500/30 rounded-2xl hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200"
+                >
+                  <div className="flex items-start gap-5 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <Shield className="w-8 h-8 text-white" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">Police</h3>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2">
+                        Police
+                      </h3>
                       <p className="text-sm text-gray-400">
                         Emergency Police Services
                       </p>
                     </div>
                   </div>
-                  <a
-                    href="tel:100"
-                    className="text-2xl font-bold text-primary-500 hover:text-primary-400"
-                  >
-                    100
-                  </a>
-                </div>
+                  <div className="flex items-end justify-between">
+                    <span className="text-2xl font-black text-blue-400 group-hover:text-blue-300 transition-colors">
+                      100
+                    </span>
+                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
+                  </div>
+                </a>
 
-                <div className="p-6 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-600 transition-colors">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center">
-                      <AlertTriangle className="w-6 h-6 text-white" />
+                <a
+                  href="tel:101"
+                  className="group p-8 bg-gradient-to-br from-orange-600/10 to-orange-700/10 border-2 border-orange-500/30 rounded-2xl hover:border-orange-500 hover:shadow-lg hover:shadow-orange-500/20 transition-all duration-200"
+                >
+                  <div className="flex items-start gap-5 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <AlertTriangle className="w-8 h-8 text-white" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-2">
                         Fire Brigade
                       </h3>
                       <p className="text-sm text-gray-400">
@@ -673,81 +893,121 @@ const UserDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <a
-                    href="tel:101"
-                    className="text-2xl font-bold text-primary-500 hover:text-primary-400"
-                  >
-                    101
-                  </a>
-                </div>
+                  <div className="flex items-end justify-between">
+                    <span className="text-2xl font-black text-orange-400 group-hover:text-orange-300 transition-colors">
+                      101
+                    </span>
+                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
+                  </div>
+                </a>
 
-                <div className="p-6 bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-600 transition-colors">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-white" />
+                <a
+                  href="tel:1091"
+                  className="group p-8 bg-gradient-to-br from-purple-600/10 to-purple-700/10 border-2 border-purple-500/30 rounded-2xl hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-200"
+                >
+                  <div className="flex items-start gap-5 mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <Users className="w-8 h-8 text-white" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-2">
                         Women Helpline
                       </h3>
                       <p className="text-sm text-gray-400">24x7 Support</p>
                     </div>
                   </div>
-                  <a
-                    href="tel:1091"
-                    className="text-2xl font-bold text-primary-500 hover:text-primary-400"
-                  >
-                    1091
-                  </a>
-                </div>
+                  <div className="flex items-end justify-between">
+                    <span className="text-2xl font-black text-purple-400 group-hover:text-purple-300 transition-colors">
+                      1091
+                    </span>
+                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
+                  </div>
+                </a>
               </div>
             </div>
           )}
 
           {/* Map Section */}
           {activeSection === "map" && (
-            <div className="card p-8">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <MapPin className="w-6 h-6 text-primary-500" />
-                Your Location
-              </h2>
+            <div className="bg-gradient-to-br from-dark-900 to-dark-800 border border-dark-700 rounded-2xl p-8 shadow-lg">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-primary-500/10 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-primary-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white">Your Location</h2>
+              </div>
 
               {locationLoading ? (
-                <div className="text-center py-16">
-                  <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
                   <p className="text-gray-400">Getting your location...</p>
                 </div>
               ) : locationError ? (
-                <div className="text-center py-16">
-                  <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                  <p className="text-red-400 mb-4">{locationError}</p>
-                  <button onClick={getLocation} className="btn-primary">
+                <div className="text-center py-20">
+                  <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <AlertCircle className="w-10 h-10 text-red-500" />
+                  </div>
+                  <p className="text-red-400 mb-6">{locationError}</p>
+                  <button
+                    onClick={getLocation}
+                    className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors"
+                  >
                     Try Again
                   </button>
                 </div>
               ) : location ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-dark-800 rounded-lg">
-                    <p className="text-sm text-gray-400 mb-2">
-                      Current Coordinates:
+                <div className="space-y-6">
+                  <div className="p-6 bg-dark-800 border border-dark-700 rounded-xl">
+                    <p className="text-sm text-gray-400 mb-4 font-semibold">
+                      Current Coordinates
                     </p>
-                    <p className="text-white font-mono">
-                      Lat: {location.latitude.toFixed(6)}, Long:{" "}
-                      {location.longitude.toFixed(6)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Accuracy: ±{location.accuracy?.toFixed(0)}m
-                    </p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
+                        <span className="text-sm text-gray-400">Latitude:</span>
+                        <span className="text-white font-mono font-semibold">
+                          {location.latitude.toFixed(6)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
+                        <span className="text-sm text-gray-400">
+                          Longitude:
+                        </span>
+                        <span className="text-white font-mono font-semibold">
+                          {location.longitude.toFixed(6)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
+                        <span className="text-sm text-gray-400">Accuracy:</span>
+                        <span className="text-green-400 font-semibold">
+                          ±{location.accuracy?.toFixed(0)}m
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="aspect-video bg-dark-800 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-400">Map view coming soon...</p>
+                  <div className="aspect-video bg-dark-800 border border-dark-700 rounded-xl flex items-center justify-center">
+                    <div className="text-center">
+                      <MapPin className="w-16 h-16 text-primary-500/30 mx-auto mb-4" />
+                      <p className="text-gray-400 font-semibold">
+                        Map view coming soon...
+                      </p>
+                      <p className="text-gray-500 text-sm mt-2">
+                        Interactive map integration in progress
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-16">
-                  <MapPin className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 mb-4">Location not available</p>
-                  <button onClick={getLocation} className="btn-primary">
+                <div className="text-center py-20">
+                  <div className="w-20 h-20 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <MapPin className="w-10 h-10 text-gray-600" />
+                  </div>
+                  <p className="text-gray-400 text-lg mb-6">
+                    Location not available
+                  </p>
+                  <button
+                    onClick={getLocation}
+                    className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors"
+                  >
                     Get Location
                   </button>
                 </div>
@@ -768,32 +1028,32 @@ const UserDashboard = () => {
 
               {/* Statistics Overview */}
               <div className="card p-8">
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                   <BarChart3 className="w-6 h-6 text-primary-500" />
                   Your Statistics
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-dark-800 rounded-lg border border-dark-700">
                     <p className="text-sm text-gray-400 mb-1">Total Requests</p>
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-2xl font-bold text-white">
                       {statistics.total}
                     </p>
                   </div>
                   <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
                     <p className="text-sm text-yellow-400 mb-1">Pending</p>
-                    <p className="text-3xl font-bold text-yellow-500">
+                    <p className="text-2xl font-bold text-yellow-500">
                       {statistics.pending}
                     </p>
                   </div>
                   <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
                     <p className="text-sm text-green-400 mb-1">Completed</p>
-                    <p className="text-3xl font-bold text-green-500">
+                    <p className="text-2xl font-bold text-green-500">
                       {statistics.completed}
                     </p>
                   </div>
                   <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
                     <p className="text-sm text-red-400 mb-1">Rejected</p>
-                    <p className="text-3xl font-bold text-red-500">
+                    <p className="text-2xl font-bold text-red-500">
                       {statistics.rejected}
                     </p>
                   </div>
