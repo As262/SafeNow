@@ -14,9 +14,23 @@ import {
   AlertTriangle,
   Settings as SettingsIcon,
   Mail,
+  Edit2,
+  Save,
+  X,
+  Globe,
+  Moon,
+  Sun,
+  Bell,
+  Lock,
+  Eye,
+  EyeOff,
+  BarChart3,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { useLanguage } from "../contexts/LanguageContext";
 import { submitSOSRequest, getUserRequests } from "../utils/api";
 import Sidebar from "./Sidebar";
 
@@ -42,6 +56,7 @@ const UserDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const locationHook = useLocation();
+  const { language, changeLanguage } = useLanguage();
   const {
     location,
     error: locationError,
@@ -56,6 +71,45 @@ const UserDashboard = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
   const submittingRef = useRef(false);
+
+  // Settings states
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("appTheme") || "dark",
+  );
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user.name,
+    email: user.email || "",
+    mobile: user.mobile,
+  });
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem("notificationSettings");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          push: true,
+          email: true,
+          sms: true,
+        };
+  });
+  const [privacy, setPrivacy] = useState(() => {
+    const saved = localStorage.getItem("privacySettings");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          shareLocation: true,
+          dataAnalytics: true,
+        };
+  });
+  const [appPreferences, setAppPreferences] = useState(() => {
+    const saved = localStorage.getItem("appPreferences");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          soundEffects: true,
+          autoLocation: true,
+        };
+  });
 
   // Get active section from URL hash
   const activeSection = locationHook.hash.replace("#", "") || "dashboard";
@@ -91,6 +145,84 @@ const UserDashboard = () => {
     } catch (error) {
       console.error("Error loading request history:", error);
     }
+  };
+
+  // Persist settings to localStorage
+  useEffect(() => {
+    localStorage.setItem("appTheme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("notificationSettings", JSON.stringify(notifications));
+  }, [notifications]);
+
+  useEffect(() => {
+    localStorage.setItem("privacySettings", JSON.stringify(privacy));
+  }, [privacy]);
+
+  useEffect(() => {
+    localStorage.setItem("appPreferences", JSON.stringify(appPreferences));
+  }, [appPreferences]);
+
+  // Calculate statistics
+  const statistics = {
+    total: requestHistory.length,
+    pending: requestHistory.filter((r) => r.status === "pending").length,
+    completed: requestHistory.filter((r) => r.status === "completed").length,
+    rejected: requestHistory.filter((r) => r.status === "rejected").length,
+  };
+
+  // Settings handlers
+  const handleThemeToggle = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  const handleLanguageChange = (e) => {
+    changeLanguage(e.target.value);
+  };
+
+  const handleProfileEdit = () => {
+    setEditingProfile(true);
+  };
+
+  const handleProfileCancel = () => {
+    setEditingProfile(false);
+    setProfileData({
+      name: user.name,
+      email: user.email || "",
+      mobile: user.mobile,
+    });
+  };
+
+  const handleProfileSave = async () => {
+    try {
+      // Here you would make an API call to update the profile
+      // await updateUserProfile(profileData);
+
+      // For now, just update local state
+      user.name = profileData.name;
+      user.email = profileData.email;
+
+      setEditingProfile(false);
+      setSuccessMessage("Profile updated successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile");
+    }
+  };
+
+  const handleNotificationToggle = (key) => {
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handlePrivacyToggle = (key) => {
+    setPrivacy((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleAppPreferenceToggle = (key) => {
+    setAppPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleSOSClick = () => {
@@ -625,68 +757,442 @@ const UserDashboard = () => {
 
           {/* Settings Section */}
           {activeSection === "settings" && (
-            <div className="card p-8">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                <SettingsIcon className="w-6 h-6 text-primary-500" />
-                Settings
-              </h2>
+            <div className="space-y-6">
+              {/* Success Message */}
+              {successMessage && (
+                <div className="bg-green-500/20 border border-green-500 text-green-400 p-4 rounded-lg flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  {successMessage}
+                </div>
+              )}
 
-              <div className="space-y-6">
-                {/* Profile Settings */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">
+              {/* Statistics Overview */}
+              <div className="card p-8">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-primary-500" />
+                  Your Statistics
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-dark-800 rounded-lg border border-dark-700">
+                    <p className="text-sm text-gray-400 mb-1">Total Requests</p>
+                    <p className="text-3xl font-bold text-white">
+                      {statistics.total}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                    <p className="text-sm text-yellow-400 mb-1">Pending</p>
+                    <p className="text-3xl font-bold text-yellow-500">
+                      {statistics.pending}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                    <p className="text-sm text-green-400 mb-1">Completed</p>
+                    <p className="text-3xl font-bold text-green-500">
+                      {statistics.completed}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
+                    <p className="text-sm text-red-400 mb-1">Rejected</p>
+                    <p className="text-3xl font-bold text-red-500">
+                      {statistics.rejected}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Settings */}
+              <div className="card p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <User className="w-5 h-5 text-primary-500" />
                     Profile Information
                   </h3>
-                  <div className="space-y-3">
-                    <div className="p-4 bg-dark-800 rounded-lg">
-                      <label className="text-sm text-gray-400 block mb-1">
-                        Name
-                      </label>
+                  {!editingProfile ? (
+                    <button
+                      onClick={handleProfileEdit}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Edit Profile
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleProfileSave}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                      >
+                        <Save className="w-4 h-4" />
+                        Save
+                      </button>
+                      <button
+                        onClick={handleProfileCancel}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <div className="p-4 bg-dark-800 rounded-lg">
+                    <label className="text-sm text-gray-400 block mb-2">
+                      Name
+                    </label>
+                    {editingProfile ? (
+                      <input
+                        type="text"
+                        value={profileData.name}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            name: e.target.value,
+                          })
+                        }
+                        className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary-500"
+                      />
+                    ) : (
                       <p className="text-white font-medium">{user.name}</p>
-                    </div>
-                    <div className="p-4 bg-dark-800 rounded-lg">
-                      <label className="text-sm text-gray-400 block mb-1">
-                        Mobile
-                      </label>
-                      <p className="text-white font-medium">{user.mobile}</p>
-                    </div>
-                    {user.email && (
-                      <div className="p-4 bg-dark-800 rounded-lg">
-                        <label className="text-sm text-gray-400 block mb-1">
-                          Email
-                        </label>
-                        <p className="text-white font-medium">{user.email}</p>
-                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 bg-dark-800 rounded-lg">
+                    <label className="text-sm text-gray-400 block mb-2">
+                      Mobile
+                    </label>
+                    <p className="text-white font-medium">{user.mobile}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Mobile number cannot be changed
+                    </p>
+                  </div>
+                  <div className="p-4 bg-dark-800 rounded-lg">
+                    <label className="text-sm text-gray-400 block mb-2">
+                      Email
+                    </label>
+                    {editingProfile ? (
+                      <input
+                        type="email"
+                        value={profileData.email}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            email: e.target.value,
+                          })
+                        }
+                        className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary-500"
+                        placeholder="Enter your email"
+                      />
+                    ) : (
+                      <p className="text-white font-medium">
+                        {user.email || "Not set"}
+                      </p>
                     )}
                   </div>
                 </div>
+              </div>
 
-                {/* App Settings */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">
-                    App Settings
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+              {/* Appearance Settings */}
+              <div className="card p-8">
+                <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-primary-500" />
+                  Appearance & Language
+                </h3>
+                <div className="space-y-4">
+                  {/* Theme Toggle */}
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {theme === "dark" ? (
+                        <Moon className="w-5 h-5 text-blue-400" />
+                      ) : (
+                        <Sun className="w-5 h-5 text-yellow-400" />
+                      )}
                       <div>
-                        <p className="text-white font-medium">
-                          Location Services
-                        </p>
+                        <p className="text-white font-medium">Theme</p>
                         <p className="text-sm text-gray-400">
-                          Allow app to access your location
+                          {theme === "dark" ? "Dark Mode" : "Light Mode"}
                         </p>
-                      </div>
-                      <div
-                        className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                          location
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
-                      >
-                        {location ? "Enabled" : "Disabled"}
                       </div>
                     </div>
+                    <button
+                      onClick={handleThemeToggle}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        theme === "dark" ? "bg-primary-600" : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          theme === "dark" ? "translate-x-7" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
                   </div>
+
+                  {/* Language Selection */}
+                  <div className="p-4 bg-dark-800 rounded-lg">
+                    <label className="text-white font-medium mb-3 flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-primary-500" />
+                      Language
+                    </label>
+                    <select
+                      value={language}
+                      onChange={handleLanguageChange}
+                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary-500 cursor-pointer"
+                    >
+                      <option value="en">English</option>
+                      <option value="hi">हिन्दी (Hindi)</option>
+                      <option value="es">Español (Spanish)</option>
+                      <option value="fr">Français (French)</option>
+                      <option value="ar">العربية (Arabic)</option>
+                      <option value="bn">বাংলা (Bengali)</option>
+                      <option value="pt">Português (Portuguese)</option>
+                      <option value="ru">Русский (Russian)</option>
+                      <option value="ja">日本語 (Japanese)</option>
+                      <option value="de">Deutsch (German)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notification Settings */}
+              <div className="card p-8">
+                <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-primary-500" />
+                  Notification Preferences
+                </h3>
+                <div className="space-y-4">
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-medium">
+                        Push Notifications
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Receive instant alerts about your requests
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleNotificationToggle("push")}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        notifications.push ? "bg-primary-600" : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          notifications.push ? "translate-x-7" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-medium">
+                        Email Notifications
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Get updates via email
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleNotificationToggle("email")}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        notifications.email ? "bg-primary-600" : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          notifications.email
+                            ? "translate-x-7"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-medium">
+                        SMS Notifications
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Receive text message alerts
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleNotificationToggle("sms")}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        notifications.sms ? "bg-primary-600" : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          notifications.sms ? "translate-x-7" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy Settings */}
+              <div className="card p-8">
+                <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-primary-500" />
+                  Privacy & Security
+                </h3>
+                <div className="space-y-4">
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-medium">
+                        Share Location with Services
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Allow emergency services to access your location
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handlePrivacyToggle("shareLocation")}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        privacy.shareLocation ? "bg-primary-600" : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          privacy.shareLocation
+                            ? "translate-x-7"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-medium">Usage Analytics</p>
+                      <p className="text-sm text-gray-400">
+                        Help improve the app by sharing usage data
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handlePrivacyToggle("dataAnalytics")}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        privacy.dataAnalytics ? "bg-primary-600" : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          privacy.dataAnalytics
+                            ? "translate-x-7"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* App Preferences */}
+              <div className="card p-8">
+                <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                  <SettingsIcon className="w-5 h-5 text-primary-500" />
+                  App Preferences
+                </h3>
+                <div className="space-y-4">
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {appPreferences.soundEffects ? (
+                        <Volume2 className="w-5 h-5 text-primary-500" />
+                      ) : (
+                        <VolumeX className="w-5 h-5 text-gray-500" />
+                      )}
+                      <div>
+                        <p className="text-white font-medium">Sound Effects</p>
+                        <p className="text-sm text-gray-400">
+                          Play sounds for actions and alerts
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleAppPreferenceToggle("soundEffects")}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        appPreferences.soundEffects
+                          ? "bg-primary-600"
+                          : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          appPreferences.soundEffects
+                            ? "translate-x-7"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-5 h-5 text-primary-500" />
+                      <div>
+                        <p className="text-white font-medium">
+                          Auto-Fetch Location
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Automatically get your location on app start
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleAppPreferenceToggle("autoLocation")}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        appPreferences.autoLocation
+                          ? "bg-primary-600"
+                          : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          appPreferences.autoLocation
+                            ? "translate-x-7"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Location Services Status */}
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-medium">
+                        Location Services
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Browser location access status
+                      </p>
+                    </div>
+                    <div
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        location
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                    >
+                      {location ? "Enabled" : "Disabled"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="card p-8 border border-red-500/30">
+                <h3 className="text-lg font-semibold text-red-400 mb-6">
+                  Danger Zone
+                </h3>
+                <div className="space-y-4">
+                  <button className="w-full p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 font-medium transition-colors">
+                    Clear All Request History
+                  </button>
+                  <button className="w-full p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 font-medium transition-colors">
+                    Delete Account
+                  </button>
                 </div>
               </div>
             </div>
