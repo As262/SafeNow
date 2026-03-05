@@ -29,6 +29,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
         ('user', 'User'),
         ('admin', 'Admin'),
+        ('hospital', 'Hospital'),
+        ('fire', 'Fire Department'),
+        ('ngo', 'NGO'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -79,6 +82,48 @@ class OTP(models.Model):
             self.expires_at = timezone.now() + timezone.timedelta(
                 minutes=settings.OTP_EXPIRY_MINUTES
             )
+        super().save(*args, **kwargs)
+
+
+class ServiceProvider(models.Model):
+    """Service Provider model for hospitals, fire departments, NGOs, and admins."""
+
+    ROLE_CHOICES = (
+        ('admin', 'Admin'),
+        ('hospital', 'Hospital'),
+        ('fire', 'Fire Department'),
+        ('ngo', 'NGO'),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    service_id = models.CharField(max_length=20, unique=True, db_index=True)
+    name = models.CharField(max_length=200)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=128)  # Hashed password
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    phone = models.CharField(max_length=15, blank=True, default='')
+    address = models.TextField(blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.service_id})"
+
+    def save(self, *args, **kwargs):
+        """Auto-extract role from service_id prefix if not set."""
+        if not self.role and self.service_id:
+            if self.service_id.startswith('ADM-'):
+                self.role = 'admin'
+            elif self.service_id.startswith('HSP-'):
+                self.role = 'hospital'
+            elif self.service_id.startswith('FIR-'):
+                self.role = 'fire'
+            elif self.service_id.startswith('NGO-'):
+                self.role = 'ngo'
         super().save(*args, **kwargs)
 
 

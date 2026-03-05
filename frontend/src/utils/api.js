@@ -84,6 +84,19 @@ export const verifyOTP = async (mobile, otp) => {
 };
 
 /**
+ * Service Provider Login
+ * @param {string} serviceId - Service ID (e.g., HSP-001, ADM-001)
+ * @param {string} password - Password
+ * @returns {Promise} - User data + token if successful
+ */
+export const serviceLogin = async (serviceId, password) => {
+  return apiRequest("/auth/service-login/", {
+    method: "POST",
+    body: JSON.stringify({ service_id: serviceId, password }),
+  });
+};
+
+/**
  * Get user profile
  * @returns {Promise} - User profile
  */

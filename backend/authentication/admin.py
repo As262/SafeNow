@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, OTP, UserSession
+from .models import User, OTP, UserSession, ServiceProvider
 
 
 @admin.register(User)
@@ -8,6 +8,15 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ['role', 'is_active']
     search_fields = ['mobile', 'name', 'email']
     ordering = ['-created_at']
+
+
+@admin.register(ServiceProvider)
+class ServiceProviderAdmin(admin.ModelAdmin):
+    list_display = ['service_id', 'name', 'role', 'email', 'is_active', 'created_at']
+    list_filter = ['role', 'is_active']
+    search_fields = ['service_id', 'name', 'email']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at', 'updated_at']
 
 
 @admin.register(OTP)

@@ -1,11 +1,18 @@
 from rest_framework import serializers
-from .models import User, UserSession
+from .models import User, UserSession, ServiceProvider
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'mobile', 'name', 'email', 'role', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class ServiceProviderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceProvider
+        fields = ['id', 'service_id', 'name', 'email', 'role', 'phone', 'address', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
@@ -48,3 +55,18 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['name', 'email']
+
+
+class ServiceLoginSerializer(serializers.Serializer):
+    service_id = serializers.CharField(max_length=20)
+    password = serializers.CharField(max_length=128, write_only=True)
+
+    def validate_service_id(self, value):
+        value = value.upper().strip()
+        # Validate format: PREFIX-NUMBER
+        import re
+        if not re.match(r'^(ADM|HSP|FIR|NGO)-\d+$', value):
+            raise serializers.ValidationError(
+                "Invalid Service ID format. Use PREFIX-NUMBER (e.g., HSP-001)"
+            )
+        return value

@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles = null }) => {
+  const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,12 +19,17 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (adminOnly && !isAdmin) {
-    return <Navigate to="/user-dashboard" replace />;
-  }
-
-  if (!adminOnly && isAdmin) {
-    return <Navigate to="/admin-dashboard" replace />;
+  // If specific roles are required, check if user has one of them
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    // Redirect to appropriate dashboard based on role
+    const roleRedirects = {
+      admin: "/admin-dashboard",
+      hospital: "/hospital-dashboard",
+      fire: "/fire-dashboard",
+      ngo: "/ngo-dashboard",
+      user: "/user-dashboard",
+    };
+    return <Navigate to={roleRedirects[user.role] || "/login"} replace />;
   }
 
   return children;

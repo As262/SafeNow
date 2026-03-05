@@ -10,6 +10,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import Login from "./components/Login";
 import UserDashboard from "./components/UserDashboard";
 import AdminDashboard from "./components/AdminDashboard";
+import ServiceDashboard from "./components/ServiceDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SplashScreen from "./components/SplashScreen";
 
@@ -45,7 +46,7 @@ function App() {
             <Route
               path="/user-dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["user"]}>
                   <UserDashboard />
                 </ProtectedRoute>
               }
@@ -55,8 +56,38 @@ function App() {
             <Route
               path="/admin-dashboard"
               element={
-                <ProtectedRoute adminOnly={true}>
+                <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected Hospital Route */}
+            <Route
+              path="/hospital-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["hospital"]}>
+                  <ServiceDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected Fire Department Route */}
+            <Route
+              path="/fire-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["fire"]}>
+                  <ServiceDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected NGO Route */}
+            <Route
+              path="/ngo-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["ngo"]}>
+                  <ServiceDashboard />
                 </ProtectedRoute>
               }
             />

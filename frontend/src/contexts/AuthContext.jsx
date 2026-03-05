@@ -56,6 +56,12 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAuthenticated: !!user,
     isAdmin: user?.role === "admin",
+    isHospital: user?.role === "hospital",
+    isFire: user?.role === "fire",
+    isNGO: user?.role === "ngo",
+    isServiceProvider: ["admin", "hospital", "fire", "ngo"].includes(
+      user?.role,
+    ),
     loading,
   };
 

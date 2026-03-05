@@ -21,6 +21,12 @@ const requestTypes = [
   { id: "ambulance", label: "Ambulance", icon: Ambulance, color: "bg-red-600" },
   { id: "police", label: "Police", icon: Shield, color: "bg-blue-600" },
   {
+    id: "fire",
+    label: "Fire Emergency",
+    icon: AlertTriangle,
+    color: "bg-orange-600",
+  },
+  {
     id: "medical",
     label: "Medical Help",
     icon: AlertCircle,
@@ -40,16 +46,36 @@ const UserDashboard = () => {
   } = useGeolocation();
 
   const [selectedType, setSelectedType] = useState("ambulance");
-  const [showSOSModal, setShowSOSModal] = useState(false);
   const [sosActive, setSosActive] = useState(false);
   const [requestHistory, setRequestHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [sendingRequest, setSendingRequest] = useState(false);
   const submittingRef = useRef(false);
 
   useEffect(() => {
     loadRequestHistory();
+    // Get location on component mount so it's ready when needed
+    getLocation();
   }, []);
+
+  // Watch for location updates when sending request
+  useEffect(() => {
+    if (sendingRequest && location && !submittingRef.current) {
+      sendSOSRequest();
+    }
+  }, [location, sendingRequest]);
+
+  // Handle location errors while sending
+  useEffect(() => {
+    if (sendingRequest && locationError) {
+      alert(
+        `Location error: ${locationError}. Please enable location access and try again.`,
+      );
+      setLoading(false);
+      setSendingRequest(false);
+    }
+  }, [locationError, sendingRequest]);
 
   const loadRequestHistory = async () => {
     try {
@@ -61,19 +87,34 @@ const UserDashboard = () => {
   };
 
   const handleSOSClick = () => {
-    setShowSOSModal(true);
-    getLocation();
+    if (submittingRef.current || sosActive || sendingRequest) return;
+
+    // Start the sending process
+    setSendingRequest(true);
+    setLoading(true);
+
+    // Get location if not already available
+    if (!location) {
+      getLocation();
+    } else {
+      // Location already available, send immediately
+      sendSOSRequest();
+    }
   };
 
-  const handleConfirmSOS = async () => {
+  const sendSOSRequest = async () => {
     if (submittingRef.current) return;
+
     if (!location) {
-      alert("Please enable location access to send SOS");
+      alert(
+        "Unable to get your location. Please enable location access in your browser settings.",
+      );
+      setLoading(false);
+      setSendingRequest(false);
       return;
     }
 
     submittingRef.current = true;
-    setLoading(true);
     setSosActive(true);
 
     try {
@@ -90,8 +131,9 @@ const UserDashboard = () => {
 
       const response = await submitSOSRequest(requestData);
 
-      setSuccessMessage(response.message);
-      setShowSOSModal(false);
+      setSuccessMessage(
+        response.message || "SOS Alert sent successfully! Help is on the way.",
+      );
 
       // Reload history
       loadRequestHistory();
@@ -106,6 +148,7 @@ const UserDashboard = () => {
       setSosActive(false);
     } finally {
       setLoading(false);
+      setSendingRequest(false);
       submittingRef.current = false;
     }
   };
@@ -188,24 +231,28 @@ const UserDashboard = () => {
             <div className="flex flex-col items-center mb-8">
               <button
                 onClick={handleSOSClick}
-                disabled={sosActive}
+                disabled={sosActive || loading}
                 className={`w-48 h-48 rounded-full bg-gradient-to-br from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-200 ${
-                  sosActive
+                  sosActive || loading
                     ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
                     : "hover:scale-105 active:scale-95"
                 }`}
               >
                 <div className="text-center">
                   <AlertTriangle className="w-20 h-20 text-white mx-auto mb-2" />
-                  <span className="text-white text-2xl font-bold">SOS</span>
+                  <span className="text-white text-2xl font-bold">
+                    {loading ? "SENDING..." : "SOS"}
+                  </span>
                 </div>
               </button>
 
-              {sosActive && (
+              {(sosActive || loading) && (
                 <div className="mt-4 flex items-center gap-2 text-green-400">
                   <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
                   <span className="font-semibold">
-                    Alert Sent - Help is on the way!
+                    {loading
+                      ? "Sending alert..."
+                      : "Alert Sent - Help is on the way!"}
                   </span>
                 </div>
               )}
@@ -314,7 +361,8 @@ const UserDashboard = () => {
                         </p>
                         <p className="text-xs text-gray-400 flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
-                          {request.location?.address || `${request.location?.latitude?.toFixed?.(4) || '—'}, ${request.location?.longitude?.toFixed?.(4) || '—'}`}
+                          {request.location?.address ||
+                            `${request.location?.latitude?.toFixed?.(4) || "—"}, ${request.location?.longitude?.toFixed?.(4) || "—"}`}
                         </p>
                       </div>
                     </div>
@@ -351,97 +399,6 @@ const UserDashboard = () => {
           )}
         </div>
       </main>
-
-      {/* SOS Confirmation Modal */}
-      {showSOSModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-dark-900 rounded-2xl p-6 max-w-md w-full border border-dark-700 shadow-2xl">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <AlertTriangle className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">
-                Confirm Emergency SOS
-              </h3>
-              <p className="text-gray-400">
-                This will send an alert to emergency services with your current
-                location
-              </p>
-            </div>
-
-            {/* Location Status */}
-            <div className="mb-6 p-4 bg-dark-800 rounded-lg">
-              {locationLoading ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                  <span className="text-gray-400">
-                    Getting your location...
-                  </span>
-                </div>
-              ) : locationError ? (
-                <div className="flex items-center gap-3 text-red-400">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="text-sm">{locationError}</span>
-                </div>
-              ) : location ? (
-                <div className="flex items-center gap-3 text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  <div>
-                    <p className="text-sm font-semibold">Location acquired</p>
-                    <p className="text-xs text-gray-400">
-                      {location.latitude.toFixed(6)},{" "}
-                      {location.longitude.toFixed(6)}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Selected Type */}
-            <div className="mb-6">
-              <p className="text-sm text-gray-400 mb-2">Request Type:</p>
-              <div className="flex items-center gap-3 p-3 bg-dark-800 rounded-lg">
-                {(() => {
-                  const type = requestTypes.find((t) => t.id === selectedType);
-                  const Icon = type.icon;
-                  return (
-                    <>
-                      <Icon className="w-6 h-6 text-primary-500" />
-                      <span className="text-white font-semibold">
-                        {type.label}
-                      </span>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSOSModal(false)}
-                className="flex-1 px-4 py-3 bg-dark-800 hover:bg-dark-700 text-white font-semibold rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmSOS}
-                disabled={!location || loading}
-                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  "Confirm SOS"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

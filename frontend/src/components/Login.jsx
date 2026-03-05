@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, PhoneCall, AlertCircle } from "lucide-react";
-import { sendOTP, verifyOTP } from "../utils/api";
+import { Shield, PhoneCall, AlertCircle, Building2, Lock } from "lucide-react";
+import { sendOTP, verifyOTP, serviceLogin } from "../utils/api";
 import { useAuth } from "../contexts/AuthContext";
 
 const Login = () => {
+  const [loginMode, setLoginMode] = useState("user"); // 'user' or 'service'
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState("mobile"); // 'mobile' or 'otp'
@@ -12,6 +13,10 @@ const Login = () => {
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [demoOtp, setDemoOtp] = useState(""); // For demo purposes
+
+  // Service Provider Login fields
+  const [serviceId, setServiceId] = useState("");
+  const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -79,6 +84,59 @@ const Login = () => {
     }
   };
 
+  const handleServiceLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      // Validate service ID format
+      if (!/^(ADM|HSP|FIR|NGO)-\d+$/.test(serviceId)) {
+        throw new Error(
+          "Invalid Service ID format. Use prefix-number (e.g., HSP-001)",
+        );
+      }
+
+      const response = await serviceLogin(serviceId, password);
+
+      // Login user with token
+      login(response.user, response.token, response.refresh);
+
+      // Redirect based on role
+      const rolePrefix = serviceId.split("-")[0];
+      switch (rolePrefix) {
+        case "ADM":
+          navigate("/admin-dashboard");
+          break;
+        case "HSP":
+          navigate("/hospital-dashboard");
+          break;
+        case "FIR":
+          navigate("/fire-dashboard");
+          break;
+        case "NGO":
+          navigate("/ngo-dashboard");
+          break;
+        default:
+          navigate("/user-dashboard");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleLoginMode = () => {
+    setLoginMode(loginMode === "user" ? "service" : "user");
+    setError("");
+    setStep("mobile");
+    setOtp("");
+    setOtpSent(false);
+    setServiceId("");
+    setPassword("");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 px-4">
       <div className="w-full max-w-md">
@@ -95,13 +153,154 @@ const Login = () => {
 
         {/* Login Card */}
         <div className="card p-8 shadow-2xl">
-          {step === "mobile" ? (
-            <form onSubmit={handleSendOTP}>
+          {loginMode === "user" ? (
+            // USER LOGIN (OTP)
+            step === "mobile" ? (
+              <form onSubmit={handleSendOTP}>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  Welcome Back
+                </h2>
+                <p className="text-gray-400 mb-6">
+                  Enter your mobile number to get started
+                </p>
+
+                {error && (
+                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <div className="mb-6">
+                  <label className="block text-gray-300 text-sm font-semibold mb-2">
+                    Mobile Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <PhoneCall className="w-5 h-5 text-gray-500" />
+                    </div>
+                    <input
+                      type="tel"
+                      value={mobile}
+                      onChange={(e) =>
+                        setMobile(
+                          e.target.value.replace(/\D/g, "").slice(0, 10),
+                        )
+                      }
+                      placeholder="9876543210"
+                      className="input-field pl-12"
+                      maxLength="10"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Admin demo account: 9876543210 (OTP: 000000)
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || mobile.length !== 10}
+                  className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Sending OTP...
+                    </>
+                  ) : (
+                    "Send OTP"
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOTP}>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  Verify OTP
+                </h2>
+                <p className="text-gray-400 mb-6">
+                  Enter the 6-digit code sent to{" "}
+                  <span className="text-white font-semibold">{mobile}</span>
+                </p>
+
+                {error && (
+                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
+
+                {/* Demo OTP Display */}
+                {demoOtp && (
+                  <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg">
+                    <p className="text-blue-400 text-sm font-mono">
+                      <span className="font-semibold">Demo OTP:</span> {demoOtp}
+                    </p>
+                  </div>
+                )}
+
+                <div className="mb-6">
+                  <label className="block text-gray-300 text-sm font-semibold mb-2">
+                    Enter OTP
+                  </label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    placeholder="123456"
+                    className="input-field text-center text-2xl tracking-widest"
+                    maxLength="6"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || otp.length !== 6}
+                  className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-4"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Verify & Login"
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between text-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("mobile");
+                      setOtp("");
+                      setError("");
+                    }}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Change Number
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    className="text-primary-500 hover:text-primary-400 transition-colors font-semibold"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+              </form>
+            )
+          ) : (
+            // SERVICE PROVIDER LOGIN
+            <form onSubmit={handleServiceLogin}>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Welcome Back
+                Service Provider Login
               </h2>
               <p className="text-gray-400 mb-6">
-                Enter your mobile number to get started
+                Login with your service credentials
               </p>
 
               {error && (
@@ -111,124 +310,76 @@ const Login = () => {
                 </div>
               )}
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-gray-300 text-sm font-semibold mb-2">
-                  Mobile Number
+                  Service ID
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <PhoneCall className="w-5 h-5 text-gray-500" />
+                    <Building2 className="w-5 h-5 text-gray-500" />
                   </div>
                   <input
-                    type="tel"
-                    value={mobile}
-                    onChange={(e) =>
-                      setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))
-                    }
-                    placeholder="9876543210"
+                    type="text"
+                    value={serviceId}
+                    onChange={(e) => setServiceId(e.target.value.toUpperCase())}
+                    placeholder="HSP-001"
                     className="input-field pl-12"
-                    maxLength="10"
                     required
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Admin demo account: 9876543210 (OTP: 000000)
+                  Format: ADM-xxx, HSP-xxx, FIR-xxx, or NGO-xxx
                 </p>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-300 text-sm font-semibold mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="input-field pl-12"
+                    required
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
-                disabled={loading || mobile.length !== 10}
+                disabled={loading || !serviceId || !password}
                 className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending OTP...
+                    Logging in...
                   </>
                 ) : (
-                  "Send OTP"
+                  "Login"
                 )}
               </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOTP}>
-              <h2 className="text-2xl font-bold text-white mb-2">Verify OTP</h2>
-              <p className="text-gray-400 mb-6">
-                Enter the 6-digit code sent to{" "}
-                <span className="text-white font-semibold">{mobile}</span>
-              </p>
-
-              {error && (
-                <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-400 text-sm">{error}</p>
-                </div>
-              )}
-
-              {/* Demo OTP Display */}
-              {demoOtp && (
-                <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg">
-                  <p className="text-blue-400 text-sm font-mono">
-                    <span className="font-semibold">Demo OTP:</span> {demoOtp}
-                  </p>
-                </div>
-              )}
-
-              <div className="mb-6">
-                <label className="block text-gray-300 text-sm font-semibold mb-2">
-                  Enter OTP
-                </label>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) =>
-                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                  placeholder="123456"
-                  className="input-field text-center text-2xl tracking-widest"
-                  maxLength="6"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || otp.length !== 6}
-                className="w-full btn-primary py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-4"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  "Verify & Login"
-                )}
-              </button>
-
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep("mobile");
-                    setOtp("");
-                    setError("");
-                  }}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Change Number
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResendOTP}
-                  className="text-primary-500 hover:text-primary-400 transition-colors font-semibold"
-                >
-                  Resend OTP
-                </button>
-              </div>
             </form>
           )}
+
+          {/* Toggle between User and Service Login */}
+          <div className="mt-6 text-center border-t border-gray-700 pt-6">
+            <button
+              type="button"
+              onClick={toggleLoginMode}
+              className="text-primary-500 hover:text-primary-400 transition-colors font-semibold text-sm"
+            >
+              {loginMode === "user"
+                ? "Login as Service Provider →"
+                : "← Back to User Login"}
+            </button>
+          </div>
         </div>
 
         {/* Footer */}

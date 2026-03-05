@@ -6,13 +6,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User, UserSession
+from django.contrib.auth.hashers import check_password
+
+from .models import User, UserSession, ServiceProvider
 from .serializers import (
     SendOTPSerializer,
     VerifyOTPSerializer,
     UserSerializer,
     UserProfileUpdateSerializer,
     UserSessionSerializer,
+    ServiceLoginSerializer,
+    ServiceProviderSerializer,
 )
 from .services import create_otp, verify_otp
 
@@ -163,3 +167,77 @@ def sessions_view(request):
         'success': True,
         'sessions': UserSessionSerializer(sessions, many=True).data,
     })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def service_login_view(request):
+    """Service Provider Login with service_id and password."""
+    serializer = ServiceLoginSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    service_id = serializer.validated_data['service_id']
+    password = serializer.validated_data['password']
+
+    try:
+        provider = ServiceProvider.objects.get(service_id=service_id, is_active=True)
+    except ServiceProvider.DoesNotExist:
+        logger.warning(f"Failed login attempt for service ID: {service_id}")
+        return Response(
+            {'success': False, 'message': 'Invalid service ID or password'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    # Verify password
+    if not check_password(password, provider.password):
+        logger.warning(f"Invalid password for service ID: {service_id}")
+        return Response(
+            {'success': False, 'message': 'Invalid service ID or password'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    # Create or get a corresponding User object for JWT generation
+    # Service providers are stored separately but we need a User for JWT
+    user, created = User.objects.get_or_create(
+        mobile=f"SP_{provider.service_id}",  # Unique identifier
+        defaults={
+            'name': provider.name,
+            'email': provider.email,
+            'role': provider.role,
+        }
+    )
+
+    # Update role if it changed
+    if user.role != provider.role:
+        user.role = provider.role
+        user.name = provider.name
+        user.email = provider.email
+        user.save()
+
+    # Generate JWT tokens
+    refresh = RefreshToken.for_user(user)
+    token_jti = str(refresh.get('jti', uuid.uuid4()))
+
+    # Create session record
+    UserSession.objects.create(
+        user=user,
+        token_id=token_jti,
+        ip_address=get_client_ip(request),
+        device_info=request.META.get('HTTP_USER_AGENT', '')[:500],
+    )
+
+    logger.info(f"Service provider login successful: {service_id} ({provider.role})")
+
+    return Response({
+        'success': True,
+        'message': 'Login successful',
+        'user': {
+            'service_id': provider.service_id,
+            'name': provider.name,
+            'email': provider.email,
+            'role': provider.role,
+            'id': str(user.id),
+        },
+        'token': str(refresh.access_token),
+        'refresh': str(refresh),
+    }, status=status.HTTP_200_OK)
