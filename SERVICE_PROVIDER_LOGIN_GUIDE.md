@@ -15,7 +15,7 @@
 
 1. Open the login page
 2. Click **"Login as Service Provider →"** at the bottom
-3. Enter your Service ID (format: PREFIX-NUMBER)
+3. Enter your 7-digit Service PIN (e.g., 1004782)
 4. Enter your password
 5. Click "Login"
 6. You'll be redirected to your role-specific dashboard
@@ -24,14 +24,14 @@
 
 ## Service ID Format
 
-All service providers use this ID format: `PREFIX-NUMBER`
+All service providers use a 7-digit PIN code:
 
-| Prefix | Organization Type     | Example IDs               |
-| ------ | --------------------- | ------------------------- |
-| ADM-   | Admin                 | ADM-001                   |
-| HSP-   | Hospital              | HSP-001, HSP-002, HSP-003 |
-| FIR-   | Fire Department       | FIR-001, FIR-002          |
-| NGO-   | NGO/Community Support | NGO-001, NGO-002          |
+| Prefix | Organization Type     | Example IDs                   |
+| ------ | --------------------- | ----------------------------- |
+| 400    | Admin                 | 4001923                       |
+| 100    | Hospital              | 1004782, 1007361, 1002594     |
+| 300    | Fire Department       | 3006147, 3008253              |
+| 200    | NGO/Community Support | 2003891, 2005674              |
 
 ---
 
@@ -39,48 +39,43 @@ All service providers use this ID format: `PREFIX-NUMBER`
 
 ### Admin
 
-- **Service ID**: `ADM-001`
+- **Service ID**: `4001923`
 - **Password**: `admin123`
 - **Dashboard**: Shows ALL requests
-- **Can see**: All emergency types
 
 ### Hospital
 
-- **Service ID**: `HSP-001`
+- **Service ID**: `1004782`
 - **Name**: City General Hospital
 - **Password**: `hospital123`
-- **Dashboard**: Shows only **Ambulance** requests
-- **Can see**: Medical emergencies requiring ambulance
+- **Dashboard**: Shows ALL SOS requests
 
 ### Fire Department
 
-- **Service ID**: `FIR-001`
+- **Service ID**: `3006147`
 - **Name**: City Fire Department
 - **Password**: `fire123`
-- **Dashboard**: Shows only **Fire Emergency** requests
-- **Can see**: Fire-related emergencies
+- **Dashboard**: Shows ALL SOS requests
 
 ### NGO
 
-- **Service ID**: `NGO-001`
+- **Service ID**: `2003891`
 - **Name**: Community Support NGO
 - **Password**: `ngo123`
-- **Dashboard**: Shows only **NGO Support** requests
-- **Can see**: Community support requests
+- **Dashboard**: Shows ALL SOS requests
 
 ---
 
-## Request Type Assignment
+## SOS Request Visibility
 
-When users send SOS requests, they choose a type:
+All SOS requests are visible on ALL service dashboards:
 
-| Request Type   | Who Can See It            |
-| -------------- | ------------------------- |
-| Ambulance      | Hospital Dashboard        |
-| Fire Emergency | Fire Department Dashboard |
-| NGO Support    | NGO Dashboard             |
-| Police         | Admin Dashboard only      |
-| Medical Help   | Admin Dashboard only      |
+| Request Type   | Who Can See It               |
+| -------------- | ---------------------------- |
+| Ambulance      | All dashboards               |
+| Police         | All dashboards               |
+| Medical Help   | All dashboards               |
+| NGO Support    | All dashboards               |
 
 ---
 

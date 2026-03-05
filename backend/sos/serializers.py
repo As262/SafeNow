@@ -6,7 +6,7 @@ from authentication.serializers import UserSerializer
 class SOSRequestCreateSerializer(serializers.Serializer):
     """Serializer for creating a new SOS request."""
     type = serializers.ChoiceField(choices=[
-        'Ambulance', 'Police', 'Medical Help', 'NGO Support'
+        'Ambulance', 'Police', 'Fire Emergency', 'Medical Help', 'NGO Support'
     ])
     latitude = serializers.FloatField()
     longitude = serializers.FloatField()
