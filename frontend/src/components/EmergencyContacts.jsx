@@ -14,6 +14,12 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
+import {
+  getEmergencyContacts,
+  addEmergencyContact,
+  updateEmergencyContact,
+  deleteEmergencyContact,
+} from "../utils/api";
 
 const defaultEmergencyContacts = [
   {
@@ -66,27 +72,19 @@ const EmergencyContacts = () => {
   const [customContacts, setCustomContacts] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     relationship: "",
-    phoneNumber: "",
+    phone_number: "",
   });
 
-  // Load custom contacts from localStorage on mount
+  // Load contacts from backend on mount
   useEffect(() => {
-    const saved = localStorage.getItem("customEmergencyContacts");
-    if (saved) {
-      setCustomContacts(JSON.parse(saved));
-    }
+    getEmergencyContacts()
+      .then((res) => setCustomContacts(res.contacts || []))
+      .catch(() => {});
   }, []);
-
-  // Save custom contacts to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(
-      "customEmergencyContacts",
-      JSON.stringify(customContacts),
-    );
-  }, [customContacts]);
 
   const handleCall = (number) => {
     window.location.href = `tel:${number}`;
@@ -98,7 +96,7 @@ const EmergencyContacts = () => {
       return;
     }
     setEditingContact(null);
-    setFormData({ name: "", relationship: "", phoneNumber: "" });
+    setFormData({ name: "", relationship: "", phone_number: "" });
     setShowAddModal(true);
   };
 
@@ -107,49 +105,50 @@ const EmergencyContacts = () => {
     setFormData({
       name: contact.name,
       relationship: contact.relationship,
-      phoneNumber: contact.phoneNumber,
+      phone_number: contact.phone_number,
     });
     setShowAddModal(true);
   };
 
-  const handleDeleteContact = (id) => {
+  const handleDeleteContact = async (id) => {
     if (window.confirm("Are you sure you want to delete this contact?")) {
-      setCustomContacts(customContacts.filter((c) => c.id !== id));
+      try {
+        await deleteEmergencyContact(id);
+        setCustomContacts(customContacts.filter((c) => c.id !== id));
+      } catch (e) {
+        alert("Failed to delete contact.");
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.name || !formData.phoneNumber) {
+    if (!formData.name || !formData.phone_number) {
       alert("Please fill in all required fields.");
       return;
     }
-
-    if (editingContact) {
-      // Update existing contact
-      setCustomContacts(
-        customContacts.map((c) =>
-          c.id === editingContact.id ? { ...editingContact, ...formData } : c,
-        ),
-      );
-    } else {
-      // Add new contact
-      const newContact = {
-        id: Date.now(),
-        ...formData,
-      };
-      setCustomContacts([...customContacts, newContact]);
+    setLoading(true);
+    try {
+      if (editingContact) {
+        const res = await updateEmergencyContact(editingContact.id, formData);
+        setCustomContacts(customContacts.map((c) => c.id === editingContact.id ? res.contact : c));
+      } else {
+        const res = await addEmergencyContact(formData);
+        setCustomContacts([...customContacts, res.contact]);
+      }
+      setShowAddModal(false);
+      setFormData({ name: "", relationship: "", phone_number: "" });
+      setEditingContact(null);
+    } catch (e) {
+      alert(e.message || "Failed to save contact.");
+    } finally {
+      setLoading(false);
     }
-
-    setShowAddModal(false);
-    setFormData({ name: "", relationship: "", phoneNumber: "" });
-    setEditingContact(null);
   };
 
   const handleCloseModal = () => {
     setShowAddModal(false);
-    setFormData({ name: "", relationship: "", phoneNumber: "" });
+    setFormData({ name: "", relationship: "", phone_number: "" });
     setEditingContact(null);
   };
 
@@ -214,11 +213,11 @@ const EmergencyContacts = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleCall(contact.phoneNumber)}
+                  onClick={() => handleCall(contact.phone_number)}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold text-sm"
                 >
                   <Phone className="w-4 h-4" />
-                  {t.call} {contact.phoneNumber}
+                  {t.call} {contact.phone_number}
                 </button>
               </div>
             ))}
@@ -347,9 +346,9 @@ const EmergencyContacts = () => {
                 </label>
                 <input
                   type="tel"
-                  value={formData.phoneNumber}
+                  value={formData.phone_number}
                   onChange={(e) =>
-                    setFormData({ ...formData, phoneNumber: e.target.value })
+                    setFormData({ ...formData, phone_number: e.target.value })
                   }
                   placeholder="Enter phone number"
                   className="input-field"
@@ -367,9 +366,10 @@ const EmergencyContacts = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors"
+                  disabled={loading}
+                  className="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
                 >
-                  {editingContact ? tCommon.save : tCommon.save}
+                  {loading ? "Saving..." : tCommon.save}
                 </button>
               </div>
             </form>

@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.hashers import check_password
 
-from .models import User, UserSession, ServiceProvider
+from .models import User, UserSession, ServiceProvider, EmergencyContact
 from .serializers import (
     SendOTPSerializer,
     VerifyOTPSerializer,
@@ -17,6 +17,7 @@ from .serializers import (
     UserSessionSerializer,
     ServiceLoginSerializer,
     ServiceProviderSerializer,
+    EmergencyContactSerializer,
 )
 from .services import create_otp, verify_otp
 
@@ -241,3 +242,46 @@ def service_login_view(request):
         'token': str(refresh.access_token),
         'refresh': str(refresh),
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def emergency_contacts_view(request):
+    """List or create emergency contacts for the authenticated user."""
+    if request.method == 'GET':
+        contacts = EmergencyContact.objects.filter(user=request.user)
+        serializer = EmergencyContactSerializer(contacts, many=True)
+        return Response({'success': True, 'contacts': serializer.data})
+
+    # POST — create new contact
+    if EmergencyContact.objects.filter(user=request.user).count() >= 3:
+        return Response(
+            {'success': False, 'message': 'You can only add up to 3 emergency contacts.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    serializer = EmergencyContactSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response({'success': True, 'contact': serializer.data}, status=status.HTTP_201_CREATED)
+    return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def emergency_contact_detail_view(request, contact_id):
+    """Update or delete a specific emergency contact."""
+    try:
+        contact = EmergencyContact.objects.get(id=contact_id, user=request.user)
+    except EmergencyContact.DoesNotExist:
+        return Response({'success': False, 'message': 'Contact not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        serializer = EmergencyContactSerializer(contact, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': True, 'contact': serializer.data})
+        return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    # DELETE
+    contact.delete()
+    return Response({'success': True, 'message': 'Contact deleted.'}, status=status.HTTP_200_OK)
