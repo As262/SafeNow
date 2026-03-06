@@ -31,9 +31,14 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useLanguage } from "../contexts/LanguageContext";
-import { submitSOSRequest, getUserRequests, updateUserProfile } from "../utils/api";
+import {
+  submitSOSRequest,
+  getUserRequests,
+  updateUserProfile,
+} from "../utils/api";
 import Sidebar from "./Sidebar";
 import SafetyChatbot from "./SafetyChatbot";
+import EmergencyContacts from "./EmergencyContacts";
 
 const requestTypes = [
   { id: "ambulance", label: "Ambulance", icon: Ambulance, color: "bg-red-600" },
@@ -200,7 +205,8 @@ const UserDashboard = () => {
     try {
       const dataToUpdate = {};
       if (profileData.name !== user.name) dataToUpdate.name = profileData.name;
-      if (profileData.email !== user.email) dataToUpdate.email = profileData.email;
+      if (profileData.email !== user.email)
+        dataToUpdate.email = profileData.email;
 
       if (Object.keys(dataToUpdate).length > 0) {
         const response = await updateUserProfile(dataToUpdate);
@@ -879,125 +885,7 @@ const UserDashboard = () => {
           )}
 
           {/* Contacts Section */}
-          {activeSection === "contacts" && (
-            <div className="bg-gradient-to-br from-dark-900 to-dark-800 border border-dark-700 rounded-2xl p-8 sm:p-10 shadow-lg">
-              <div className="mb-8">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
-                    <Phone className="w-7 h-7 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Emergency Contacts
-                    </h2>
-                    <p className="text-gray-400">
-                      Quick access to emergency services
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a
-                  href="tel:108"
-                  className="group p-8 bg-gradient-to-br from-red-600/10 to-red-700/10 border-2 border-red-500/30 rounded-2xl hover:border-red-500 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
-                >
-                  <div className="flex items-start gap-5 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <Ambulance className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white mb-2">
-                        Ambulance
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        Emergency Medical Services
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-2xl font-black text-red-400 group-hover:text-red-300 transition-colors">
-                      108
-                    </span>
-                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
-                  </div>
-                </a>
-
-                <a
-                  href="tel:100"
-                  className="group p-8 bg-gradient-to-br from-blue-600/10 to-blue-700/10 border-2 border-blue-500/30 rounded-2xl hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200"
-                >
-                  <div className="flex items-start gap-5 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <Shield className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-white mb-2">
-                        Police
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        Emergency Police Services
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-2xl font-black text-blue-400 group-hover:text-blue-300 transition-colors">
-                      100
-                    </span>
-                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
-                  </div>
-                </a>
-
-                <a
-                  href="tel:101"
-                  className="group p-8 bg-gradient-to-br from-orange-600/10 to-orange-700/10 border-2 border-orange-500/30 rounded-2xl hover:border-orange-500 hover:shadow-lg hover:shadow-orange-500/20 transition-all duration-200"
-                >
-                  <div className="flex items-start gap-5 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <AlertTriangle className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white mb-2">
-                        Fire Brigade
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        Fire Emergency Services
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-2xl font-black text-orange-400 group-hover:text-orange-300 transition-colors">
-                      101
-                    </span>
-                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
-                  </div>
-                </a>
-
-                <a
-                  href="tel:1091"
-                  className="group p-8 bg-gradient-to-br from-purple-600/10 to-purple-700/10 border-2 border-purple-500/30 rounded-2xl hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-200"
-                >
-                  <div className="flex items-start gap-5 mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <Users className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white mb-2">
-                        Women Helpline
-                      </h3>
-                      <p className="text-sm text-gray-400">24x7 Support</p>
-                    </div>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-2xl font-black text-purple-400 group-hover:text-purple-300 transition-colors">
-                      1091
-                    </span>
-                    <Phone className="w-6 h-6 text-gray-500 group-hover:text-primary-400 transition-colors" />
-                  </div>
-                </a>
-              </div>
-            </div>
-          )}
+          {activeSection === "contacts" && <EmergencyContacts />}
 
           {/* Map Section */}
           {activeSection === "map" && (
