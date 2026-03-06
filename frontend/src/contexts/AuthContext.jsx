@@ -68,7 +68,8 @@ export const AuthProvider = ({ children }) => {
     isHospital: user?.role === "hospital",
     isFire: user?.role === "fire",
     isNGO: user?.role === "ngo",
-    isServiceProvider: ["admin", "hospital", "fire", "ngo"].includes(
+    isPolice: user?.role === "police",
+    isServiceProvider: ["admin", "hospital", "fire", "ngo", "police"].includes(
       user?.role,
     ),
     loading,

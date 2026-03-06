@@ -91,7 +91,7 @@ const Login = () => {
 
     try {
       // Validate service ID format (7-digit pin)
-      if (!/^(100|200|300|400)\d{4}$/.test(serviceId)) {
+      if (!/^(100|200|300|400|500)\d{4}$/.test(serviceId)) {
         throw new Error(
           "Invalid Service ID. Must be a 7-digit pin (e.g., 1004782)",
         );
@@ -116,6 +116,9 @@ const Login = () => {
           break;
         case "ngo":
           navigate("/ngo-dashboard");
+          break;
+        case "police":
+          navigate("/police-dashboard");
           break;
         default:
           navigate("/user-dashboard");
@@ -187,15 +190,11 @@ const Login = () => {
                           e.target.value.replace(/\D/g, "").slice(0, 10),
                         )
                       }
-                      placeholder="9876543210"
                       className="input-field pl-12"
                       maxLength="10"
                       required
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Admin demo account: 9876543210 (OTP: 000000)
-                  </p>
                 </div>
 
                 <button
@@ -249,7 +248,7 @@ const Login = () => {
                     onChange={(e) =>
                       setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                     }
-                    placeholder="123456"
+                    placeholder="XXXXXX"
                     className="input-field text-center text-2xl tracking-widest"
                     maxLength="6"
                     required
@@ -321,7 +320,11 @@ const Login = () => {
                   <input
                     type="text"
                     value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value.replace(/\D/g, "").slice(0, 7))}
+                    onChange={(e) =>
+                      setServiceId(
+                        e.target.value.replace(/\D/g, "").slice(0, 7),
+                      )
+                    }
                     placeholder="1004782"
                     className="input-field pl-12"
                     maxLength="7"
@@ -329,7 +332,8 @@ const Login = () => {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  7-digit PIN: 100xxxx (Hospital), 200xxxx (NGO), 300xxxx (Fire), 400xxxx (Admin)
+                  7-digit PIN: 100xxxx (Hospital), 200xxxx (NGO), 300xxxx
+                  (Fire), 400xxxx (Admin), 500xxxx (Police)
                 </p>
               </div>
 
@@ -384,7 +388,7 @@ const Login = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-8 mb-12">
           <p className="text-gray-500 text-sm">
             By continuing, you agree to our Terms of Service and Privacy Policy
           </p>

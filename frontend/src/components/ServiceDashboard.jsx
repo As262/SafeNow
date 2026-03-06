@@ -22,7 +22,7 @@ import { getAllSOSRequests, updateRequestStatus } from "../utils/api";
 import MapView from "./MapView";
 
 const ServiceDashboard = () => {
-  const { user, logout, isHospital, isFire, isNGO } = useAuth();
+  const { user, logout, isHospital, isFire, isNGO, isPolice } = useAuth();
   const navigate = useNavigate();
   const { requests: wsRequests, updateRequestStatus: updateWSRequest } =
     useWebSocket(user);
@@ -55,6 +55,14 @@ const ServiceDashboard = () => {
         icon: Users,
         color: "purple",
         filterTypes: ["NGO Support"],
+      };
+    }
+    if (isPolice) {
+      return {
+        name: "Police",
+        icon: Shield,
+        color: "blue",
+        filterTypes: ["Police"],
       };
     }
     return {
@@ -257,7 +265,10 @@ const ServiceDashboard = () => {
               {filteredRequests.length}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {serviceInfo.filterTypes ? serviceInfo.filterTypes.join(" / ") : "All"} type
+              {serviceInfo.filterTypes
+                ? serviceInfo.filterTypes.join(" / ")
+                : "All"}{" "}
+              type
             </p>
           </div>
         </div>
@@ -281,7 +292,11 @@ const ServiceDashboard = () => {
                 <div className="text-center py-8">
                   <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-400">
-                    No pending {serviceInfo.filterTypes ? serviceInfo.filterTypes.join(" / ") : ""} requests
+                    No pending{" "}
+                    {serviceInfo.filterTypes
+                      ? serviceInfo.filterTypes.join(" / ")
+                      : ""}{" "}
+                    requests
                   </p>
                 </div>
               ) : (

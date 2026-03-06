@@ -32,6 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('hospital', 'Hospital'),
         ('fire', 'Fire Department'),
         ('ngo', 'NGO'),
+        ('police', 'Police'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -93,6 +94,7 @@ class ServiceProvider(models.Model):
         ('hospital', 'Hospital'),
         ('fire', 'Fire Department'),
         ('ngo', 'NGO'),
+        ('police', 'Police'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -125,6 +127,8 @@ class ServiceProvider(models.Model):
                 self.role = 'fire'
             elif prefix == '200':
                 self.role = 'ngo'
+            elif prefix == '500':
+                self.role = 'police'
         super().save(*args, **kwargs)
 
 

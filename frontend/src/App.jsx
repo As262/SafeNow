@@ -92,6 +92,16 @@ function App() {
               }
             />
 
+            {/* Protected Police Route */}
+            <Route
+              path="/police-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["police"]}>
+                  <ServiceDashboard />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Default Redirect */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />

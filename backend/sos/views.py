@@ -25,7 +25,7 @@ def is_admin(user):
 
 
 def is_service_provider(user):
-    return user.role in ('admin', 'hospital', 'fire', 'ngo')
+    return user.role in ('admin', 'hospital', 'fire', 'ngo', 'police')
 
 
 # Map SOS type to the service provider group(s) that should be notified
