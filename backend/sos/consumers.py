@@ -57,9 +57,9 @@ class SOSConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # Send initial pending requests to all service providers
+        # Send initial pending requests filtered by role
         if self.user_role in ('admin', 'hospital', 'fire', 'ngo'):
-            pending = await self.get_pending_requests()
+            pending = await self.get_pending_requests(self.user_role)
             await self.send(text_data=json.dumps({
                 'type': 'initial_requests',
                 'requests': pending,
@@ -107,13 +107,23 @@ class SOSConsumer(AsyncWebsocketConsumer):
         }, cls=SafeJSONEncoder))
 
     @database_sync_to_async
-    def get_pending_requests(self):
-        """Get all pending SOS requests for admin initial load."""
+    def get_pending_requests(self, role):
+        """Get pending SOS requests filtered by service provider role."""
         from .models import SOSRequest
         from .serializers import SOSRequestSerializer
 
         requests = SOSRequest.objects.filter(
             status='pending'
         ).select_related('user').order_by('-created_at')
+
+        # Filter by SOS types relevant to this role (admin sees all)
+        role_type_map = {
+            'hospital': ['Ambulance', 'Medical Help'],
+            'fire': ['Fire Emergency'],
+            'ngo': ['NGO Support'],
+        }
+        allowed_types = role_type_map.get(role)
+        if allowed_types is not None:
+            requests = requests.filter(type__in=allowed_types)
 
         return SOSRequestSerializer(requests, many=True).data

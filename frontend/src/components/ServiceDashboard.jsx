@@ -38,7 +38,7 @@ const ServiceDashboard = () => {
         name: "Hospital",
         icon: Ambulance,
         color: "red",
-        filterType: "Ambulance",
+        filterTypes: ["Ambulance", "Medical Help"],
       };
     }
     if (isFire) {
@@ -46,7 +46,7 @@ const ServiceDashboard = () => {
         name: "Fire Department",
         icon: Flame,
         color: "orange",
-        filterType: "Fire Emergency",
+        filterTypes: ["Fire Emergency"],
       };
     }
     if (isNGO) {
@@ -54,14 +54,14 @@ const ServiceDashboard = () => {
         name: "NGO",
         icon: Users,
         color: "purple",
-        filterType: "NGO Support",
+        filterTypes: ["NGO Support"],
       };
     }
     return {
       name: "Service Provider",
       icon: Shield,
       color: "blue",
-      filterType: null,
+      filterTypes: null,
     };
   };
 
@@ -100,8 +100,10 @@ const ServiceDashboard = () => {
     }
   };
 
-  // Show all requests for all service types
-  const filteredRequests = requests;
+  // Filter requests by service type (only show relevant emergency types)
+  const filteredRequests = serviceInfo.filterTypes
+    ? requests.filter((r) => serviceInfo.filterTypes.includes(r.type))
+    : requests;
 
   const handleAcceptRequest = async (requestId) => {
     try {
@@ -255,7 +257,7 @@ const ServiceDashboard = () => {
               {filteredRequests.length}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {serviceInfo.filterType} type
+              {serviceInfo.filterTypes ? serviceInfo.filterTypes.join(" / ") : "All"} type
             </p>
           </div>
         </div>
@@ -279,7 +281,7 @@ const ServiceDashboard = () => {
                 <div className="text-center py-8">
                   <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-400">
-                    No pending {serviceInfo.filterType} requests
+                    No pending {serviceInfo.filterTypes ? serviceInfo.filterTypes.join(" / ") : ""} requests
                   </p>
                 </div>
               ) : (

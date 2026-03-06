@@ -28,6 +28,32 @@ def is_service_provider(user):
     return user.role in ('admin', 'hospital', 'fire', 'ngo')
 
 
+# Map SOS type to the service provider group(s) that should be notified
+SOS_TYPE_TO_GROUPS = {
+    'Ambulance': ['hospital_sos'],
+    'Medical Help': ['hospital_sos'],
+    'Fire Emergency': ['fire_sos'],
+    'NGO Support': ['ngo_sos'],
+    'Police': ['admin_sos'],
+}
+
+# Map service role to the SOS types they handle
+ROLE_TO_SOS_TYPES = {
+    'hospital': ['Ambulance', 'Medical Help'],
+    'fire': ['Fire Emergency'],
+    'ngo': ['NGO Support'],
+    'admin': None,  # Admin sees all types
+}
+
+
+def get_target_groups(sos_type):
+    """Get the WebSocket groups to notify for a given SOS type. Admin always included."""
+    groups = list(SOS_TYPE_TO_GROUPS.get(sos_type, []))
+    if 'admin_sos' not in groups:
+        groups.append('admin_sos')
+    return groups
+
+
 def serialize_for_ws(serializer_data):
     """Convert DRF serializer data to plain JSON-safe dict."""
     return json.loads(JSONRenderer().render(serializer_data))
@@ -70,12 +96,10 @@ def submit_sos_request(request):
 
     sos_data = SOSRequestSerializer(sos).data
 
-    # Notify all service provider groups via WebSocket (in background threads)
+    # Notify only the relevant service provider groups via WebSocket
     ws_data = serialize_for_ws(sos_data)
-    notify_ws('admin_sos', 'new_sos_request', ws_data)
-    notify_ws('hospital_sos', 'new_sos_request', ws_data)
-    notify_ws('fire_sos', 'new_sos_request', ws_data)
-    notify_ws('ngo_sos', 'new_sos_request', ws_data)
+    for group in get_target_groups(sos.type):
+        notify_ws(group, 'new_sos_request', ws_data)
 
     return Response({
         'success': True,
@@ -108,6 +132,12 @@ def all_sos_requests(request):
         )
 
     requests_qs = SOSRequest.objects.select_related('user', 'responded_by').all()
+
+    # Filter by SOS types relevant to this service provider's role
+    allowed_types = ROLE_TO_SOS_TYPES.get(request.user.role)
+    if allowed_types is not None:
+        requests_qs = requests_qs.filter(type__in=allowed_types)
+
     serializer = SOSRequestSerializer(requests_qs, many=True)
 
     return Response({
@@ -155,11 +185,9 @@ def update_request_status(request, request_id):
     sos_data = SOSRequestSerializer(sos).data
     ws_data = serialize_for_ws(sos_data)
 
-    # Notify via WebSocket (in background threads)
-    notify_ws('admin_sos', 'sos_status_update', ws_data)
-    notify_ws('hospital_sos', 'sos_status_update', ws_data)
-    notify_ws('fire_sos', 'sos_status_update', ws_data)
-    notify_ws('ngo_sos', 'sos_status_update', ws_data)
+    # Notify only the relevant service provider groups + the user
+    for group in get_target_groups(sos.type):
+        notify_ws(group, 'sos_status_update', ws_data)
     notify_ws(f'user_{sos.user.mobile}', 'sos_status_update', ws_data)
 
     return Response({
