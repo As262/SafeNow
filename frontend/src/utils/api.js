@@ -116,6 +116,30 @@ export const updateUserProfile = async (data) => {
   });
 };
 
+export const getEmergencyContacts = async () => {
+  return apiRequest("/auth/emergency-contacts/");
+};
+
+export const addEmergencyContact = async (data) => {
+  return apiRequest("/auth/emergency-contacts/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const updateEmergencyContact = async (id, data) => {
+  return apiRequest(`/auth/emergency-contacts/${id}/`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const deleteEmergencyContact = async (id) => {
+  return apiRequest(`/auth/emergency-contacts/${id}/`, {
+    method: "DELETE",
+  });
+};
+
 /**
  * Submit SOS request
  * @param {Object} requestData - SOS request data

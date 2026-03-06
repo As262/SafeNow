@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, UserSession, ServiceProvider
+from .models import User, UserSession, ServiceProvider, EmergencyContact
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -55,6 +55,13 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['name', 'email']
+
+
+class EmergencyContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmergencyContact
+        fields = ['id', 'name', 'relationship', 'phone_number', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class ServiceLoginSerializer(serializers.Serializer):
