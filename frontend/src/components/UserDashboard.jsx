@@ -695,13 +695,17 @@ const UserDashboard = () => {
                               className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                                 request.status === "completed"
                                   ? "bg-green-500/20 border border-green-500/30"
-                                  : request.status === "pending"
-                                    ? "bg-yellow-500/20 border border-yellow-500/30"
-                                    : "bg-red-500/20 border border-red-500/30"
+                                  : request.status === "accepted"
+                                    ? "bg-blue-500/20 border border-blue-500/30"
+                                    : request.status === "pending"
+                                      ? "bg-yellow-500/20 border border-yellow-500/30"
+                                      : "bg-red-500/20 border border-red-500/30"
                               }`}
                             >
                               {request.status === "completed" ? (
                                 <CheckCircle className="w-6 h-6 text-green-400" />
+                              ) : request.status === "accepted" ? (
+                                <CheckCircle className="w-6 h-6 text-blue-400" />
                               ) : request.status === "pending" ? (
                                 <Clock className="w-6 h-6 text-yellow-400" />
                               ) : (
@@ -731,9 +735,11 @@ const UserDashboard = () => {
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 ${
                               request.status === "completed"
                                 ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                : request.status === "pending"
-                                  ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                                  : "bg-red-500/20 text-red-400 border border-red-500/30"
+                                : request.status === "accepted"
+                                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                  : request.status === "pending"
+                                    ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                    : "bg-red-500/20 text-red-400 border border-red-500/30"
                             }`}
                           >
                             {request.status}
