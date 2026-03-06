@@ -40,6 +40,14 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.setItem("safeNowUser", JSON.stringify(userWithToken));
   };
 
+  const updateUser = (updatedFields) => {
+    setUser((prev) => {
+      const updated = { ...prev, ...updatedFields };
+      sessionStorage.setItem("safeNowUser", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const logout = async () => {
     try {
       await logoutUser();
@@ -54,6 +62,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!user,
     isAdmin: user?.role === "admin",
     isHospital: user?.role === "hospital",

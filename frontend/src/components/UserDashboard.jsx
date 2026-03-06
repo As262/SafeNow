@@ -31,7 +31,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useLanguage } from "../contexts/LanguageContext";
-import { submitSOSRequest, getUserRequests } from "../utils/api";
+import { submitSOSRequest, getUserRequests, updateUserProfile } from "../utils/api";
 import Sidebar from "./Sidebar";
 import SafetyChatbot from "./SafetyChatbot";
 
@@ -54,7 +54,7 @@ const requestTypes = [
 ];
 
 const UserDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const locationHook = useLocation();
   const { language, changeLanguage } = useLanguage();
@@ -198,19 +198,21 @@ const UserDashboard = () => {
 
   const handleProfileSave = async () => {
     try {
-      // Here you would make an API call to update the profile
-      // await updateUserProfile(profileData);
+      const dataToUpdate = {};
+      if (profileData.name !== user.name) dataToUpdate.name = profileData.name;
+      if (profileData.email !== user.email) dataToUpdate.email = profileData.email;
 
-      // For now, just update local state
-      user.name = profileData.name;
-      user.email = profileData.email;
+      if (Object.keys(dataToUpdate).length > 0) {
+        const response = await updateUserProfile(dataToUpdate);
+        updateUser(response.user);
+      }
 
       setEditingProfile(false);
       setSuccessMessage("Profile updated successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile");
+      alert(error.message || "Failed to update profile");
     }
   };
 

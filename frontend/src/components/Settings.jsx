@@ -14,9 +14,10 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
+import { updateUserProfile } from "../utils/api";
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { language, changeLanguage } = useLanguage();
   const [saved, setSaved] = useState(false);
   const t = translations[language].settings;
@@ -53,11 +54,24 @@ const Settings = () => {
     }
   };
 
-  const handleSave = () => {
-    // Save settings logic here
-    console.log("Saving settings:", settings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  const handleSave = async () => {
+    try {
+      const profileData = {};
+      if (settings.name !== user?.name) profileData.name = settings.name;
+      if (settings.email !== user?.email) profileData.email = settings.email;
+
+      if (Object.keys(profileData).length > 0) {
+        const response = await updateUserProfile(profileData);
+        // Update auth context and session storage with new user data
+        updateUser(response.user);
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      alert(error.message || "Failed to save settings");
+    }
   };
 
   return (
