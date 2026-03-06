@@ -62,11 +62,11 @@ class ServiceLoginSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=128, write_only=True)
 
     def validate_service_id(self, value):
-        value = value.upper().strip()
-        # Validate format: PREFIX-NUMBER
+        value = value.strip()
+        # Validate format: 7-digit pin code starting with 100/200/300/400
         import re
-        if not re.match(r'^(ADM|HSP|FIR|NGO)-\d+$', value):
+        if not re.match(r'^(100|200|300|400)\d{4}$', value):
             raise serializers.ValidationError(
-                "Invalid Service ID format. Use PREFIX-NUMBER (e.g., HSP-001)"
+                "Invalid Service ID format. Must be a 7-digit pin (e.g., 1004782)"
             )
         return value

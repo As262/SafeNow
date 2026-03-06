@@ -24,6 +24,10 @@ def is_admin(user):
     return user.role == 'admin'
 
 
+def is_service_provider(user):
+    return user.role in ('admin', 'hospital', 'fire', 'ngo')
+
+
 def serialize_for_ws(serializer_data):
     """Convert DRF serializer data to plain JSON-safe dict."""
     return json.loads(JSONRenderer().render(serializer_data))
@@ -66,8 +70,12 @@ def submit_sos_request(request):
 
     sos_data = SOSRequestSerializer(sos).data
 
-    # Notify admin via WebSocket (in background thread)
-    notify_ws('admin_sos', 'new_sos_request', serialize_for_ws(sos_data))
+    # Notify all service provider groups via WebSocket (in background threads)
+    ws_data = serialize_for_ws(sos_data)
+    notify_ws('admin_sos', 'new_sos_request', ws_data)
+    notify_ws('hospital_sos', 'new_sos_request', ws_data)
+    notify_ws('fire_sos', 'new_sos_request', ws_data)
+    notify_ws('ngo_sos', 'new_sos_request', ws_data)
 
     return Response({
         'success': True,
@@ -92,10 +100,10 @@ def user_requests(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def all_sos_requests(request):
-    """Get all SOS requests (admin only)."""
-    if not is_admin(request.user):
+    """Get all SOS requests (service providers only: admin, hospital, fire, ngo)."""
+    if not is_service_provider(request.user):
         return Response(
-            {'success': False, 'message': 'Admin access required'},
+            {'success': False, 'message': 'Service provider access required'},
             status=status.HTTP_403_FORBIDDEN
         )
 
@@ -111,10 +119,10 @@ def all_sos_requests(request):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_request_status(request, request_id):
-    """Update SOS request status (admin only)."""
-    if not is_admin(request.user):
+    """Update SOS request status (service providers only)."""
+    if not is_service_provider(request.user):
         return Response(
-            {'success': False, 'message': 'Admin access required'},
+            {'success': False, 'message': 'Service provider access required'},
             status=status.HTTP_403_FORBIDDEN
         )
 
@@ -149,6 +157,9 @@ def update_request_status(request, request_id):
 
     # Notify via WebSocket (in background threads)
     notify_ws('admin_sos', 'sos_status_update', ws_data)
+    notify_ws('hospital_sos', 'sos_status_update', ws_data)
+    notify_ws('fire_sos', 'sos_status_update', ws_data)
+    notify_ws('ngo_sos', 'sos_status_update', ws_data)
     notify_ws(f'user_{sos.user.mobile}', 'sos_status_update', ws_data)
 
     return Response({

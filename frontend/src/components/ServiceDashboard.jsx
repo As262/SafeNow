@@ -100,10 +100,8 @@ const ServiceDashboard = () => {
     }
   };
 
-  // Filter requests based on service type
-  const filteredRequests = serviceInfo.filterType
-    ? requests.filter((req) => req.type === serviceInfo.filterType)
-    : requests;
+  // Show all requests for all service types
+  const filteredRequests = requests;
 
   const handleAcceptRequest = async (requestId) => {
     try {

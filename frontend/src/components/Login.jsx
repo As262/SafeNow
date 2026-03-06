@@ -90,10 +90,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Validate service ID format
-      if (!/^(ADM|HSP|FIR|NGO)-\d+$/.test(serviceId)) {
+      // Validate service ID format (7-digit pin)
+      if (!/^(100|200|300|400)\d{4}$/.test(serviceId)) {
         throw new Error(
-          "Invalid Service ID format. Use prefix-number (e.g., HSP-001)",
+          "Invalid Service ID. Must be a 7-digit pin (e.g., 1004782)",
         );
       }
 
@@ -102,19 +102,19 @@ const Login = () => {
       // Login user with token
       login(response.user, response.token, response.refresh);
 
-      // Redirect based on role
-      const rolePrefix = serviceId.split("-")[0];
-      switch (rolePrefix) {
-        case "ADM":
+      // Redirect based on role from response
+      const role = response.user.role;
+      switch (role) {
+        case "admin":
           navigate("/admin-dashboard");
           break;
-        case "HSP":
+        case "hospital":
           navigate("/hospital-dashboard");
           break;
-        case "FIR":
+        case "fire":
           navigate("/fire-dashboard");
           break;
-        case "NGO":
+        case "ngo":
           navigate("/ngo-dashboard");
           break;
         default:
@@ -321,14 +321,15 @@ const Login = () => {
                   <input
                     type="text"
                     value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value.toUpperCase())}
-                    placeholder="HSP-001"
+                    onChange={(e) => setServiceId(e.target.value.replace(/\D/g, "").slice(0, 7))}
+                    placeholder="1004782"
                     className="input-field pl-12"
+                    maxLength="7"
                     required
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Format: ADM-xxx, HSP-xxx, FIR-xxx, or NGO-xxx
+                  7-digit PIN: 100xxxx (Hospital), 200xxxx (NGO), 300xxxx (Fire), 400xxxx (Admin)
                 </p>
               </div>
 

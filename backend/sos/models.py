@@ -16,6 +16,7 @@ class SOSRequest(models.Model):
     TYPE_CHOICES = (
         ('Ambulance', 'Ambulance'),
         ('Police', 'Police'),
+        ('Fire Emergency', 'Fire Emergency'),
         ('Medical Help', 'Medical Help'),
         ('NGO Support', 'NGO Support'),
     )

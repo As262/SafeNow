@@ -199,7 +199,7 @@ def service_login_view(request):
     # Create or get a corresponding User object for JWT generation
     # Service providers are stored separately but we need a User for JWT
     user, created = User.objects.get_or_create(
-        mobile=f"SP_{provider.service_id}",  # Unique identifier
+        mobile=f"SP_{provider.service_id}",
         defaults={
             'name': provider.name,
             'email': provider.email,

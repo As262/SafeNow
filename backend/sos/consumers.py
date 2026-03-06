@@ -35,9 +35,19 @@ class SOSConsumer(AsyncWebsocketConsumer):
         self.user_role = params.get('role', 'user')
         self.user_mobile = params.get('mobile', '')
 
+        # Add to role-specific group for service providers
         if self.user_role == 'admin':
             await self.channel_layer.group_add('admin_sos', self.channel_name)
             logger.info(f"Admin connected to WebSocket: {self.channel_name}")
+        elif self.user_role == 'hospital':
+            await self.channel_layer.group_add('hospital_sos', self.channel_name)
+            logger.info(f"Hospital connected to WebSocket: {self.channel_name}")
+        elif self.user_role == 'fire':
+            await self.channel_layer.group_add('fire_sos', self.channel_name)
+            logger.info(f"Fire Dept connected to WebSocket: {self.channel_name}")
+        elif self.user_role == 'ngo':
+            await self.channel_layer.group_add('ngo_sos', self.channel_name)
+            logger.info(f"NGO connected to WebSocket: {self.channel_name}")
         else:
             if self.user_mobile:
                 await self.channel_layer.group_add(
@@ -47,7 +57,8 @@ class SOSConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        if self.user_role == 'admin':
+        # Send initial pending requests to all service providers
+        if self.user_role in ('admin', 'hospital', 'fire', 'ngo'):
             pending = await self.get_pending_requests()
             await self.send(text_data=json.dumps({
                 'type': 'initial_requests',
@@ -58,6 +69,12 @@ class SOSConsumer(AsyncWebsocketConsumer):
         """Handle WebSocket disconnection."""
         if self.user_role == 'admin':
             await self.channel_layer.group_discard('admin_sos', self.channel_name)
+        elif self.user_role == 'hospital':
+            await self.channel_layer.group_discard('hospital_sos', self.channel_name)
+        elif self.user_role == 'fire':
+            await self.channel_layer.group_discard('fire_sos', self.channel_name)
+        elif self.user_role == 'ngo':
+            await self.channel_layer.group_discard('ngo_sos', self.channel_name)
         elif self.user_mobile:
             await self.channel_layer.group_discard(
                 f'user_{self.user_mobile}', self.channel_name

@@ -14,27 +14,27 @@ def test_service_login():
     test_cases = [
         {
             "name": "Admin Login",
-            "service_id": "ADM-001",
+            "service_id": "4001923",
             "password": "admin123",
         },
         {
             "name": "Hospital Login",
-            "service_id": "HSP-001",
+            "service_id": "1004782",
             "password": "hospital123",
         },
         {
             "name": "Fire Department Login",
-            "service_id": "FIR-001",
+            "service_id": "3006147",
             "password": "fire123",
         },
         {
             "name": "NGO Login",
-            "service_id": "NGO-001",
+            "service_id": "2003891",
             "password": "ngo123",
         },
         {
             "name": "Invalid Credentials",
-            "service_id": "HSP-999",
+            "service_id": "1009999",
             "password": "wrongpassword",
             "should_fail": True,
         },

@@ -115,14 +115,15 @@ class ServiceProvider(models.Model):
 
     def save(self, *args, **kwargs):
         """Auto-extract role from service_id prefix if not set."""
-        if not self.role and self.service_id:
-            if self.service_id.startswith('ADM-'):
+        if not self.role and self.service_id and len(self.service_id) == 7:
+            prefix = self.service_id[:3]
+            if prefix == '400':
                 self.role = 'admin'
-            elif self.service_id.startswith('HSP-'):
+            elif prefix == '100':
                 self.role = 'hospital'
-            elif self.service_id.startswith('FIR-'):
+            elif prefix == '300':
                 self.role = 'fire'
-            elif self.service_id.startswith('NGO-'):
+            elif prefix == '200':
                 self.role = 'ngo'
         super().save(*args, **kwargs)
 

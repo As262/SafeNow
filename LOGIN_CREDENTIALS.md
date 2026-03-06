@@ -8,33 +8,39 @@ All service provider accounts have been created. Use these credentials to log in
 
 ## 🔐 Test Credentials
 
+### Service ID Format: 7-digit PIN code
+- `400xxxx` = Admin
+- `100xxxx` = Hospital
+- `300xxxx` = Fire Department
+- `200xxxx` = NGO
+
 ### Admin
 
-- **Service ID**: `ADM-001`
+- **Service ID**: `4001923`
 - **Password**: `admin123`
 - **Dashboard**: All requests (admin dashboard)
 
 ---
 
-### Hospitals (Shows only "Ambulance" requests)
+### Hospitals (Shows all SOS requests)
 
-- **Service ID**: `HSP-001` | **Password**: `hospital123` | **Name**: City General Hospital
-- **Service ID**: `HSP-002` | **Password**: `hospital123` | **Name**: Emergency Medical Center
-- **Service ID**: `HSP-003` | **Password**: `hospital123` | **Name**: Community Health Hospital
-
----
-
-### Fire Departments (Shows only "Fire Emergency" requests)
-
-- **Service ID**: `FIR-001` | **Password**: `fire123` | **Name**: City Fire Department
-- **Service ID**: `FIR-002` | **Password**: `fire123` | **Name**: District Fire Brigade
+- **Service ID**: `1004782` | **Password**: `hospital123` | **Name**: City General Hospital
+- **Service ID**: `1007361` | **Password**: `hospital123` | **Name**: Emergency Medical Center
+- **Service ID**: `1002594` | **Password**: `hospital123` | **Name**: Community Health Hospital
 
 ---
 
-### NGOs (Shows only "NGO Support" requests)
+### Fire Departments (Shows all SOS requests)
 
-- **Service ID**: `NGO-001` | **Password**: `ngo123` | **Name**: Community Support NGO
-- **Service ID**: `NGO-002` | **Password**: `ngo123` | **Name**: Help Foundation
+- **Service ID**: `3006147` | **Password**: `fire123` | **Name**: City Fire Department
+- **Service ID**: `3008253` | **Password**: `fire123` | **Name**: District Fire Brigade
+
+---
+
+### NGOs (Shows all SOS requests)
+
+- **Service ID**: `2003891` | **Password**: `ngo123` | **Name**: Community Support NGO
+- **Service ID**: `2005674` | **Password**: `ngo123` | **Name**: Help Foundation
 
 ---
 
@@ -44,7 +50,7 @@ All service provider accounts have been created. Use these credentials to log in
 
 1. Navigate to: `http://localhost:5173/login`
 2. Click **"Login as Service Provider"** at the bottom
-3. Enter your Service ID (e.g., `HSP-001`)
+3. Enter your Service ID (e.g., `1004782`)
 4. Enter your password (e.g., `hospital123`)
 5. Click **Login**
 6. You'll be redirected to your role-specific dashboard!
@@ -63,7 +69,7 @@ POST http://localhost:8000/api/auth/service-login/
 
 ```json
 {
-  "service_id": "HSP-001",
+  "service_id": "1004782",
   "password": "hospital123"
 }
 ```
@@ -75,7 +81,7 @@ POST http://localhost:8000/api/auth/service-login/
   "success": true,
   "message": "Login successful",
   "user": {
-    "service_id": "HSP-001",
+    "service_id": "1004782",
     "name": "City General Hospital",
     "email": "admin@cityhospital.com",
     "role": "hospital",
@@ -102,10 +108,10 @@ POST http://localhost:8000/api/auth/service-login/
 | Role         | Login        | Dashboard URL         | Sees Requests       |
 | ------------ | ------------ | --------------------- | ------------------- |
 | **User**     | Mobile + OTP | `/user-dashboard`     | Their own requests  |
-| **Admin**    | ADM-001      | `/admin-dashboard`    | All requests        |
-| **Hospital** | HSP-xxx      | `/hospital-dashboard` | Ambulance only      |
-| **Fire**     | FIR-xxx      | `/fire-dashboard`     | Fire Emergency only |
-| **NGO**      | NGO-xxx      | `/ngo-dashboard`      | NGO Support only    |
+| **Admin**    | 4001923      | `/admin-dashboard`    | All requests        |
+| **Hospital** | 100xxxx      | `/hospital-dashboard` | All requests        |
+| **Fire**     | 300xxxx      | `/fire-dashboard`     | All requests        |
+| **NGO**      | 200xxxx      | `/ngo-dashboard`      | All requests        |
 
 ---
 
@@ -132,22 +138,22 @@ All service provider dashboards include:
 3. Submit request with location
 ```
 
-### 2. As Hospital (HSP-001):
+### 2. As Hospital (1004782):
 
 ```
 1. Click "Login as Service Provider"
-2. Service ID: HSP-001
+2. Service ID: 1004782
 3. Password: hospital123
 4. See the ambulance request
 5. Click "Accept" to respond
 ```
 
-### 3. As Fire Department (FIR-001):
+### 3. As Fire Department (3006147):
 
 ```
-1. Service ID: FIR-001
+1. Service ID: 3006147
 2. Password: fire123
-3. See only "Fire Emergency" requests
+3. See all SOS requests
 4. Accept/Reject as needed
 ```
 
@@ -176,7 +182,7 @@ python manage.py shell
 from authentication.models import ServiceProvider
 from django.contrib.auth.hashers import make_password
 
-provider = ServiceProvider.objects.get(service_id='HSP-001')
+provider = ServiceProvider.objects.get(service_id='1004782')
 provider.password = make_password('new_password_here')
 provider.save()
 ```
@@ -185,7 +191,7 @@ provider.save()
 
 ## 📝 Notes
 
-- Service IDs are case-insensitive (HSP-001 = hsp-001)
+- Service IDs are 7-digit numeric PIN codes
 - Passwords are securely hashed using Django's password hasher
 - JWT tokens are used for authentication
 - Sessions are tracked in the database
