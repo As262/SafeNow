@@ -18,12 +18,16 @@ import {
   Navigation,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { translations } from "../utils/translations";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { getAllSOSRequests, updateRequestStatus } from "../utils/api";
 import MapView from "./MapView";
 
 const ServiceDashboard = () => {
   const { user, logout, isHospital, isFire, isNGO, isPolice } = useAuth();
+  const { language } = useLanguage();
+  const t = translations[language];
   const navigate = useNavigate();
   const { requests: wsRequests, updateRequestStatus: updateWSRequest } =
     useWebSocket(user);
@@ -155,10 +159,10 @@ const ServiceDashboard = () => {
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffMins < 1) return t.common.justNow;
+    if (diffMins < 60) return `${diffMins} ${t.common.minAgo}`;
     const diffHours = Math.floor(diffMs / 3600000);
-    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    return `${diffHours} ${diffHours > 1 ? t.common.hoursAgo : t.common.hourAgo}`;
   };
 
   const pendingRequests = filteredRequests.filter(
@@ -187,7 +191,7 @@ const ServiceDashboard = () => {
                   SafeNow {serviceInfo.name}
                 </h1>
                 <p className="text-xs text-gray-400">
-                  Emergency Response Dashboard
+                  {t.serviceDashboard.emergencyResponseDashboard}
                 </p>
               </div>
             </div>
@@ -219,7 +223,7 @@ const ServiceDashboard = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors"
               >
                 <LogOut className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-white">Logout</span>
+                <span className="text-sm text-white">{t.common.logout}</span>
               </button>
             </div>
           </div>
@@ -232,20 +236,20 @@ const ServiceDashboard = () => {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
-                Pending Requests
+                {t.serviceDashboard.pendingRequests}
               </h3>
               <Activity className="w-5 h-5 text-red-500" />
             </div>
             <p className="text-3xl font-bold text-white">
               {pendingRequests.length}
             </p>
-            <p className="text-xs text-gray-500 mt-1">Awaiting response</p>
+            <p className="text-xs text-gray-500 mt-1">{t.serviceDashboard.awaitingResponse}</p>
           </div>
 
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
-                Accepted Today
+                {t.serviceDashboard.acceptedToday}
               </h3>
               <CheckCircle className="w-5 h-5 text-green-500" />
             </div>
@@ -258,7 +262,7 @@ const ServiceDashboard = () => {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
-                Total Requests
+                {t.serviceDashboard.totalRequests}
               </h3>
               <Clock className="w-5 h-5 text-blue-500" />
             </div>
@@ -268,8 +272,8 @@ const ServiceDashboard = () => {
             <p className="text-xs text-gray-500 mt-1">
               {serviceInfo.filterTypes
                 ? serviceInfo.filterTypes.join(" / ")
-                : "All"}{" "}
-              type
+                : t.serviceDashboard.all}{" "}
+              {t.serviceDashboard.type}
             </p>
           </div>
         </div>
@@ -281,23 +285,22 @@ const ServiceDashboard = () => {
             <div className="card p-6">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-red-500" />
-                Pending Requests ({pendingRequests.length})
+                {t.serviceDashboard.pendingRequests} ({pendingRequests.length})
               </h3>
 
               {loading ? (
                 <div className="text-center py-8">
                   <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-gray-400 mt-3">Loading requests...</p>
+                  <p className="text-gray-400 mt-3">{t.serviceDashboard.loadingRequests}</p>
                 </div>
               ) : pendingRequests.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-400">
-                    No pending{" "}
+                    {t.serviceDashboard.noPendingRequests}{" "}
                     {serviceInfo.filterTypes
                       ? serviceInfo.filterTypes.join(" / ")
-                      : ""}{" "}
-                    requests
+                      : ""}
                   </p>
                 </div>
               ) : (
@@ -351,7 +354,7 @@ const ServiceDashboard = () => {
                           className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
                         >
                           <CheckCircle className="w-4 h-4" />
-                          Accept
+                          {t.common.accept}
                         </button>
                         <button
                           onClick={(e) => {
@@ -361,7 +364,7 @@ const ServiceDashboard = () => {
                           className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
                         >
                           <XCircle className="w-4 h-4" />
-                          Reject
+                          {t.common.reject}
                         </button>
                       </div>
                     </div>
@@ -375,7 +378,7 @@ const ServiceDashboard = () => {
               <div className="card p-6">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  Accepted Requests ({acceptedRequests.length})
+                  {t.serviceDashboard.acceptedRequests} ({acceptedRequests.length})
                 </h3>
                 <div className="space-y-3">
                   {acceptedRequests.map((request) => (
@@ -412,12 +415,12 @@ const ServiceDashboard = () => {
                               }
                             }}
                             className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
-                            title="View on map"
+                            title={t.serviceDashboard.viewOnMap}
                           >
                             <Navigation className="w-3.5 h-3.5" />
                           </button>
                           <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
-                            ACCEPTED
+                            {t.common.accepted}
                           </span>
                         </div>
                       </div>
@@ -437,7 +440,7 @@ const ServiceDashboard = () => {
 
                       <div className="flex items-center gap-2 mt-3 text-sm text-green-400">
                         <CheckCircle className="w-4 h-4" />
-                        <span>You responded to this request</span>
+                        <span>{t.serviceDashboard.youRespondedToThisRequest}</span>
                       </div>
                     </div>
                   ))}

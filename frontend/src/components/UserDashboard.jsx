@@ -30,6 +30,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useLanguage } from "../contexts/LanguageContext";
+import { translations } from "../utils/translations";
 import {
   submitSOSRequest,
   getUserRequests,
@@ -38,6 +39,7 @@ import {
 import Sidebar from "./Sidebar";
 import SafetyChatbot from "./SafetyChatbot";
 import EmergencyContacts from "./EmergencyContacts";
+import MapView from "./MapView";
 
 const requestTypes = [
   { id: "ambulance", label: "Ambulance", icon: Ambulance, color: "bg-red-600" },
@@ -62,6 +64,7 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const locationHook = useLocation();
   const { language, changeLanguage } = useLanguage();
+  const t = translations[language]; // Translation object
   const {
     location,
     error: locationError,
@@ -386,11 +389,11 @@ const UserDashboard = () => {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-              Welcome back,{" "}
+              {t.dashboard.welcome},{" "}
               <span className="text-primary-500">{user.name}</span>
             </h1>
             <p className="text-gray-400">
-              Stay safe and connected with emergency services
+              {t.dashboard.subtitle}
             </p>
           </div>
 
@@ -415,10 +418,10 @@ const UserDashboard = () => {
                       <AlertTriangle className="w-6 h-6 text-red-500" />
                     </div>
                     <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                      Emergency SOS
+                      {t.dashboard.emergencyAssistance}
                     </h2>
                     <p className="text-sm text-gray-400 mb-6">
-                      Tap the button below for immediate emergency assistance
+                      {t.dashboard.tapForHelp}
                     </p>
 
                     {/* SOS Button */}
@@ -507,7 +510,7 @@ const UserDashboard = () => {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {statistics.total}
                   </h3>
-                  <p className="text-sm text-gray-400">Total Requests</p>
+                  <p className="text-sm text-gray-400">{t.dashboard.totalRequests}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
@@ -519,7 +522,7 @@ const UserDashboard = () => {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {statistics.pending}
                   </h3>
-                  <p className="text-sm text-gray-400">Pending</p>
+                  <p className="text-sm text-gray-400">{t.dashboard.pending}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-green-600/20 to-green-700/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
@@ -531,7 +534,7 @@ const UserDashboard = () => {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {statistics.completed}
                   </h3>
-                  <p className="text-sm text-gray-400">Completed</p>
+                  <p className="text-sm text-gray-400">{t.dashboard.completed}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
@@ -543,7 +546,7 @@ const UserDashboard = () => {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {location ? "✓" : "✗"}
                   </h3>
-                  <p className="text-sm text-gray-400">Location</p>
+                  <p className="text-sm text-gray-400">{t.dashboard.location}</p>
                 </div>
               </div>
 
@@ -557,10 +560,10 @@ const UserDashboard = () => {
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white mb-1">
-                        Your Profile
+                        {t.dashboard.yourProfile}
                       </h3>
                       <p className="text-sm text-gray-400">
-                        Account information
+                        {t.dashboard.accountInformation}
                       </p>
                     </div>
                   </div>
@@ -570,7 +573,7 @@ const UserDashboard = () => {
                         <User className="w-5 h-5 text-primary-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">Name</p>
+                        <p className="text-xs text-gray-400 mb-1">{t.dashboard.name}</p>
                         <p className="text-sm font-semibold text-white">
                           {user.name}
                         </p>
@@ -581,7 +584,7 @@ const UserDashboard = () => {
                         <Phone className="w-5 h-5 text-green-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">Mobile</p>
+                        <p className="text-xs text-gray-400 mb-1">{t.dashboard.mobile}</p>
                         <p className="text-sm font-semibold text-white">
                           {user.mobile}
                         </p>
@@ -606,14 +609,14 @@ const UserDashboard = () => {
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white">
-                        Location
+                        {t.dashboard.location}
                       </h3>
                       <p
                         className={`text-sm font-semibold ${
                           location ? "text-green-400" : "text-red-400"
                         }`}
                       >
-                        {location ? "Active" : "Inactive"}
+                        {location ? t.dashboard.active : t.dashboard.inactive}
                       </p>
                     </div>
                   </div>
@@ -621,7 +624,7 @@ const UserDashboard = () => {
                     <div className="space-y-2">
                       <div className="p-2 bg-dark-800 rounded text-xs">
                         <p className="text-gray-400">
-                          Lat:{" "}
+                          {t.dashboard.lat}:{" "}
                           <span className="text-white font-mono">
                             {location.latitude.toFixed(4)}
                           </span>
@@ -629,7 +632,7 @@ const UserDashboard = () => {
                       </div>
                       <div className="p-2 bg-dark-800 rounded text-xs">
                         <p className="text-gray-400">
-                          Long:{" "}
+                          {t.dashboard.long}:{" "}
                           <span className="text-white font-mono">
                             {location.longitude.toFixed(4)}
                           </span>
@@ -641,7 +644,7 @@ const UserDashboard = () => {
                       onClick={getLocation}
                       className="w-full mt-2 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
                     >
-                      Enable Location
+                      {t.dashboard.enableLocation}
                     </button>
                   )}
                 </div>
@@ -655,7 +658,7 @@ const UserDashboard = () => {
                       <Clock className="w-5 h-5 text-primary-400" />
                     </div>
                     <h3 className="text-lg font-bold text-white">
-                      Recent Requests
+                      {t.dashboard.recentRequests}
                     </h3>
                   </div>
                   {requestHistory.length > 0 && (
@@ -671,10 +674,10 @@ const UserDashboard = () => {
                       <AlertCircle className="w-10 h-10 text-gray-600" />
                     </div>
                     <p className="text-gray-400 text-lg font-medium">
-                      No previous requests
+                      {t.dashboard.noPreviousRequests}
                     </p>
                     <p className="text-gray-500 text-sm mt-2">
-                      Your emergency requests will appear here
+                      {t.dashboard.emergencyRequestsAppear}
                     </p>
                   </div>
                 ) : (
@@ -997,7 +1000,7 @@ const UserDashboard = () => {
                               <User className="w-3 h-3 text-primary-400" />
                             </div>
                             <p className="text-sm text-gray-400">
-                              Responded by{" "}
+                              {t.dashboard.respondedBy}{" "}
                               <span className="text-white font-semibold">
                                 {request.respondedBy || request.respondedByName}
                               </span>
@@ -1005,7 +1008,7 @@ const UserDashboard = () => {
                                 request.response_time) && (
                                 <span className="text-gray-500">
                                   {" "}
-                                  in{" "}
+                                  {t.dashboard.in}{" "}
                                   {request.responseTime ||
                                     request.response_time}
                                 </span>
@@ -1031,13 +1034,13 @@ const UserDashboard = () => {
                 <div className="w-12 h-12 bg-primary-500/10 rounded-lg flex items-center justify-center">
                   <MapPin className="w-6 h-6 text-primary-400" />
                 </div>
-                <h2 className="text-xl font-bold text-white">Your Location</h2>
+                <h2 className="text-xl font-bold text-white">{t.map.title}</h2>
               </div>
 
               {locationLoading ? (
                 <div className="text-center py-20">
                   <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-                  <p className="text-gray-400">Getting your location...</p>
+                  <p className="text-gray-400">{t.dashboard.gettingLocation}</p>
                 </div>
               ) : locationError ? (
                 <div className="text-center py-20">
@@ -1049,49 +1052,39 @@ const UserDashboard = () => {
                     onClick={getLocation}
                     className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors"
                   >
-                    Try Again
+                    {t.dashboard.tryAgain}
                   </button>
                 </div>
               ) : location ? (
                 <div className="space-y-6">
                   <div className="p-6 bg-dark-800 border border-dark-700 rounded-xl">
                     <p className="text-sm text-gray-400 mb-4 font-semibold">
-                      Current Coordinates
+                      {t.dashboard.currentCoordinates}
                     </p>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
-                        <span className="text-sm text-gray-400">Latitude:</span>
+                        <span className="text-sm text-gray-400">{t.dashboard.latitude}:</span>
                         <span className="text-white font-mono font-semibold">
                           {location.latitude.toFixed(6)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
                         <span className="text-sm text-gray-400">
-                          Longitude:
+                          {t.dashboard.longitude}:
                         </span>
                         <span className="text-white font-mono font-semibold">
                           {location.longitude.toFixed(6)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
-                        <span className="text-sm text-gray-400">Accuracy:</span>
+                        <span className="text-sm text-gray-400">{t.dashboard.accuracy}:</span>
                         <span className="text-green-400 font-semibold">
                           ±{location.accuracy?.toFixed(0)}m
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="aspect-video bg-dark-800 border border-dark-700 rounded-xl flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-16 h-16 text-primary-500/30 mx-auto mb-4" />
-                      <p className="text-gray-400 font-semibold">
-                        Map view coming soon...
-                      </p>
-                      <p className="text-gray-500 text-sm mt-2">
-                        Interactive map integration in progress
-                      </p>
-                    </div>
-                  </div>
+                  <MapView />
                 </div>
               ) : (
                 <div className="text-center py-20">
@@ -1099,13 +1092,13 @@ const UserDashboard = () => {
                     <MapPin className="w-10 h-10 text-gray-600" />
                   </div>
                   <p className="text-gray-400 text-lg mb-6">
-                    Location not available
+                    {t.dashboard.locationNotAvailable}
                   </p>
                   <button
                     onClick={getLocation}
                     className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors"
                   >
-                    Get Location
+                    {t.dashboard.getLocation}
                   </button>
                 </div>
               )}
@@ -1127,29 +1120,29 @@ const UserDashboard = () => {
               <div className="card p-8">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                   <BarChart3 className="w-6 h-6 text-primary-500" />
-                  Your Statistics
+                  {t.dashboard.yourStatistics}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-dark-800 rounded-lg border border-dark-700">
-                    <p className="text-sm text-gray-400 mb-1">Total Requests</p>
+                    <p className="text-sm text-gray-400 mb-1">{t.dashboard.totalRequests}</p>
                     <p className="text-2xl font-bold text-white">
                       {statistics.total}
                     </p>
                   </div>
                   <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                    <p className="text-sm text-yellow-400 mb-1">Pending</p>
+                    <p className="text-sm text-yellow-400 mb-1">{t.dashboard.pending}</p>
                     <p className="text-2xl font-bold text-yellow-500">
                       {statistics.pending}
                     </p>
                   </div>
                   <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
-                    <p className="text-sm text-green-400 mb-1">Completed</p>
+                    <p className="text-sm text-green-400 mb-1">{t.dashboard.completed}</p>
                     <p className="text-2xl font-bold text-green-500">
                       {statistics.completed}
                     </p>
                   </div>
                   <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
-                    <p className="text-sm text-red-400 mb-1">Rejected</p>
+                    <p className="text-sm text-red-400 mb-1">{t.dashboard.rejected}</p>
                     <p className="text-2xl font-bold text-red-500">
                       {statistics.rejected}
                     </p>
@@ -1162,7 +1155,7 @@ const UserDashboard = () => {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                     <User className="w-5 h-5 text-primary-500" />
-                    Profile Information
+                    {t.settings.profileInfo}
                   </h3>
                   {!editingProfile ? (
                     <button
@@ -1170,7 +1163,7 @@ const UserDashboard = () => {
                       className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
-                      Edit Profile
+                      {t.dashboard.editProfile}
                     </button>
                   ) : (
                     <div className="flex gap-2">
@@ -1179,14 +1172,14 @@ const UserDashboard = () => {
                         className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
                       >
                         <Save className="w-4 h-4" />
-                        Save
+                        {t.common.save}
                       </button>
                       <button
                         onClick={handleProfileCancel}
                         className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
                       >
                         <X className="w-4 h-4" />
-                        Cancel
+                        {t.common.cancel}
                       </button>
                     </div>
                   )}
@@ -1194,7 +1187,7 @@ const UserDashboard = () => {
                 <div className="space-y-3">
                   <div className="p-4 bg-dark-800 rounded-lg">
                     <label className="text-sm text-gray-400 block mb-2">
-                      Name
+                      {t.dashboard.name}
                     </label>
                     {editingProfile ? (
                       <input
@@ -1214,16 +1207,16 @@ const UserDashboard = () => {
                   </div>
                   <div className="p-4 bg-dark-800 rounded-lg">
                     <label className="text-sm text-gray-400 block mb-2">
-                      Mobile
+                      {t.dashboard.mobile}
                     </label>
                     <p className="text-white font-medium">{user.mobile}</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Mobile number cannot be changed
+                      {t.dashboard.mobileCannotChange}
                     </p>
                   </div>
                   <div className="p-4 bg-dark-800 rounded-lg">
                     <label className="text-sm text-gray-400 block mb-2">
-                      Email
+                      {t.dashboard.email}
                     </label>
                     {editingProfile ? (
                       <input
@@ -1251,11 +1244,52 @@ const UserDashboard = () => {
               <div className="card p-8">
                 <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
                   <Globe className="w-5 h-5 text-primary-500" />
+<<<<<<< HEAD
                   Language
                 </h3>
                 <div className="space-y-4">
                   {/* Language Selection */}
                   <div className="p-4 bg-dark-800 rounded-lg">
+=======
+                  {t.settings.appearanceLanguage}
+                </h3>
+                <div className="space-y-4">
+                  {/* Theme Toggle */}
+                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {theme === "dark" ? (
+                        <Moon className="w-5 h-5 text-blue-400" />
+                      ) : (
+                        <Sun className="w-5 h-5 text-yellow-400" />
+                      )}
+                      <div>
+                        <p className="text-white font-medium">{t.settings.theme}</p>
+                        <p className="text-sm text-gray-400">
+                          {theme === "dark" ? t.settings.darkMode : t.settings.lightMode}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleThemeToggle}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        theme === "dark" ? "bg-primary-600" : "bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                          theme === "dark" ? "translate-x-7" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Language Selection */}
+                  <div className="p-4 bg-dark-800 rounded-lg">
+                    <label className="text-white font-medium mb-3 flex items-center gap-2">
+                      <Globe className="w-5 h-5 text-primary-500" />
+                      {t.settings.languageLabel}
+                    </label>
+>>>>>>> 9e170f457778c31932b0c838cb899e4cf773dca6
                     <select
                       value={language}
                       onChange={handleLanguageChange}
@@ -1263,14 +1297,6 @@ const UserDashboard = () => {
                     >
                       <option value="en">English</option>
                       <option value="hi">हिन्दी (Hindi)</option>
-                      <option value="es">Español (Spanish)</option>
-                      <option value="fr">Français (French)</option>
-                      <option value="ar">العربية (Arabic)</option>
-                      <option value="bn">বাংলা (Bengali)</option>
-                      <option value="pt">Português (Portuguese)</option>
-                      <option value="ru">Русский (Russian)</option>
-                      <option value="ja">日本語 (Japanese)</option>
-                      <option value="de">Deutsch (German)</option>
                     </select>
                   </div>
                 </div>
@@ -1280,16 +1306,16 @@ const UserDashboard = () => {
               <div className="card p-8">
                 <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
                   <Bell className="w-5 h-5 text-primary-500" />
-                  Notification Preferences
+                  {t.settings.notificationPreferences}
                 </h3>
                 <div className="space-y-4">
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium">
-                        Push Notifications
+                        {t.settings.pushNotifications}
                       </p>
                       <p className="text-sm text-gray-400">
-                        Receive instant alerts about your requests
+                        {t.settings.receiveInstantAlerts}
                       </p>
                     </div>
                     <button
@@ -1309,10 +1335,10 @@ const UserDashboard = () => {
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium">
-                        Email Notifications
+                        {t.settings.emailNotifications}
                       </p>
                       <p className="text-sm text-gray-400">
-                        Get updates via email
+                        {t.settings.getUpdatesViaEmail}
                       </p>
                     </div>
                     <button
@@ -1334,10 +1360,10 @@ const UserDashboard = () => {
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium">
-                        SMS Notifications
+                        {t.settings.smsNotifications}
                       </p>
                       <p className="text-sm text-gray-400">
-                        Receive text message alerts
+                        {t.settings.receiveTextAlerts}
                       </p>
                     </div>
                     <button
@@ -1360,16 +1386,16 @@ const UserDashboard = () => {
               <div className="card p-8">
                 <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
                   <Lock className="w-5 h-5 text-primary-500" />
-                  Privacy & Security
+                  {t.settings.privacySecurity}
                 </h3>
                 <div className="space-y-4">
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium">
-                        Share Location with Services
+                        {t.settings.shareLocationServices}
                       </p>
                       <p className="text-sm text-gray-400">
-                        Allow emergency services to access your location
+                        {t.settings.allowEmergencyAccess}
                       </p>
                     </div>
                     <button
@@ -1390,9 +1416,9 @@ const UserDashboard = () => {
 
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
                     <div>
-                      <p className="text-white font-medium">Usage Analytics</p>
+                      <p className="text-white font-medium">{t.settings.usageAnalytics}</p>
                       <p className="text-sm text-gray-400">
-                        Help improve the app by sharing usage data
+                        {t.settings.helpImproveApp}
                       </p>
                     </div>
                     <button
@@ -1417,7 +1443,7 @@ const UserDashboard = () => {
               <div className="card p-8">
                 <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
                   <SettingsIcon className="w-5 h-5 text-primary-500" />
-                  App Preferences
+                  {t.settings.appPreferences}
                 </h3>
                 <div className="space-y-4">
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
@@ -1428,9 +1454,9 @@ const UserDashboard = () => {
                         <VolumeX className="w-5 h-5 text-gray-500" />
                       )}
                       <div>
-                        <p className="text-white font-medium">Sound Effects</p>
+                        <p className="text-white font-medium">{t.settings.soundEffects}</p>
                         <p className="text-sm text-gray-400">
-                          Play sounds for actions and alerts
+                          {t.settings.playSoundsForActions}
                         </p>
                       </div>
                     </div>
@@ -1457,10 +1483,10 @@ const UserDashboard = () => {
                       <MapPin className="w-5 h-5 text-primary-500" />
                       <div>
                         <p className="text-white font-medium">
-                          Auto-Fetch Location
+                          {t.settings.autoFetchLocation}
                         </p>
                         <p className="text-sm text-gray-400">
-                          Automatically get your location on app start
+                          {t.settings.autoGetLocation}
                         </p>
                       </div>
                     </div>
@@ -1486,10 +1512,10 @@ const UserDashboard = () => {
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium">
-                        Location Services
+                        {t.settings.locationServices}
                       </p>
                       <p className="text-sm text-gray-400">
-                        Browser location access status
+                        {t.settings.browserLocationStatus}
                       </p>
                     </div>
                     <div
@@ -1499,7 +1525,7 @@ const UserDashboard = () => {
                           : "bg-red-500/20 text-red-400"
                       }`}
                     >
-                      {location ? "Enabled" : "Disabled"}
+                      {location ? t.settings.enabled : t.settings.disabled}
                     </div>
                   </div>
                 </div>
@@ -1508,14 +1534,14 @@ const UserDashboard = () => {
               {/* Danger Zone */}
               <div className="card p-8 border border-red-500/30">
                 <h3 className="text-lg font-semibold text-red-400 mb-6">
-                  Danger Zone
+                  {t.settings.dangerZone}
                 </h3>
                 <div className="space-y-4">
                   <button className="w-full p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 font-medium transition-colors">
-                    Clear All Request History
+                    {t.settings.clearAllHistory}
                   </button>
                   <button className="w-full p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 font-medium transition-colors">
-                    Delete Account
+                    {t.settings.deleteAccount}
                   </button>
                 </div>
               </div>
