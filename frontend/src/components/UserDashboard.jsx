@@ -39,6 +39,7 @@ import {
 import Sidebar from "./Sidebar";
 import SafetyChatbot from "./SafetyChatbot";
 import EmergencyContacts from "./EmergencyContacts";
+import MapView from "./MapView";
 
 const requestTypes = [
   { id: "ambulance", label: "Ambulance", icon: Ambulance, color: "bg-red-600" },
@@ -1075,17 +1076,7 @@ const UserDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="aspect-video bg-dark-800 border border-dark-700 rounded-xl flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-16 h-16 text-primary-500/30 mx-auto mb-4" />
-                      <p className="text-gray-400 font-semibold">
-                        Map view coming soon...
-                      </p>
-                      <p className="text-gray-500 text-sm mt-2">
-                        Interactive map integration in progress
-                      </p>
-                    </div>
-                  </div>
+                  <MapView />
                 </div>
               ) : (
                 <div className="text-center py-20">
