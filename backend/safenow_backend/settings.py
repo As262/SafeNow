@@ -23,7 +23,9 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+_render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
+_extra_hosts = [h for h in os.environ.get('ALLOWED_HOSTS', '').split(',') if h]
+ALLOWED_HOSTS = ['*'] if DEBUG else (['localhost', '127.0.0.1'] + _extra_hosts + ([_render_host] if _render_host else []))
 
 INSTALLED_APPS = [
     'daphne',
@@ -186,7 +188,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICSFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGGING = {
