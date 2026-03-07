@@ -18,8 +18,6 @@ import {
   Save,
   X,
   Globe,
-  Moon,
-  Sun,
   Bell,
   Lock,
   Eye,
@@ -80,9 +78,6 @@ const UserDashboard = () => {
   const submittingRef = useRef(false);
 
   // Settings states
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("appTheme") || "dark",
-  );
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user.name,
@@ -156,11 +151,6 @@ const UserDashboard = () => {
 
   // Persist settings to localStorage
   useEffect(() => {
-    localStorage.setItem("appTheme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
     localStorage.setItem("notificationSettings", JSON.stringify(notifications));
   }, [notifications]);
 
@@ -181,10 +171,6 @@ const UserDashboard = () => {
   };
 
   // Settings handlers
-  const handleThemeToggle = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
   const handleLanguageChange = (e) => {
     changeLanguage(e.target.value);
   };
@@ -749,7 +735,7 @@ const UserDashboard = () => {
                                 if (lat && lng) {
                                   window.open(
                                     `https://www.google.com/maps?q=${lat},${lng}`,
-                                    "_blank"
+                                    "_blank",
                                   );
                                 }
                               }}
@@ -1261,48 +1247,15 @@ const UserDashboard = () => {
                 </div>
               </div>
 
-              {/* Appearance Settings */}
+              {/* Language Settings */}
               <div className="card p-8">
                 <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
                   <Globe className="w-5 h-5 text-primary-500" />
-                  Appearance & Language
+                  Language
                 </h3>
                 <div className="space-y-4">
-                  {/* Theme Toggle */}
-                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {theme === "dark" ? (
-                        <Moon className="w-5 h-5 text-blue-400" />
-                      ) : (
-                        <Sun className="w-5 h-5 text-yellow-400" />
-                      )}
-                      <div>
-                        <p className="text-white font-medium">Theme</p>
-                        <p className="text-sm text-gray-400">
-                          {theme === "dark" ? "Dark Mode" : "Light Mode"}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleThemeToggle}
-                      className={`relative w-14 h-7 rounded-full transition-colors ${
-                        theme === "dark" ? "bg-primary-600" : "bg-gray-600"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                          theme === "dark" ? "translate-x-7" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
                   {/* Language Selection */}
                   <div className="p-4 bg-dark-800 rounded-lg">
-                    <label className="text-white font-medium mb-3 flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-primary-500" />
-                      Language
-                    </label>
                     <select
                       value={language}
                       onChange={handleLanguageChange}

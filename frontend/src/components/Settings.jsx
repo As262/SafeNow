@@ -6,7 +6,6 @@ import {
   MapPin,
   Bell,
   Shield,
-  Moon,
   Globe,
   Save,
   CheckCircle,
@@ -30,7 +29,6 @@ const Settings = () => {
     address: "123 Main Street, City",
     notifications: true,
     locationSharing: true,
-    darkMode: true,
     language: language,
   });
 
@@ -223,33 +221,11 @@ const Settings = () => {
       {/* Appearance */}
       <div className="card p-6">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <Moon className="w-5 h-5 text-primary-500" />
+          <Globe className="w-5 h-5 text-primary-500" />
           {t.appearance}
         </h3>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-dark-800 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Moon className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-white font-medium">{t.darkMode}</p>
-                <p className="text-sm text-gray-400">{t.useDarkTheme}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => handleChange("darkMode", !settings.darkMode)}
-              className={`relative w-14 h-7 rounded-full transition-colors ${
-                settings.darkMode ? "bg-primary-600" : "bg-dark-700"
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
-                  settings.darkMode ? "translate-x-7" : "translate-x-0.5"
-                }`}
-              />
-            </button>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2">
               {t.language}
