@@ -19,6 +19,15 @@ from authentication.models import User
 
 logger = logging.getLogger('sos')
 
+# ---------------------------------------------------------------------------
+# In-memory conversation store:
+#   { session_id: [{"role": "user"|"assistant", "content": str}] }
+# A lock guards concurrent access; sessions persist until server restart.
+# ---------------------------------------------------------------------------
+_conversation_store: dict = {}
+_store_lock = threading.Lock()
+_MAX_HISTORY = 10  # maximum messages kept per session (user+assistant pairs)
+
 
 def is_admin(user):
     return user.role == 'admin'
@@ -34,7 +43,7 @@ SOS_TYPE_TO_GROUPS = {
     'Medical Help': ['hospital_sos'],
     'Fire Emergency': ['fire_sos'],
     'NGO Support': ['ngo_sos'],
-    'Police': ['admin_sos'],
+    'Police': ['police_sos'],
 }
 
 # Map service role to the SOS types they handle
@@ -42,6 +51,7 @@ ROLE_TO_SOS_TYPES = {
     'hospital': ['Ambulance', 'Medical Help'],
     'fire': ['Fire Emergency'],
     'ngo': ['NGO Support'],
+    'police': ['Police'],
     'admin': None,  # Admin sees all types
 }
 
@@ -198,14 +208,63 @@ def update_request_status(request, request_id):
     })
 
 
+_SYSTEM_INSTRUCTION = (
+    "You are a calm, concise safety assistant for an emergency SOS app called SafeNow. "
+    "You remember the full conversation history and use it to decide how to respond.\n\n"
+
+    "RESPONSE FORMAT RULES — choose the format based on the user's intent:\n\n"
+
+    "1. NEW INJURY OR EMERGENCY (user describes a new situation for the first time):\n"
+    "   - Use a short header (e.g. 'Immediate steps:') followed by numbered steps.\n"
+    "   - Maximum 4 steps. One short sentence per step.\n"
+    "   - End with 'Send an SOS alert if symptoms worsen.' if the situation could need help.\n\n"
+
+    "2. FOLLOW-UP QUESTION (user asks about the same situation already discussed):\n"
+    "   - Respond with 1–2 short direct sentences. Do NOT repeat the full step list.\n"
+    "   - Only add a bullet list if new distinct points are needed (max 3 bullets).\n\n"
+
+    "3. SEVERE OR LIFE-THREATENING SITUATION (unconscious, severe bleeding, can't breathe, chest pain, etc.):\n"
+    "   - Respond with exactly: '⚠️ Call emergency services immediately. Do not wait.'\n"
+    "   - Add one sentence of what to do while waiting (e.g. keep them still, don't remove objects).\n\n"
+
+    "GENERAL RULES:\n"
+    "- Never write long paragraphs.\n"
+    "- Use bullet points (•) only for listing signs or options, not for action steps.\n"
+    "- Keep tone calm and reassuring.\n"
+    "- Prioritize the most urgent action first.\n\n"
+
+    "EXAMPLES:\n"
+    "User: I burned my hand\n"
+    "→ Immediate steps:\n"
+    "   1. Run cool water over the burn for 10 minutes\n"
+    "   2. Remove rings or tight items nearby\n"
+    "   3. Cover loosely with a sterile dressing\n"
+    "   4. Seek medical care if blistering occurs\n\n"
+
+    "User (follow-up): Should I apply a bandage now?\n"
+    "→ Yes. Once the burn has cooled and is clean, cover it loosely with a sterile bandage.\n\n"
+
+    "User: He is unconscious and not breathing\n"
+    "→ ⚠️ Call emergency services immediately. Do not wait.\n"
+    "   Start CPR if you are trained while waiting for help to arrive.\n"
+)
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chatbot_response(request):
     """
-    AI Safety Chatbot endpoint.
+    AI Safety Chatbot endpoint with session-based conversation memory.
     Provides safety guidance and emergency advice using Google Gemini AI.
+
+    Expected request body:
+      { "message": "...", "session_id": "<uuid>" }
+
+    Response:
+      { "success": true, "response": "...", "session_id": "<uuid>" }
     """
     user_message = request.data.get('message', '').strip()
+    session_id = request.data.get('session_id', '').strip()
 
     if not user_message:
         return Response(
@@ -213,69 +272,68 @@ def chatbot_response(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    # Retrieve existing history for this session (copy so we can mutate freely)
+    with _store_lock:
+        history = list(_conversation_store.get(session_id, [])) if session_id else []
+
+    api_key = os.environ.get('GROQ_API_KEY')
+    if not api_key:
+        logger.warning("GROQ_API_KEY not set — using fallback responses")
+        return Response({
+            'success': True,
+            'response': get_fallback_response(user_message),
+            'session_id': session_id,
+        })
+
+    # Build the messages list: system prompt + conversation history + new message
+    messages = [
+        {"role": "system", "content": _SYSTEM_INSTRUCTION},
+        *history,
+        {"role": "user", "content": user_message},
+    ]
+
     try:
-        # Import Gemini AI
-        import google.generativeai as genai
+        import httpx
+        with httpx.Client(timeout=30) as client:
+            resp = client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": messages,
+                    "max_tokens": 300,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            ai_response = data["choices"][0]["message"]["content"].strip()
 
-        # Configure API key from environment
-        api_key = os.environ.get('GEMINI_API_KEY')
-        if not api_key:
-            # Fallback response when API key is not configured
-            return Response({
-                'success': True,
-                'response': get_fallback_response(user_message),
-            })
-
-        genai.configure(api_key=api_key)
-
-        # Initialize the model
-        model = genai.GenerativeModel('gemini-1.5-flash')
-
-        # System instruction for safety assistant
-        system_instruction = """You are a helpful safety assistant for an emergency SOS application called SafeNow. 
-Your role is to provide short, practical, and clear advice for safety situations.
-
-Guidelines:
-- Keep responses brief (2-4 sentences maximum)
-- Focus on immediate, actionable steps
-- Be calm and reassuring
-- Cover topics like: minor injuries (cuts, burns, sprains), safety precautions, harassment, accidents, fires, medical emergencies
-- If the situation sounds like a MINOR issue that needs professional help (not life-threatening), suggest they can send an SOS alert
-- For life-threatening emergencies, remind them to call emergency services immediately (they shouldn't be chatting)
-- Use simple, clear language
-- Prioritize safety above all
-
-Examples of good responses:
-User: "I have a small cut on my hand"
-You: "For a small cut, wash it with clean water and soap, apply pressure with a clean cloth to stop bleeding, then cover with a bandage. If bleeding persists or the cut is deep, consider seeking medical attention."
-
-User: "Someone is following me"
-You: "Stay in well-lit public areas, keep walking toward crowded places, call a trusted contact, and if you feel threatened, use your SOS alert to get help immediately."
-
-Remember: This chatbot is for MINOR safety concerns and guidance, not life-threatening emergencies."""
-
-        # Generate response
-        prompt = f"{system_instruction}\n\nUser: {user_message}\nAssistant:"
-        response = model.generate_content(prompt)
-
-        ai_response = response.text if response.text else "I'm here to help with safety questions. Could you please provide more details about your situation?"
+        # Persist updated history (cap at _MAX_HISTORY messages)
+        if session_id:
+            updated_history = history + [
+                {"role": "user",      "content": user_message},
+                {"role": "assistant", "content": ai_response},
+            ]
+            if len(updated_history) > _MAX_HISTORY:
+                updated_history = updated_history[-_MAX_HISTORY:]
+            with _store_lock:
+                _conversation_store[session_id] = updated_history
 
         return Response({
             'success': True,
             'response': ai_response,
+            'session_id': session_id,
         })
 
-    except ImportError:
-        logger.error("google-generativeai library not installed")
-        return Response({
-            'success': True,
-            'response': get_fallback_response(user_message),
-        })
     except Exception as e:
-        logger.error(f"Chatbot error: {str(e)}")
+        logger.error(f"Chatbot error (Groq): {str(e)}")
         return Response({
             'success': True,
             'response': get_fallback_response(user_message),
+            'session_id': session_id,
         })
 
 

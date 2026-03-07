@@ -48,6 +48,9 @@ class SOSConsumer(AsyncWebsocketConsumer):
         elif self.user_role == 'ngo':
             await self.channel_layer.group_add('ngo_sos', self.channel_name)
             logger.info(f"NGO connected to WebSocket: {self.channel_name}")
+        elif self.user_role == 'police':
+            await self.channel_layer.group_add('police_sos', self.channel_name)
+            logger.info(f"Police connected to WebSocket: {self.channel_name}")
         else:
             if self.user_mobile:
                 await self.channel_layer.group_add(
@@ -58,7 +61,7 @@ class SOSConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         # Send initial pending requests filtered by role
-        if self.user_role in ('admin', 'hospital', 'fire', 'ngo'):
+        if self.user_role in ('admin', 'hospital', 'fire', 'ngo', 'police'):
             pending = await self.get_pending_requests(self.user_role)
             await self.send(text_data=json.dumps({
                 'type': 'initial_requests',
@@ -75,6 +78,8 @@ class SOSConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_discard('fire_sos', self.channel_name)
         elif self.user_role == 'ngo':
             await self.channel_layer.group_discard('ngo_sos', self.channel_name)
+        elif self.user_role == 'police':
+            await self.channel_layer.group_discard('police_sos', self.channel_name)
         elif self.user_mobile:
             await self.channel_layer.group_discard(
                 f'user_{self.user_mobile}', self.channel_name
@@ -121,6 +126,7 @@ class SOSConsumer(AsyncWebsocketConsumer):
             'hospital': ['Ambulance', 'Medical Help'],
             'fire': ['Fire Emergency'],
             'ngo': ['NGO Support'],
+            'police': ['Police'],
         }
         allowed_types = role_type_map.get(role)
         if allowed_types is not None:
