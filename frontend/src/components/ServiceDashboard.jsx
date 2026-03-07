@@ -15,6 +15,7 @@ import {
   Flame,
   Users,
   AlertCircle,
+  Navigation,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -397,9 +398,28 @@ const ServiceDashboard = () => {
                             {request.userId}
                           </p>
                         </div>
-                        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
-                          ACCEPTED
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const lat = request.location?.latitude;
+                              const lng = request.location?.longitude;
+                              if (lat && lng) {
+                                window.open(
+                                  `https://www.google.com/maps?q=${lat},${lng}`,
+                                  "_blank"
+                                );
+                              }
+                            }}
+                            className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
+                            title="View on map"
+                          >
+                            <Navigation className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
+                            ACCEPTED
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">

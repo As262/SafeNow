@@ -27,6 +27,7 @@ import {
   BarChart3,
   Volume2,
   VolumeX,
+  Navigation,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
@@ -421,25 +422,25 @@ const UserDashboard = () => {
           {activeSection === "dashboard" && (
             <>
               {/* SOS Section */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-br from-red-600/10 via-dark-900 to-dark-900 border-2 border-red-500/20 rounded-2xl p-8 sm:p-10 text-center shadow-2xl">
+              <div className="mb-6">
+                <div className="bg-gradient-to-br from-red-600/10 via-dark-900 to-dark-900 border-2 border-red-500/20 rounded-2xl p-5 sm:p-6 text-center shadow-2xl">
                   <div className="max-w-3xl mx-auto">
-                    <div className="inline-block p-3 bg-red-500/10 rounded-full mb-4">
-                      <AlertTriangle className="w-8 h-8 text-red-500" />
+                    <div className="inline-block p-2 bg-red-500/10 rounded-full mb-3">
+                      <AlertTriangle className="w-6 h-6 text-red-500" />
                     </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
                       Emergency SOS
                     </h2>
-                    <p className="text-gray-400 mb-10">
+                    <p className="text-sm text-gray-400 mb-6">
                       Tap the button below for immediate emergency assistance
                     </p>
 
                     {/* SOS Button */}
-                    <div className="flex flex-col items-center mb-10">
+                    <div className="flex flex-col items-center mb-6">
                       <button
                         onClick={handleSOSClick}
                         disabled={sosActive || loading}
-                        className={`relative w-56 h-56 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-300 ${
+                        className={`relative w-40 h-40 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-300 ${
                           sosActive || loading
                             ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
                             : "hover:scale-110 hover:shadow-red-500/50 active:scale-95"
@@ -447,17 +448,17 @@ const UserDashboard = () => {
                       >
                         <div className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-20" />
                         <div className="text-center relative z-10">
-                          <AlertTriangle className="w-24 h-24 text-white mx-auto mb-3 drop-shadow-lg" />
-                          <span className="text-white text-2xl font-black tracking-wider">
+                          <AlertTriangle className="w-16 h-16 text-white mx-auto mb-2 drop-shadow-lg" />
+                          <span className="text-white text-xl font-black tracking-wider">
                             {loading ? "SENDING" : "SOS"}
                           </span>
                         </div>
                       </button>
 
                       {(sosActive || loading) && (
-                        <div className="mt-6 flex items-center gap-3 px-6 py-3 bg-green-500/20 border border-green-500/50 rounded-full">
-                          <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-                          <span className="font-semibold text-green-400 text-lg">
+                        <div className="mt-4 flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-full">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+                          <span className="font-semibold text-green-400 text-sm">
                             {loading
                               ? "Sending emergency alert..."
                               : "Alert Sent - Help is on the way!"}
@@ -468,24 +469,24 @@ const UserDashboard = () => {
 
                     {/* Request Type Selection */}
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-5 text-left">
+                      <h3 className="text-base font-semibold text-white mb-3 text-left">
                         Select Emergency Type
                       </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
                         {requestTypes.map((type) => {
                           const Icon = type.icon;
                           return (
                             <button
                               key={type.id}
                               onClick={() => setSelectedType(type.id)}
-                              className={`p-5 rounded-xl border-2 transition-all duration-200 group ${
+                              className={`p-3 rounded-xl border-2 transition-all duration-200 group ${
                                 selectedType === type.id
                                   ? "bg-gradient-to-br from-primary-600/30 to-primary-700/30 border-primary-500 shadow-lg shadow-primary-500/20 scale-105"
                                   : "bg-dark-800/50 border-dark-700 hover:border-primary-500/50 hover:bg-dark-800"
                               }`}
                             >
                               <Icon
-                                className={`w-10 h-10 mx-auto mb-3 transition-transform group-hover:scale-110 ${
+                                className={`w-8 h-8 mx-auto mb-2 transition-transform group-hover:scale-110 ${
                                   selectedType === type.id
                                     ? "text-primary-400"
                                     : "text-gray-400"
@@ -739,19 +740,38 @@ const UserDashboard = () => {
                               </div>
                             </div>
                           </div>
-                          <span
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 ${
-                              request.status === "completed"
-                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                : request.status === "accepted"
-                                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                                  : request.status === "pending"
-                                    ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                                    : "bg-red-500/20 text-red-400 border border-red-500/30"
-                            }`}
-                          >
-                            {request.status}
-                          </span>
+                          <div className="flex items-start gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const lat = request.location?.latitude;
+                                const lng = request.location?.longitude;
+                                if (lat && lng) {
+                                  window.open(
+                                    `https://www.google.com/maps?q=${lat},${lng}`,
+                                    "_blank"
+                                  );
+                                }
+                              }}
+                              className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
+                              title="View on map"
+                            >
+                              <Navigation className="w-4 h-4" />
+                            </button>
+                            <span
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 ${
+                                request.status === "completed"
+                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                  : request.status === "accepted"
+                                    ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                    : request.status === "pending"
+                                      ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                      : "bg-red-500/20 text-red-400 border border-red-500/30"
+                              }`}
+                            >
+                              {request.status}
+                            </span>
+                          </div>
                         </div>
 
                         {(request.respondedBy || request.respondedByName) && (
