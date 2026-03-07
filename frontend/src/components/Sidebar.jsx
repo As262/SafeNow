@@ -12,6 +12,8 @@ import {
   ChevronRight,
   Phone,
   ClipboardList,
+  Menu,
+  X as CloseIcon,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -23,6 +25,7 @@ const Sidebar = ({ onNavigate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAdmin = user?.role === "admin";
   const t = translations[language].sidebar;
 
@@ -78,6 +81,8 @@ const Sidebar = ({ onNavigate }) => {
     if (onNavigate) {
       onNavigate(item.section);
     }
+    // Close mobile menu after navigation
+    setIsMobileMenuOpen(false);
   };
 
   const handleLogout = () => {
@@ -87,11 +92,34 @@ const Sidebar = ({ onNavigate }) => {
 
   return (
     <>
+      {/* Mobile Hamburger Menu */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-dark-900 border border-dark-800 rounded-lg text-white hover:bg-dark-800 transition-colors shadow-lg"
+        aria-label="Toggle menu"
+      >
+        {isMobileMenuOpen ? (
+          <CloseIcon className="w-6 h-6" />
+        ) : (
+          <Menu className="w-6 h-6" />
+        )}
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 h-screen bg-dark-900 border-r border-dark-800 transition-all duration-300 z-50 flex flex-col ${
           isCollapsed ? "w-20" : "w-64"
-        }`}
+        } ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0`}
       >
         {/* Logo Section */}
         <div className="p-4 border-b border-dark-800">
@@ -220,9 +248,9 @@ const Sidebar = ({ onNavigate }) => {
         </div>
       </aside>
 
-      {/* Spacer */}
+      {/* Spacer - Only on desktop */}
       <div
-        className={`transition-all duration-300 ${
+        className={`hidden lg:block transition-all duration-300 ${
           isCollapsed ? "w-20" : "w-64"
         }`}
       />
