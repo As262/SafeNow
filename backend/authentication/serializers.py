@@ -70,9 +70,9 @@ class ServiceLoginSerializer(serializers.Serializer):
 
     def validate_service_id(self, value):
         value = value.strip()
-        # Validate format: 7-digit pin code starting with 100/200/300/400
+        # Validate format: 7-digit pin code starting with 100/200/300/400/500
         import re
-        if not re.match(r'^(100|200|300|400)\d{4}$', value):
+        if not re.match(r'^(100|200|300|400|500)\d{4}$', value):
             raise serializers.ValidationError(
                 "Invalid Service ID format. Must be a 7-digit pin (e.g., 1004782)"
             )

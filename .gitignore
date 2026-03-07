@@ -1,0 +1,30 @@
+# Python compiled files - never commit these
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Django
+db.sqlite3
+*.log
+
+# Environment variables
+.env
+.env.*
+.env.local
+.env.production
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Node
+node_modules/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
