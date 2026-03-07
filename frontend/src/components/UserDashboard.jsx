@@ -1244,52 +1244,11 @@ const UserDashboard = () => {
               <div className="card p-8">
                 <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
                   <Globe className="w-5 h-5 text-primary-500" />
-<<<<<<< HEAD
                   Language
                 </h3>
                 <div className="space-y-4">
                   {/* Language Selection */}
                   <div className="p-4 bg-dark-800 rounded-lg">
-=======
-                  {t.settings.appearanceLanguage}
-                </h3>
-                <div className="space-y-4">
-                  {/* Theme Toggle */}
-                  <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {theme === "dark" ? (
-                        <Moon className="w-5 h-5 text-blue-400" />
-                      ) : (
-                        <Sun className="w-5 h-5 text-yellow-400" />
-                      )}
-                      <div>
-                        <p className="text-white font-medium">{t.settings.theme}</p>
-                        <p className="text-sm text-gray-400">
-                          {theme === "dark" ? t.settings.darkMode : t.settings.lightMode}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleThemeToggle}
-                      className={`relative w-14 h-7 rounded-full transition-colors ${
-                        theme === "dark" ? "bg-primary-600" : "bg-gray-600"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                          theme === "dark" ? "translate-x-7" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Language Selection */}
-                  <div className="p-4 bg-dark-800 rounded-lg">
-                    <label className="text-white font-medium mb-3 flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-primary-500" />
-                      {t.settings.languageLabel}
-                    </label>
->>>>>>> 9e170f457778c31932b0c838cb899e4cf773dca6
                     <select
                       value={language}
                       onChange={handleLanguageChange}
