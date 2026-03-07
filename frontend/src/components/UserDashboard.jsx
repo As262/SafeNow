@@ -884,6 +884,137 @@ const UserDashboard = () => {
             </div>
           )}
 
+          {/* History Section */}
+          {activeSection === "history" && (
+            <div className="bg-gradient-to-br from-dark-900 to-dark-800 border border-dark-700 rounded-xl p-6 sm:p-8 shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-primary-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">
+                      All Requests
+                    </h2>
+                    <p className="text-sm text-gray-400">
+                      Your complete emergency request history
+                    </p>
+                  </div>
+                </div>
+                {requestHistory.length > 0 && (
+                  <span className="px-3 py-1 bg-primary-500/20 text-primary-400 rounded-full text-sm font-semibold">
+                    {requestHistory.length} total
+                  </span>
+                )}
+              </div>
+
+              {requestHistory.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-10 h-10 text-gray-600" />
+                  </div>
+                  <p className="text-gray-400 text-lg font-medium">
+                    No requests yet
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Your emergency requests will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {requestHistory.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-5 bg-dark-800 border border-dark-700 rounded-xl hover:border-primary-500/50 hover:shadow-lg transition-all duration-200 group"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                              request.status === "completed"
+                                ? "bg-green-500/20 border border-green-500/30"
+                                : request.status === "accepted"
+                                  ? "bg-blue-500/20 border border-blue-500/30"
+                                  : request.status === "pending"
+                                    ? "bg-yellow-500/20 border border-yellow-500/30"
+                                    : "bg-red-500/20 border border-red-500/30"
+                            }`}
+                          >
+                            {request.status === "completed" ? (
+                              <CheckCircle className="w-6 h-6 text-green-400" />
+                            ) : request.status === "accepted" ? (
+                              <CheckCircle className="w-6 h-6 text-blue-400" />
+                            ) : request.status === "pending" ? (
+                              <Clock className="w-6 h-6 text-yellow-400" />
+                            ) : (
+                              <X className="w-6 h-6 text-red-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-white text-base mb-1">
+                              {request.type}
+                            </p>
+                            <p className="text-sm text-gray-400 flex items-center gap-2 mb-2">
+                              <MapPin className="w-4 h-4 shrink-0" />
+                              <span className="truncate">
+                                {request.location?.address ||
+                                  `${request.location?.latitude?.toFixed?.(4) || "—"}, ${request.location?.longitude?.toFixed?.(4) || "—"}`}
+                              </span>
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-3 h-3 text-gray-500" />
+                              <p className="text-xs text-gray-500">
+                                {formatTimestamp(request.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <span
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 ${
+                            request.status === "completed"
+                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                              : request.status === "accepted"
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                : request.status === "pending"
+                                  ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                  : "bg-red-500/20 text-red-400 border border-red-500/30"
+                          }`}
+                        >
+                          {request.status}
+                        </span>
+                      </div>
+
+                      {(request.respondedBy || request.respondedByName) && (
+                        <div className="mt-4 pt-4 border-t border-dark-700">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-primary-500/20 rounded-full flex items-center justify-center">
+                              <User className="w-3 h-3 text-primary-400" />
+                            </div>
+                            <p className="text-sm text-gray-400">
+                              Responded by{" "}
+                              <span className="text-white font-semibold">
+                                {request.respondedBy || request.respondedByName}
+                              </span>
+                              {(request.responseTime ||
+                                request.response_time) && (
+                                <span className="text-gray-500">
+                                  {" "}
+                                  in{" "}
+                                  {request.responseTime ||
+                                    request.response_time}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Contacts Section */}
           {activeSection === "contacts" && <EmergencyContacts />}
 
