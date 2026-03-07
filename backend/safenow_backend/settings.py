@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.gzip.GZipMiddleware',  # Enable compression
+    'safenow_backend.middleware.DatabaseConnectionMiddleware',  # Close DB connections
 ]
 
 ROOT_URLCONF = 'safenow_backend.urls'
@@ -96,7 +97,7 @@ else:
 # Database configuration - uses SQLite if PostgreSQL credentials not provided
 _db_password = os.environ.get('DB_PASSWORD', '')
 if _db_password:
-    # PostgreSQL configuration
+    # PostgreSQL configuration with connection pooling
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -105,9 +106,15 @@ if _db_password:
             'PASSWORD': _db_password,
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '5432'),
+            'CONN_MAX_AGE': 0,  # Don't pool connections (close after each request)
+            'CONN_HEALTH_CHECKS': True,  # Check connection health before reusing
             'OPTIONS': {
                 'sslmode': 'prefer',
                 'connect_timeout': 10,
+                'keepalives': 1,
+                'keepalives_idle': 30,
+                'keepalives_interval': 10,
+                'keepalives_count': 5,
             },
         }
     }
