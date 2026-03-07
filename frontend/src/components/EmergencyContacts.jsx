@@ -25,15 +25,15 @@ const defaultEmergencyContacts = [
   {
     id: 1,
     name: "Emergency Services",
-    number: "911",
+    number: "112",
     icon: AlertCircle,
     color: "from-red-500 to-red-700",
-    description: "General emergency hotline",
+    description: "National emergency number",
   },
   {
     id: 2,
     name: "Ambulance",
-    number: "1-800-AMBULANCE",
+    number: "102",
     icon: Ambulance,
     color: "from-blue-500 to-blue-700",
     description: "Medical emergency & ambulance",
@@ -41,7 +41,7 @@ const defaultEmergencyContacts = [
   {
     id: 3,
     name: "Police",
-    number: "1-800-POLICE",
+    number: "100",
     icon: Shield,
     color: "from-indigo-500 to-indigo-700",
     description: "Law enforcement assistance",
@@ -49,7 +49,7 @@ const defaultEmergencyContacts = [
   {
     id: 4,
     name: "Fire Department",
-    number: "1-800-FIRE",
+    number: "101",
     icon: Hospital,
     color: "from-orange-500 to-orange-700",
     description: "Fire & rescue services",
@@ -57,10 +57,10 @@ const defaultEmergencyContacts = [
   {
     id: 5,
     name: "NGO Support",
-    number: "1-800-NGO-HELP",
+    number: "1098",
     icon: Users,
     color: "from-purple-500 to-purple-700",
-    description: "Community support services",
+    description: "Child helpline & support services",
   },
 ];
 
@@ -284,7 +284,7 @@ const EmergencyContacts = () => {
           <div>
             <h4 className="text-white font-bold mb-2">Important Notice</h4>
             <p className="text-gray-300 text-sm">
-              In case of a life-threatening emergency, always call 911
+              In case of a life-threatening emergency, always call 112
               immediately. These contacts are provided for quick reference and
               non-emergency situations.
             </p>

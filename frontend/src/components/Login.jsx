@@ -3,8 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Shield, PhoneCall, AlertCircle, Building2, Lock } from "lucide-react";
 import { sendOTP, verifyOTP, serviceLogin } from "../utils/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { translations } from "../utils/translations";
 
 const Login = () => {
+  const { language } = useLanguage();
+  const t = translations[language];
   const [loginMode, setLoginMode] = useState("user"); // 'user' or 'service'
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
@@ -151,7 +155,7 @@ const Login = () => {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">SafeNow</h1>
-          <p className="text-gray-400 text-lg">Your Safety, Our Priority</p>
+          <p className="text-gray-400 text-lg">{t.login.yourSafetyPriority}</p>
         </div>
 
         {/* Login Card */}
@@ -161,10 +165,10 @@ const Login = () => {
             step === "mobile" ? (
               <form onSubmit={handleSendOTP}>
                 <h2 className="text-2xl font-bold text-white mb-2">
-                  Welcome Back
+                  {t.login.title}
                 </h2>
                 <p className="text-gray-400 mb-6">
-                  Enter your mobile number to get started
+                  {t.login.subtitle}
                 </p>
 
                 {error && (
@@ -176,7 +180,7 @@ const Login = () => {
 
                 <div className="mb-6">
                   <label className="block text-gray-300 text-sm font-semibold mb-2">
-                    Mobile Number
+                    {t.login.mobilePlaceholder}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -205,20 +209,20 @@ const Login = () => {
                   {loading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Sending OTP...
+                      {t.login.sendingOtp}
                     </>
                   ) : (
-                    "Send OTP"
+                    t.login.sendOtp
                   )}
                 </button>
               </form>
             ) : (
               <form onSubmit={handleVerifyOTP}>
                 <h2 className="text-2xl font-bold text-white mb-2">
-                  Verify OTP
+                  {t.login.verifyOtp}
                 </h2>
                 <p className="text-gray-400 mb-6">
-                  Enter the 6-digit code sent to{" "}
+                  {t.login.otpSentTo}{" "}
                   <span className="text-white font-semibold">{mobile}</span>
                 </p>
 
@@ -233,14 +237,14 @@ const Login = () => {
                 {demoOtp && (
                   <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg">
                     <p className="text-blue-400 text-sm font-mono">
-                      <span className="font-semibold">Demo OTP:</span> {demoOtp}
+                      <span className="font-semibold">{t.login.demoOtp}:</span> {demoOtp}
                     </p>
                   </div>
                 )}
 
                 <div className="mb-6">
                   <label className="block text-gray-300 text-sm font-semibold mb-2">
-                    Enter OTP
+                    {t.login.enterOtp}
                   </label>
                   <input
                     type="text"
@@ -263,10 +267,10 @@ const Login = () => {
                   {loading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Verifying...
+                      {t.login.verifying}
                     </>
                   ) : (
-                    "Verify & Login"
+                    t.login.verifyLogin
                   )}
                 </button>
 
@@ -280,14 +284,14 @@ const Login = () => {
                     }}
                     className="text-gray-400 hover:text-white transition-colors"
                   >
-                    Change Number
+                    {t.login.changeNumber}
                   </button>
                   <button
                     type="button"
                     onClick={handleResendOTP}
                     className="text-primary-500 hover:text-primary-400 transition-colors font-semibold"
                   >
-                    Resend OTP
+                    {t.login.resendOtp}
                   </button>
                 </div>
               </form>
@@ -296,10 +300,10 @@ const Login = () => {
             // SERVICE PROVIDER LOGIN
             <form onSubmit={handleServiceLogin}>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Service Provider Login
+                {t.login.serviceProviderLogin}
               </h2>
               <p className="text-gray-400 mb-6">
-                Login with your service credentials
+                {t.login.loginWithCredentials}
               </p>
 
               {error && (
@@ -311,7 +315,7 @@ const Login = () => {
 
               <div className="mb-4">
                 <label className="block text-gray-300 text-sm font-semibold mb-2">
-                  Service ID
+                  {t.login.serviceId}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -332,14 +336,13 @@ const Login = () => {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  7-digit PIN: 100xxxx (Hospital), 200xxxx (NGO), 300xxxx
-                  (Fire), 400xxxx (Admin), 500xxxx (Police)
+                  {t.login.serviceIdHint}
                 </p>
               </div>
 
               <div className="mb-6">
                 <label className="block text-gray-300 text-sm font-semibold mb-2">
-                  Password
+                  {t.login.password}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -349,7 +352,7 @@ const Login = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t.login.enterPassword}
                     className="input-field pl-12"
                     required
                   />
@@ -364,10 +367,10 @@ const Login = () => {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Logging in...
+                    {t.login.loggingInText}
                   </>
                 ) : (
-                  "Login"
+                  t.login.login
                 )}
               </button>
             </form>
@@ -381,8 +384,8 @@ const Login = () => {
               className="text-primary-500 hover:text-primary-400 transition-colors font-semibold text-sm"
             >
               {loginMode === "user"
-                ? "Login as Service Provider →"
-                : "← Back to User Login"}
+                ? t.login.loginAsServiceProvider
+                : t.login.backToUserLogin}
             </button>
           </div>
         </div>
@@ -390,7 +393,7 @@ const Login = () => {
         {/* Footer */}
         <div className="text-center mt-8 mb-12">
           <p className="text-gray-500 text-sm">
-            By continuing, you agree to our Terms of Service and Privacy Policy
+            {t.login.termsAndPrivacy}
           </p>
         </div>
       </div>
