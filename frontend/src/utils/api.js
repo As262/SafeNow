@@ -282,6 +282,34 @@ export const getHelperRequests = async (latitude = null, longitude = null) => {
 };
 
 /**
+ * Get points balance and stats
+ * @returns {Promise} - Points balance and statistics
+ */
+export const getPointsBalance = async () => {
+  return apiRequest("/auth/points/balance/");
+};
+
+/**
+ * Get points transaction history
+ * @returns {Promise} - List of transactions
+ */
+export const getPointsTransactions = async () => {
+  return apiRequest("/auth/points/transactions/");
+};
+
+/**
+ * Withdraw points
+ * @param {number} amount - Amount to withdraw
+ * @returns {Promise} - Withdrawal confirmation
+ */
+export const withdrawPoints = async (amount) => {
+  return apiRequest("/auth/points/withdraw/", {
+    method: "POST",
+    body: JSON.stringify({ amount }),
+  });
+};
+
+/**
  * Respond to an SOS request as a helper
  * @param {string} requestId - SOS request ID
  * @param {string} action - 'accept' or 'reject'
@@ -307,6 +335,17 @@ export const getServiceProviders = async (role = null) => {
   return apiRequest(url, { method: "GET" });
 };
 
+/**
+ * Confirm help received (requesting user marks their own SOS as complete)
+ * @param {string} requestId - SOS request ID
+ * @returns {Promise}
+ */
+export const confirmRequestComplete = async (requestId) => {
+  return apiRequest(`/sos/request/${requestId}/confirm-complete/`, {
+    method: "POST",
+  });
+};
+
 export default {
   sendOTP,
   verifyOTP,
@@ -322,4 +361,5 @@ export default {
   toggleHelperAvailability,
   getHelperRequests,
   helperRespondToRequest,
+  confirmRequestComplete,
 };

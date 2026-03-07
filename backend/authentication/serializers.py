@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, UserSession, ServiceProvider, EmergencyContact
+from .models import User, UserSession, ServiceProvider, EmergencyContact, PointsTransaction
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -7,9 +7,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'mobile', 'name', 'email', 'role', 'created_at',
-            'is_helper', 'helper_available', 'helper_skills', 'helper_radius_km'
+            'is_helper', 'helper_available', 'helper_skills', 'helper_radius_km',
+            'points', 'total_earnings', 'total_requests_completed'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'points', 'total_earnings', 'total_requests_completed']
 
 
 class ServiceProviderSerializer(serializers.ModelSerializer):
@@ -73,10 +74,23 @@ class ServiceLoginSerializer(serializers.Serializer):
 
     def validate_service_id(self, value):
         value = value.strip()
-        # Validate format: 7-digit pin code starting with 100/200/300/400
+        # Validate format: 7-digit pin code starting with 100/200/300/400/500
         import re
-        if not re.match(r'^(100|200|300|400)\d{4}$', value):
+        if not re.match(r'^(100|200|300|400|500)\d{4}$', value):
             raise serializers.ValidationError(
                 "Invalid Service ID format. Must be a 7-digit pin (e.g., 1004782)"
             )
         return value
+
+
+class PointsTransactionSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    user_mobile = serializers.CharField(source='user.mobile', read_only=True)
+    
+    class Meta:
+        model = PointsTransaction
+        fields = [
+            'id', 'user', 'user_name', 'user_mobile', 'transaction_type', 
+            'amount', 'balance_after', 'description', 'sos_request', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'user', 'balance_after']

@@ -49,6 +49,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     helper_skills = models.CharField(max_length=200, blank=True, default='')
     helper_radius_km = models.IntegerField(default=5)  # Service radius in kilometers
     
+    # Points/Wallet system
+    points = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_requests_completed = models.IntegerField(default=0)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -177,3 +182,39 @@ class UserSession(models.Model):
 
     def __str__(self):
         return f"Session {self.id} for {self.user.name}"
+
+
+class PointsTransaction(models.Model):
+    """Track all points transactions for helpers."""
+    
+    TRANSACTION_TYPE_CHOICES = (
+        ('earned', 'Earned'),
+        ('withdrawn', 'Withdrawn'),
+        ('bonus', 'Bonus'),
+        ('penalty', 'Penalty'),
+    )
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='points_transactions'
+    )
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.CharField(max_length=500)
+    sos_request = models.ForeignKey(
+        'sos.SOSRequest',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='points_transactions'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.user.name} - {self.transaction_type} ₹{self.amount}"

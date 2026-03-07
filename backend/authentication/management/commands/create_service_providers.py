@@ -8,7 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # 7-digit pin code IDs:
-        # 400xxxx = Admin, 100xxxx = Hospital, 300xxxx = Fire, 200xxxx = NGO
+        # 400xxxx = Admin, 100xxxx = Hospital, 300xxxx = Fire, 200xxxx = NGO, 500xxxx = Police
         service_providers = [
             {
                 'service_id': '4001923',
@@ -45,6 +45,33 @@ class Command(BaseCommand):
                 'role': 'hospital',
                 'phone': '9876543213',
                 'address': '789 Health Street, Suburb',
+            },
+            {
+                'service_id': '5001234',
+                'name': 'City Police Station',
+                'email': 'admin@citypolice.com',
+                'password': 'police123',
+                'role': 'police',
+                'phone': '9876543241',
+                'address': '10 Police Station Road, City Center',
+            },
+            {
+                'service_id': '5002345',
+                'name': 'District Police Headquarters',
+                'email': 'admin@districtpolice.com',
+                'password': 'police123',
+                'role': 'police',
+                'phone': '9876543242',
+                'address': '20 Police Avenue, District HQ',
+            },
+            {
+                'service_id': '5003456',
+                'name': 'Women Police Station',
+                'email': 'admin@womenpolice.com',
+                'password': 'police123',
+                'role': 'police',
+                'phone': '9876543243',
+                'address': '30 Safety Lane, Suburb',
             },
             {
                 'service_id': '3006147',
@@ -128,7 +155,7 @@ class Command(BaseCommand):
         self.stdout.write('\n' + '='*60)
         self.stdout.write(self.style.SUCCESS('TEST CREDENTIALS:'))
         self.stdout.write('='*60)
-        self.stdout.write('PIN Code Format: 400xxxx=Admin, 100xxxx=Hospital, 300xxxx=Fire, 200xxxx=NGO')
+        self.stdout.write('PIN Code Format: 400xxxx=Admin, 100xxxx=Hospital, 200xxxx=NGO, 300xxxx=Fire, 500xxxx=Police')
         self.stdout.write('-'*60)
         self.stdout.write('Admin:')
         self.stdout.write('  Service ID: 4001923  |  Password: admin123')
@@ -142,4 +169,8 @@ class Command(BaseCommand):
         self.stdout.write('\nNGOs:')
         self.stdout.write('  Service ID: 2003891  |  Password: ngo123')
         self.stdout.write('  Service ID: 2005674  |  Password: ngo123')
+        self.stdout.write('\nPolice:')
+        self.stdout.write('  Service ID: 5001234  |  Password: police123')
+        self.stdout.write('  Service ID: 5002345  |  Password: police123')
+        self.stdout.write('  Service ID: 5003456  |  Password: police123')
         self.stdout.write('='*60 + '\n')

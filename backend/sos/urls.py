@@ -9,4 +9,5 @@ urlpatterns = [
     path('chatbot/', views.chatbot_response, name='chatbot'),
     path('helper/requests/', views.helper_requests_view, name='helper-requests'),
     path('helper/request/<uuid:request_id>/respond/', views.helper_respond_request_view, name='helper-respond'),
+    path('request/<uuid:request_id>/confirm-complete/', views.user_confirm_completion_view, name='user-confirm-complete'),
 ]

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   AlertCircle,
@@ -25,6 +25,10 @@ import {
   Volume2,
   VolumeX,
   Navigation,
+  Wallet,
+  TrendingUp,
+  Award,
+  ArrowUpRight,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
@@ -38,6 +42,9 @@ import {
   toggleHelperAvailability,
   getHelperRequests,
   helperRespondToRequest,
+  getPointsBalance,
+  withdrawPoints,
+  confirmRequestComplete,
 } from "../utils/api";
 import Sidebar from "./Sidebar";
 import SafetyChatbot from "./SafetyChatbot";
@@ -127,13 +134,95 @@ const UserDashboard = () => {
   const [isHelper, setIsHelper] = useState(user.is_helper || false);
   const [helperAvailable, setHelperAvailable] = useState(user.helper_available || true);
   const [helperRequests, setHelperRequests] = useState([]);
+  const [acceptedRequests, setAcceptedRequests] = useState([]);
   const [helperLoading, setHelperLoading] = useState(false);
   const [selectedHelperRequest, setSelectedHelperRequest] = useState(null);
   const [helperSkills, setHelperSkills] = useState(user.helper_skills || '');
   const [helperRadius, setHelperRadius] = useState(user.helper_radius_km || 5);
   const [showHelperConsent, setShowHelperConsent] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
+  
+  // Points/Wallet states
+  const [pointsBalance, setPointsBalance] = useState({
+    points: 0,
+    total_earnings: 0,
+    total_requests_completed: 0
+  });
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawing, setWithdrawing] = useState(false);
 
+  // Load points balance whenever helper status changes
+  useEffect(() => {
+    if (isHelper) {
+      loadPointsBalance();
+    }
+  }, [isHelper]);
+
+  // Cache helper requests to reduce API calls
+  const cachedHelperRequests = useRef({ pending: [], accepted: [], timestamp: 0 });
+  const CACHE_DURATION = 10000; // 10 seconds
+
+  const loadPointsBalance = useCallback(async () => {
+    console.log('🔄 Loading points balance...', { isHelper, userId: user?.mobile });
+    try {
+      const response = await getPointsBalance();
+      console.log('✅ Points balance response:', response);
+      if (response.success) {
+        const newBalance = {
+          points: response.points || 0,
+          total_earnings: response.total_earnings || 0,
+          total_requests_completed: response.total_requests_completed || 0
+        };
+        console.log('💰 Setting points balance:', newBalance);
+        setPointsBalance(newBalance);
+      } else {
+        console.error('❌ Points balance request failed:', response);
+      }
+    } catch (error) {
+      console.error('❌ Error loading points:', error);
+    }
+  }, [isHelper, user?.mobile]);
+
+  const handleWithdraw = async () => {
+    const amount = parseFloat(withdrawAmount);
+    
+    if (!amount || amount <= 0) {
+      setErrorMessage('Please enter a valid amount');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    if (amount < 100) {
+      setErrorMessage('Minimum withdrawal amount is ₹100');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    if (amount > pointsBalance.points) {
+      setErrorMessage('Insufficient balance');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    try {
+      setWithdrawing(true);
+      const response = await withdrawPoints(amount);
+
+      if (response.success) {
+        setSuccessMessage(`Successfully requested withdrawal of ₹${amount}`);
+        setShowWithdrawModal(false);
+        setWithdrawAmount('');
+        loadPointsBalance(); // Refresh balance
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to process withdrawal');
+      setTimeout(() => setErrorMessage(''), 3000);
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   useEffect(() => {
     loadRequestHistory();
@@ -159,39 +248,57 @@ const UserDashboard = () => {
     }
   }, [locationError, sendingRequest]);
 
-  // Load helper requests when helper section is active
+  // Load helper requests when helper section is active with caching
+  const loadHelperRequestsOptimized = useCallback(async (skipCache = false) => {
+    const now = Date.now();
+    
+    // Use cached data if available and fresh
+    if (!skipCache && now - cachedHelperRequests.current.timestamp < CACHE_DURATION) {
+      console.log('📦 Using cached helper requests');
+      setHelperRequests(cachedHelperRequests.current.pending);
+      setAcceptedRequests(cachedHelperRequests.current.accepted);
+      return;
+    }
+    
+    setHelperLoading(true);
+    try {
+      const response = await getHelperRequests(
+        location?.latitude,
+        location?.longitude
+      );
+      const pending = response.pending_requests || response.requests || [];
+      const accepted = response.accepted_requests || [];
+      
+      // Update cache
+      cachedHelperRequests.current = {
+        pending,
+        accepted,
+        timestamp: now
+      };
+      
+      setHelperRequests(pending);
+      setAcceptedRequests(accepted);
+    } catch (error) {
+      console.error('Error loading helper requests:', error);
+    } finally {
+      setHelperLoading(false);
+    }
+  }, [location]);
+
   useEffect(() => {
     if (activeSection === 'helper' && isHelper && helperAvailable) {
-      const loadHelperRequests = async () => {
-        setHelperLoading(true);
-        try {
-          if (location) {
-            const response = await getHelperRequests(
-              location.latitude,
-              location.longitude
-            );
-            setHelperRequests(response.requests || []);
-          } else {
-            const response = await getHelperRequests();
-            setHelperRequests(response.requests || []);
-          }
-        } catch (error) {
-          console.error('Error loading helper requests:', error);
-        }
-        setHelperLoading(false);
-      };
-      loadHelperRequests();
+      loadHelperRequestsOptimized();
     }
-  }, [activeSection, isHelper, helperAvailable, location]);
+  }, [activeSection, isHelper, helperAvailable, loadHelperRequestsOptimized]);
 
-  const loadRequestHistory = async () => {
+  const loadRequestHistory = useCallback(async () => {
     try {
       const response = await getUserRequests();
       setRequestHistory(response.requests);
     } catch (error) {
       console.error("Error loading request history:", error);
     }
-  };
+  }, []);
 
   // Persist settings to localStorage
   useEffect(() => {
@@ -859,26 +966,62 @@ const UserDashboard = () => {
 
                         {(request.respondedBy || request.respondedByName) && (
                           <div className="mt-4 pt-4 border-t border-dark-700">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-primary-500/20 rounded-full flex items-center justify-center">
-                                <User className="w-3 h-3 text-primary-400" />
-                              </div>
-                              <p className="text-sm text-gray-400">
-                                Responded by{" "}
-                                <span className="text-white font-semibold">
-                                  {request.respondedBy ||
-                                    request.respondedByName}
-                                </span>
-                                {(request.responseTime ||
-                                  request.response_time) && (
-                                  <span className="text-gray-500">
-                                    {" "}
-                                    in{" "}
-                                    {request.responseTime ||
-                                      request.response_time}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-primary-500/20 rounded-full flex items-center justify-center">
+                                  <User className="w-3 h-3 text-primary-400" />
+                                </div>
+                                <p className="text-sm text-gray-400">
+                                  Responded by{" "}
+                                  <span className="text-white font-semibold">
+                                    {request.respondedBy ||
+                                      request.respondedByName}
                                   </span>
-                                )}
-                              </p>
+                                  {(request.responseTime ||
+                                    request.response_time) && (
+                                    <span className="text-gray-500">
+                                      {" "}
+                                      in{" "}
+                                      {request.responseTime ||
+                                        request.response_time}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              {request.status === "accepted" && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const btn = e.currentTarget;
+                                    btn.disabled = true;
+                                    btn.textContent = 'Confirming...';
+                                    
+                                    // Optimistic update
+                                    setRequestHistory(prev => prev.map(r => 
+                                      r.id === request.id ? { ...r, status: 'completed' } : r
+                                    ));
+                                    
+                                    try {
+                                      await confirmRequestComplete(request.id);
+                                      setSuccessMessage('Help confirmed! Thank you for your feedback.');
+                                      setTimeout(() => setSuccessMessage(''), 5000);
+                                    } catch (error) {
+                                      // Rollback
+                                      setRequestHistory(prev => prev.map(r => 
+                                        r.id === request.id ? { ...r, status: 'accepted' } : r
+                                      ));
+                                      setErrorMessage(error.message || 'Failed to confirm completion');
+                                      setTimeout(() => setErrorMessage(''), 3000);
+                                      btn.disabled = false;
+                                      btn.textContent = 'Confirm Help Received';
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                  Confirm Help Received
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}
@@ -1681,7 +1824,94 @@ const UserDashboard = () => {
                   </button>
                 </div>
 
-                {/* Helper Configuration */}
+                {/* Earnings/Wallet Card */}
+                {isHelper && (
+                <div className="card p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <Wallet className="w-6 h-6 text-green-500" />
+                      My Earnings
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    {/* Current Balance */}
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md p-6 text-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-green-100 text-sm">Available Balance</span>
+                        <Wallet className="w-5 h-5 text-green-100" />
+                      </div>
+                      <div className="text-3xl font-bold mb-3">₹{pointsBalance.points.toFixed(2)}</div>
+                      <button
+                        onClick={() => setShowWithdrawModal(true)}
+                        className="w-full bg-white text-green-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-50 transition-colors disabled:bg-gray-300 disabled:text-gray-500"
+                        disabled={pointsBalance.points < 100}
+                      >
+                        {pointsBalance.points < 100 ? 'Min ₹100 to withdraw' : 'Withdraw Funds'}
+                      </button>
+                    </div>
+
+                    {/* Total Earnings */}
+                    <div className="bg-dark-800 rounded-lg border border-dark-700 p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-400 text-sm">Total Earned</span>
+                        <TrendingUp className="w-5 h-5 text-blue-500" />
+                      </div>
+                      <div className="text-3xl font-bold text-white">₹{pointsBalance.total_earnings.toFixed(2)}</div>
+                      <p className="text-xs text-gray-500 mt-2">Lifetime earnings</p>
+                    </div>
+
+                    {/* Requests Completed */}
+                    <div className="bg-dark-800 rounded-lg border border-dark-700 p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-400 text-sm">Helped</span>
+                        <Award className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <div className="text-3xl font-bold text-white">{pointsBalance.total_requests_completed}</div>
+                      <p className="text-xs text-gray-500 mt-2">People helped</p>
+                    </div>
+                  </div>
+
+                  {/* Earning Guide */}
+                  <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg p-4">
+                    <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      <Award className="w-5 h-5 text-yellow-400" />
+                      How You Earn
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                      <div className="flex items-start gap-2">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                          ₹50
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Base Reward</p>
+                          <p className="text-gray-400 text-xs">Per completed request</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                          +25
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Fast Response</p>
+                          <p className="text-gray-400 text-xs">Accept within 5 min</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                          +15
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Distance Bonus</p>
+                          <p className="text-gray-400 text-xs">Travel over 10 km</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* * Helper Configuration */}
                 {isHelper && (
                   <div className="space-y-4 mb-6">
                     <div>
@@ -1766,24 +1996,7 @@ const UserDashboard = () => {
                       Nearby Emergency Requests
                     </h3>
                     <button
-                      onClick={async () => {
-                        setHelperLoading(true);
-                        try {
-                          if (location) {
-                            const response = await getHelperRequests(
-                              location.latitude,
-                              location.longitude
-                            );
-                            setHelperRequests(response.requests || []);
-                          } else {
-                            const response = await getHelperRequests();
-                            setHelperRequests(response.requests || []);
-                          }
-                        } catch (error) {
-                          console.error('Error loading requests:', error);
-                        }
-                        setHelperLoading(false);
-                      }}
+                      onClick={() => loadHelperRequestsOptimized(true)}
                       className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2"
                       disabled={helperLoading}
                     >
@@ -1835,22 +2048,36 @@ const UserDashboard = () => {
                             </div>
                             <div className="flex flex-col gap-2">
                               <button
-                                onClick={async () => {
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  const button = e.target;
+                                  button.disabled = true;
+                                  button.textContent = 'Accepting...';
+                                  
+                                  // Optimistic update - move to accepted immediately
+                                  const acceptedReq = { ...req, status: 'accepted', acceptedAt: new Date().toISOString() };
+                                  setHelperRequests(prev => prev.filter(r => r.id !== req.id));
+                                  setAcceptedRequests(prev => [acceptedReq, ...prev]);
+                                  setSuccessMessage('Request accepted! User has been notified.');
+                                  setTimeout(() => setSuccessMessage(''), 3000);
+                                  
                                   try {
                                     await helperRespondToRequest(req.id, 'accept');
-                                    setSuccessMessage('Request accepted! User has been notified.');
-                                    setTimeout(() => setSuccessMessage(''), 3000);
-                                    // Refresh requests
-                                    const response = await getHelperRequests(
-                                      location?.latitude,
-                                      location?.longitude
-                                    );
-                                    setHelperRequests(response.requests || []);
+                                    // Invalidate cache for next refresh
+                                    cachedHelperRequests.current.timestamp = 0;
                                   } catch (error) {
                                     console.error('Accept error:', error);
+                                    // Rollback on error
+                                    setHelperRequests(prev => [req, ...prev]);
+                                    setAcceptedRequests(prev => prev.filter(r => r.id !== req.id));
+                                    setErrorMessage('Failed to accept request');
+                                    setTimeout(() => setErrorMessage(''), 3000);
+                                  } finally {
+                                    button.disabled = false;
+                                    button.textContent = 'Accept';
                                   }
                                 }}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold"
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 Accept
                               </button>
@@ -1868,6 +2095,72 @@ const UserDashboard = () => {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Accepted Requests (In Progress) */}
+              {isHelper && acceptedRequests.length > 0 && (
+                <div className="card p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <Clock className="w-6 h-6 text-blue-500" />
+                      Your Accepted Requests
+                      <span className="ml-2 px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm">
+                        {acceptedRequests.length}
+                      </span>
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    {acceptedRequests.map((req) => (
+                      <div
+                        key={req.id}
+                        className="p-4 bg-gradient-to-r from-blue-900/30 to-blue-800/20 rounded-lg border-2 border-blue-500/50"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="px-3 py-1 bg-blue-500/30 text-blue-300 rounded-full text-sm font-semibold">
+                                {req.type}
+                              </span>
+                              <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-semibold">
+                                IN PROGRESS
+                              </span>
+                              {req.distance && (
+                                <span className="text-sm text-gray-400">
+                                  <MapPin className="w-4 h-4 inline" /> {req.distance} km away
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-white font-medium mb-1">
+                              User: {req.userName || 'Anonymous'}
+                            </p>
+                            <p className="text-sm text-gray-400 mb-2">
+                              {req.address || 'Location shared'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Accepted: {new Date(req.acceptedAt || req.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <div className="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm font-semibold flex items-center gap-2 border border-yellow-500/30">
+                              <Clock className="w-4 h-4" />
+                              Waiting for user to confirm
+                            </div>
+                            <a
+                              href={`https://www.google.com/maps/dir/?api=1&destination=${req.location.latitude},${req.location.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold text-center flex items-center gap-2 justify-center"
+                            >
+                              <MapPin className="w-4 h-4" />
+                              Navigate
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -2061,6 +2354,62 @@ const UserDashboard = () => {
                   I Accept and Consent
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdrawal Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-800 rounded-lg shadow-xl p-6 max-w-md w-full border border-dark-700">
+            <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+              <Wallet className="w-6 h-6 text-green-500" />
+              Withdraw Funds
+            </h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Amount (₹)
+              </label>
+              <input
+                type="number"
+                min="100"
+                max={pointsBalance.points}
+                step="10"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                className="w-full px-4 py-3 bg-dark-900 border border-dark-700 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Minimum ₹100"
+              />
+              <p className="text-sm text-gray-400 mt-2">
+                Available: ₹{pointsBalance.points.toFixed(2)}
+              </p>
+            </div>
+
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+              <p className="text-xs text-yellow-200">
+                <strong>Note:</strong> Withdrawal requests are processed within 24-48 hours. Funds will be transferred to your registered bank account.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setWithdrawAmount('');
+                }}
+                className="flex-1 px-4 py-2.5 border border-dark-600 rounded-lg text-gray-300 hover:bg-dark-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleWithdraw}
+                disabled={withdrawing}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 transition-all font-semibold"
+              >
+                {withdrawing ? 'Processing...' : 'Confirm Withdrawal'}
+              </button>
             </div>
           </div>
         </div>

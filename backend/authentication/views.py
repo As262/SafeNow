@@ -18,6 +18,7 @@ from .serializers import (
     ServiceLoginSerializer,
     ServiceProviderSerializer,
     EmergencyContactSerializer,
+    PointsTransactionSerializer,
 )
 from .services import create_otp, verify_otp
 
@@ -364,3 +365,88 @@ def get_service_providers_view(request):
         'count': providers.count()
     })
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def points_balance_view(request):
+    """Get the current points balance and stats for the authenticated user."""
+    user = request.user
+    
+    return Response({
+        'success': True,
+        'points': float(user.points),
+        'total_earnings': float(user.total_earnings),
+        'total_requests_completed': user.total_requests_completed,
+        'is_helper': user.is_helper
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def points_transactions_view(request):
+    """Get points transaction history for the authenticated user."""
+    from .models import PointsTransaction
+    
+    transactions = PointsTransaction.objects.filter(user=request.user)
+    serializer = PointsTransactionSerializer(transactions, many=True)
+    
+    return Response({
+        'success': True,
+        'transactions': serializer.data
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def withdraw_points_view(request):
+    """Request to withdraw points (convert to real money)."""
+    from .points_utils import deduct_points
+    from decimal import Decimal
+    
+    user = request.user
+    amount = request.data.get('amount')
+    
+    if not amount:
+        return Response({
+            'success': False,
+            'message': 'Amount is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        amount = Decimal(str(amount))
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        
+        # Minimum withdrawal amount
+        if amount < Decimal('100.00'):
+            return Response({
+                'success': False,
+                'message': 'Minimum withdrawal amount is ₹100'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Attempt to deduct points
+        transaction = deduct_points(
+            user=user,
+            amount=amount,
+            description=f"Withdrawal of ₹{amount}",
+            transaction_type='withdrawn'
+        )
+        
+        return Response({
+            'success': True,
+            'message': 'Withdrawal request submitted successfully',
+            'transaction': PointsTransactionSerializer(transaction).data,
+            'new_balance': float(user.points)
+        })
+        
+    except ValueError as e:
+        return Response({
+            'success': False,
+            'message': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error processing withdrawal: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'Failed to process withdrawal'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

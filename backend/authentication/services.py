@@ -50,6 +50,51 @@ def send_otp_via_twilio(mobile, otp_code):
         raise Exception(f"Failed to send OTP via SMS: {str(e)}")
 
 
+def send_sos_sms_to_emergency_contacts(user, sos):
+    """Send an SOS alert SMS to all emergency contacts of the user."""
+    from authentication.models import EmergencyContact
+
+    contacts = EmergencyContact.objects.filter(user=user)
+    if not contacts.exists():
+        return
+
+    if not all([settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN, settings.TWILIO_PHONE_NUMBER]):
+        logger.warning("Twilio not configured — skipping SOS SMS to emergency contacts.")
+        return
+
+    maps_link = f"https://maps.google.com/?q={sos.latitude},{sos.longitude}"
+    location_text = sos.address if sos.address else f"{sos.latitude}, {sos.longitude}"
+
+    message_body = (
+        f"EMERGENCY ALERT: {user.name} has triggered a SafeNow SOS!\n"
+        f"Emergency type: {sos.type}\n"
+        f"Location: {location_text}\n"
+        f"Maps: {maps_link}\n"
+        f"Please contact them or call emergency services immediately."
+    )
+
+    try:
+        from twilio.rest import Client
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+        for contact in contacts:
+            phone = contact.phone_number.strip()
+            if not phone.startswith('+'):
+                phone = f"{settings.PHONE_COUNTRY_CODE}{phone}"
+            try:
+                msg = client.messages.create(
+                    body=message_body,
+                    from_=settings.TWILIO_PHONE_NUMBER,
+                    to=phone,
+                )
+                logger.info(f"SOS SMS sent to emergency contact {contact.name} ({phone}). SID: {msg.sid}")
+            except Exception as e:
+                logger.error(f"Failed to send SOS SMS to {contact.name} ({phone}): {e}")
+
+    except Exception as e:
+        logger.error(f"Twilio client error during SOS SMS: {e}")
+
+
 def is_admin_mobile(mobile):
     """Check if the mobile number belongs to an admin user."""
     from .models import User
