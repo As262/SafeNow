@@ -16,16 +16,15 @@ import {
   Users,
   AlertCircle,
   Navigation,
-  Wallet,
   TrendingUp,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
 import { useWebSocket } from "../hooks/useWebSocket";
-import { getAllSOSRequests, updateRequestStatus, getAnalytics, getPointsBalance } from "../utils/api";
+import { getAllSOSRequests, updateRequestStatus, getAnalytics } from "../utils/api";
 import MapView from "./MapView";
-import PointsWallet from "./PointsWallet";
 
 const ServiceDashboard = () => {
   const { user, logout, isHospital, isFire, isNGO, isPolice } = useAuth();
@@ -39,8 +38,7 @@ const ServiceDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
-  const [pointsData, setPointsData] = useState({ points: 0, total_earnings: 0, total_requests_completed: 0 });
-  const [currentView, setCurrentView] = useState('requests'); // 'requests' or 'wallet'
+  const [refreshing, setRefreshing] = useState(false);
 
   // Determine service type and filter criteria
   const getServiceInfo = () => {
@@ -89,7 +87,14 @@ const ServiceDashboard = () => {
   useEffect(() => {
     loadRequests();
     loadAnalytics();
-    loadPoints();
+
+    // Auto-refresh every 5 seconds
+    const refreshInterval = setInterval(() => {
+      loadRequests(true); // Silent refresh
+      loadAnalytics();
+    }, 5000);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   useEffect(() => {
@@ -110,15 +115,22 @@ const ServiceDashboard = () => {
     }
   }, [wsRequests]);
 
-  const loadRequests = async () => {
+  const loadRequests = async (silent = false) => {
     try {
+      if (!silent) setLoading(true);
       const response = await getAllSOSRequests();
       setRequests(response.requests);
     } catch (error) {
       console.error("Error loading requests:", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([loadRequests(true), loadAnalytics()]);
+    setRefreshing(false);
   };
 
   const loadAnalytics = async () => {
@@ -127,21 +139,6 @@ const ServiceDashboard = () => {
       setAnalytics(response.analytics);
     } catch (error) {
       console.error("Error loading analytics:", error);
-    }
-  };
-
-  const loadPoints = async () => {
-    try {
-      const response = await getPointsBalance();
-      if (response.success) {
-        setPointsData({
-          points: response.points || 0,
-          total_earnings: response.total_earnings || 0,
-          total_requests_completed: response.total_requests_completed || 0
-        });
-      }
-    } catch (error) {
-      console.error("Error loading points:", error);
     }
   };
 
@@ -240,6 +237,16 @@ const ServiceDashboard = () => {
                 </div>
               )}
 
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center gap-2 px-3 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="text-sm text-white">{t.common.refresh || 'Refresh'}</span>
+              </button>
+
               <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
                 <User className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-white font-medium">
@@ -263,45 +270,8 @@ const ServiceDashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Navigation Tabs */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setCurrentView('requests')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all ${
-              currentView === 'requests'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-dark-800 text-gray-400 hover:bg-dark-700'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              <span>SOS Requests</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setCurrentView('wallet')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all ${
-              currentView === 'wallet'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-dark-800 text-gray-400 hover:bg-dark-700'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Wallet className="w-5 h-5" />
-              <span>My Earnings</span>
-              {pointsData.points > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-green-500 text-white text-xs rounded-full">
-                  ₹{pointsData.points.toFixed(0)}
-                </span>
-              )}
-            </div>
-          </button>
-        </div>
-
-        {currentView === 'requests' ? (
-          <>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
@@ -356,21 +326,6 @@ const ServiceDashboard = () => {
                 ? serviceInfo.filterTypes.join(" / ")
                 : t.serviceDashboard.all}{" "}
               {t.serviceDashboard.type}
-            </p>
-          </div>
-
-          <div className="card p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-gray-400">
-                Total Earnings
-              </h3>
-              <Wallet className="w-5 h-5 text-green-500" />
-            </div>
-            <p className="text-3xl font-bold text-white">
-              ₹{pointsData.total_earnings.toFixed(0)}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {pointsData.total_requests_completed} requests completed
             </p>
           </div>
         </div>
@@ -500,7 +455,7 @@ const ServiceDashboard = () => {
                   <CheckCircle className="w-5 h-5 text-green-500" />
                   {t.serviceDashboard.acceptedRequests} ({acceptedRequests.length})
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                   {acceptedRequests.map((request) => (
                     <div
                       key={request.id}
@@ -635,13 +590,6 @@ const ServiceDashboard = () => {
             )}
           </div>
         </div>
-        </>
-        ) : (
-          /* Wallet View */
-          <div className="mt-6">
-            <PointsWallet />
-          </div>
-        )}
       </main>
     </div>
   );

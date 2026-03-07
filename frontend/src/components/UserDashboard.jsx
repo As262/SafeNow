@@ -167,7 +167,7 @@ const UserDashboard = () => {
     accepted: [],
     timestamp: 0,
   });
-  const CACHE_DURATION = 10000; // 10 seconds
+  const CACHE_DURATION = 5000; // 5 seconds
 
   const loadPointsBalance = useCallback(async () => {
     console.log("🔄 Loading points balance...", {
@@ -237,6 +237,13 @@ const UserDashboard = () => {
     loadRequestHistory();
     // Get location on component mount so it's ready when needed
     getLocation();
+    
+    // Auto-refresh request history every 5 seconds
+    const historyRefreshInterval = setInterval(() => {
+      loadRequestHistory();
+    }, 5000);
+    
+    return () => clearInterval(historyRefreshInterval);
   }, []);
 
   // Watch for location updates when sending request
@@ -303,6 +310,13 @@ const UserDashboard = () => {
   useEffect(() => {
     if (activeSection === "helper" && isHelper && helperAvailable) {
       loadHelperRequestsOptimized();
+      
+      // Auto-refresh helper requests every 5 seconds
+      const refreshInterval = setInterval(() => {
+        loadHelperRequestsOptimized(true); // Skip cache to get fresh data
+      }, 5000);
+      
+      return () => clearInterval(refreshInterval);
     }
   }, [activeSection, isHelper, helperAvailable, loadHelperRequestsOptimized]);
 

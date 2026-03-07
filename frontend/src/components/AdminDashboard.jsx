@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Navigation,
   Building2,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -38,10 +39,19 @@ const AdminDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAllAccepted, setShowAllAccepted] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadRequests();
     loadAnalytics();
+
+    // Auto-refresh every 5 seconds
+    const refreshInterval = setInterval(() => {
+      loadRequests(true); // Silent refresh
+      loadAnalytics();
+    }, 5000);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   useEffect(() => {
@@ -62,15 +72,22 @@ const AdminDashboard = () => {
     }
   }, [wsRequests]);
 
-  const loadRequests = async () => {
+  const loadRequests = async (silent = false) => {
     try {
+      if (!silent) setLoading(true);
       const response = await getAllSOSRequests();
       setRequests(response.requests);
     } catch (error) {
       console.error("Error loading requests:", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([loadRequests(true), loadAnalytics()]);
+    setRefreshing(false);
   };
 
   const loadAnalytics = async () => {
@@ -161,6 +178,16 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               )}
+
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center gap-2 px-3 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="text-sm text-white">Refresh</span>
+              </button>
 
               <button
                 onClick={() => navigate("/admin/helpers")}
@@ -279,9 +306,69 @@ const AdminDashboard = () => {
         {/* Content */}
         {activeTab === "requests" ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Requests List */}
+            {/* Left Column - Accepted Requests */}
             <div className="space-y-6">
-              <div className="card p-6">
+              {/* Accepted Requests */}
+              {acceptedRequests.length > 0 && (
+                <div className="card p-6 h-[1272px] flex flex-col">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Accepted Requests ({acceptedRequests.length})
+                  </h3>
+                  <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    {acceptedRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="p-4 bg-dark-800 rounded-lg opacity-75"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-white">
+                              {request.userName}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              {request.type}
+                            </p>
+                            {request.respondedByName && (
+                              <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
+                                <User className="w-3 h-3" />
+                                Responded by {request.respondedByName}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const lat = request.location?.latitude;
+                                const lng = request.location?.longitude;
+                                if (lat && lng) {
+                                  window.open(
+                                    `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+                                    "_blank",
+                                  );
+                                }
+                              }}
+                              className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
+                              title="View on map"
+                            >
+                              <Navigation className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
+                              Accepted
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Pending Requests & Map */}
+            <div className="space-y-6">
+              <div className="card p-6 h-[600px] flex flex-col">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <AlertCircle className="w-5 h-5 text-red-500" />
                   Pending Requests ({pendingRequests.length})
@@ -298,7 +385,7 @@ const AdminDashboard = () => {
                     <p className="text-gray-400">No pending requests</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     {pendingRequests.map((request) => (
                       <div
                         key={request.id}
@@ -382,6 +469,7 @@ const AdminDashboard = () => {
                 )}
               </div>
 
+<<<<<<< Updated upstream
               {/* Accepted Requests */}
               {acceptedRequests.length > 0 && (
                 <div className="card p-6">
@@ -465,15 +553,12 @@ const AdminDashboard = () => {
 
             {/* Map View */}
             <div className="space-y-6 lg:sticky lg:top-24">
-              <div
-                className="card p-6 overflow-hidden"
-                style={{ height: "500px" }}
-              >
+              <div className="card p-6 overflow-hidden h-[648px] flex flex-col">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-primary-500" />
                   Live Location Map
                 </h3>
-                <div className="h-[calc(100%-3rem)] overflow-hidden">
+                <div className="flex-1 overflow-hidden">
                   <MapView
                     requests={pendingRequests}
                     selectedRequest={selectedRequest}

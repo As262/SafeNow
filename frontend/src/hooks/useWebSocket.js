@@ -9,6 +9,8 @@ export const useWebSocket = (user) => {
   const [requests, setRequests] = useState([]);
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const reconnectAttempts = useRef(0);
+  const pingIntervalRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
@@ -26,8 +28,9 @@ export const useWebSocket = (user) => {
         socketRef.current = ws;
 
         ws.onopen = () => {
-          console.log("WebSocket connected");
+          console.log("✅ WebSocket connected");
           setConnected(true);
+          reconnectAttempts.current = 0; // Reset attempts on successful connection
         };
 
         ws.onmessage = (event) => {
@@ -59,10 +62,15 @@ export const useWebSocket = (user) => {
         };
 
         ws.onclose = () => {
-          console.log("WebSocket disconnected");
+          console.log("❌ WebSocket disconnected");
           setConnected(false);
-          // Reconnect after 3 seconds
-          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+          
+          // Exponential backoff: 500ms, 1s, 2s, 5s (max)
+          const delay = Math.min(500 * Math.pow(2, reconnectAttempts.current), 5000);
+          reconnectAttempts.current++;
+          
+          console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})`);
+          reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay);
         };
 
         ws.onerror = (error) => {
@@ -71,21 +79,23 @@ export const useWebSocket = (user) => {
         };
       } catch (error) {
         console.error("WebSocket connection failed:", error);
-        reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+        const delay = Math.min(500 * Math.pow(2, reconnectAttempts.current), 5000);
+        reconnectAttempts.current++;
+        reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay);
       }
     };
 
     connectWebSocket();
 
-    // Ping to keep alive every 30 seconds
-    const pingInterval = setInterval(() => {
+    // Faster ping to keep alive every 15 seconds (reduced from 30s)
+    pingIntervalRef.current = setInterval(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         socketRef.current.send(JSON.stringify({ type: "ping" }));
       }
-    }, 30000);
+    }, 15000);
 
     return () => {
-      clearInterval(pingInterval);
+      clearInterval(pingIntervalRef.current);
       clearTimeout(reconnectTimeoutRef.current);
       if (socketRef.current) {
         socketRef.current.close();
