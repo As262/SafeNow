@@ -124,6 +124,7 @@ export const translations = {
     sidebar: {
       dashboard: "Dashboard",
       emergency: "Emergency",
+      history: "Request History",
       map: "Map",
       contacts: "Contacts",
       settings: "Settings",
@@ -275,6 +276,7 @@ export const translations = {
     sidebar: {
       dashboard: "डैशबोर्ड",
       emergency: "आपातकालीन",
+      history: "अनुरोध इतिहास",
       map: "मानचित्र",
       contacts: "संपर्क",
       settings: "सेटिंग्स",

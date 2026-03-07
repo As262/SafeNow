@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Phone,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -45,6 +46,13 @@ const Sidebar = ({ onNavigate }) => {
       icon: Phone,
       path: "#",
       section: "contacts",
+      showForAdmin: false, // Hide for admin users
+    },
+    {
+      name: t.history,
+      icon: ClipboardList,
+      path: "#",
+      section: "history",
       showForAdmin: false, // Hide for admin users
     },
     {
