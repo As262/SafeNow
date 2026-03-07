@@ -258,7 +258,8 @@ const UserDashboard = () => {
   };
 
   const handleSOSClick = () => {
-    if (submittingRef.current || sosActive || sendingRequest || countdown > 0) return;
+    if (submittingRef.current || sosActive || sendingRequest || countdown > 0)
+      return;
 
     // Start the sending process
     setSendingRequest(true);
@@ -324,7 +325,8 @@ const UserDashboard = () => {
 
   // Handle SOS request triggered from chatbot
   const handleChatbotSOS = async (emergencyType) => {
-    if (submittingRef.current || sosActive || sendingRequest || countdown > 0) return;
+    if (submittingRef.current || sosActive || sendingRequest || countdown > 0)
+      return;
 
     if (!location) {
       alert(
@@ -421,9 +423,7 @@ const UserDashboard = () => {
               {t.dashboard.welcome},{" "}
               <span className="text-primary-500">{user.name}</span>
             </h1>
-            <p className="text-gray-400">
-              {t.dashboard.subtitle}
-            </p>
+            <p className="text-gray-400">{t.dashboard.subtitle}</p>
           </div>
 
           {/* Success Message */}
@@ -468,7 +468,11 @@ const UserDashboard = () => {
                         <div className="text-center relative z-10">
                           <AlertTriangle className="w-16 h-16 text-white mx-auto mb-2 drop-shadow-lg" />
                           <span className="text-white text-xl font-black tracking-wider">
-                            {loading ? "SENDING" : countdown > 0 ? countdown : "SOS"}
+                            {loading
+                              ? "SENDING"
+                              : countdown > 0
+                                ? countdown
+                                : "SOS"}
                           </span>
                         </div>
                       </button>
@@ -551,7 +555,9 @@ const UserDashboard = () => {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {statistics.total}
                   </h3>
-                  <p className="text-sm text-gray-400">{t.dashboard.totalRequests}</p>
+                  <p className="text-sm text-gray-400">
+                    {t.dashboard.totalRequests}
+                  </p>
                 </div>
 
                 <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-700/20 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
@@ -575,7 +581,9 @@ const UserDashboard = () => {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {statistics.completed}
                   </h3>
-                  <p className="text-sm text-gray-400">{t.dashboard.completed}</p>
+                  <p className="text-sm text-gray-400">
+                    {t.dashboard.completed}
+                  </p>
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-200">
@@ -587,7 +595,9 @@ const UserDashboard = () => {
                   <h3 className="text-xl font-bold text-white mb-1">
                     {location ? "✓" : "✗"}
                   </h3>
-                  <p className="text-sm text-gray-400">{t.dashboard.location}</p>
+                  <p className="text-sm text-gray-400">
+                    {t.dashboard.location}
+                  </p>
                 </div>
               </div>
 
@@ -614,7 +624,9 @@ const UserDashboard = () => {
                         <User className="w-5 h-5 text-primary-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">{t.dashboard.name}</p>
+                        <p className="text-xs text-gray-400 mb-1">
+                          {t.dashboard.name}
+                        </p>
                         <p className="text-sm font-semibold text-white">
                           {user.name}
                         </p>
@@ -625,7 +637,9 @@ const UserDashboard = () => {
                         <Phone className="w-5 h-5 text-green-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-1">{t.dashboard.mobile}</p>
+                        <p className="text-xs text-gray-400 mb-1">
+                          {t.dashboard.mobile}
+                        </p>
                         <p className="text-sm font-semibold text-white">
                           {user.mobile}
                         </p>
@@ -874,7 +888,11 @@ const UserDashboard = () => {
                     <div className="text-center relative z-10">
                       <AlertTriangle className="w-28 h-28 text-white mx-auto mb-4 drop-shadow-lg" />
                       <span className="text-white text-2xl font-black tracking-widest">
-                        {loading ? "SENDING" : countdown > 0 ? countdown : "SOS"}
+                        {loading
+                          ? "SENDING"
+                          : countdown > 0
+                            ? countdown
+                            : "SOS"}
                       </span>
                     </div>
                   </button>
@@ -895,7 +913,8 @@ const UserDashboard = () => {
                         <div className="flex items-center gap-3 px-6 py-3 bg-blue-500/20 border border-blue-500/50 rounded-full">
                           <Clock className="w-5 h-5 text-blue-400 animate-pulse" />
                           <span className="font-bold text-blue-400">
-                            Button available in {countdown} second{countdown !== 1 ? 's' : ''}
+                            Button available in {countdown} second
+                            {countdown !== 1 ? "s" : ""}
                           </span>
                         </div>
                       )}
@@ -1116,7 +1135,9 @@ const UserDashboard = () => {
                     </p>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
-                        <span className="text-sm text-gray-400">{t.dashboard.latitude}:</span>
+                        <span className="text-sm text-gray-400">
+                          {t.dashboard.latitude}:
+                        </span>
                         <span className="text-white font-mono font-semibold">
                           {location.latitude.toFixed(6)}
                         </span>
@@ -1130,7 +1151,9 @@ const UserDashboard = () => {
                         </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-dark-900 rounded-lg">
-                        <span className="text-sm text-gray-400">{t.dashboard.accuracy}:</span>
+                        <span className="text-sm text-gray-400">
+                          {t.dashboard.accuracy}:
+                        </span>
                         <span className="text-green-400 font-semibold">
                           ±{location.accuracy?.toFixed(0)}m
                         </span>
@@ -1177,25 +1200,33 @@ const UserDashboard = () => {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-dark-800 rounded-lg border border-dark-700">
-                    <p className="text-sm text-gray-400 mb-1">{t.dashboard.totalRequests}</p>
+                    <p className="text-sm text-gray-400 mb-1">
+                      {t.dashboard.totalRequests}
+                    </p>
                     <p className="text-2xl font-bold text-white">
                       {statistics.total}
                     </p>
                   </div>
                   <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                    <p className="text-sm text-yellow-400 mb-1">{t.dashboard.pending}</p>
+                    <p className="text-sm text-yellow-400 mb-1">
+                      {t.dashboard.pending}
+                    </p>
                     <p className="text-2xl font-bold text-yellow-500">
                       {statistics.pending}
                     </p>
                   </div>
                   <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
-                    <p className="text-sm text-green-400 mb-1">{t.dashboard.completed}</p>
+                    <p className="text-sm text-green-400 mb-1">
+                      {t.dashboard.completed}
+                    </p>
                     <p className="text-2xl font-bold text-green-500">
                       {statistics.completed}
                     </p>
                   </div>
                   <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
-                    <p className="text-sm text-red-400 mb-1">{t.dashboard.rejected}</p>
+                    <p className="text-sm text-red-400 mb-1">
+                      {t.dashboard.rejected}
+                    </p>
                     <p className="text-2xl font-bold text-red-500">
                       {statistics.rejected}
                     </p>
@@ -1428,7 +1459,9 @@ const UserDashboard = () => {
 
                   <div className="p-4 bg-dark-800 rounded-lg flex items-center justify-between">
                     <div>
-                      <p className="text-white font-medium">{t.settings.usageAnalytics}</p>
+                      <p className="text-white font-medium">
+                        {t.settings.usageAnalytics}
+                      </p>
                       <p className="text-sm text-gray-400">
                         {t.settings.helpImproveApp}
                       </p>
@@ -1466,7 +1499,9 @@ const UserDashboard = () => {
                         <VolumeX className="w-5 h-5 text-gray-500" />
                       )}
                       <div>
-                        <p className="text-white font-medium">{t.settings.soundEffects}</p>
+                        <p className="text-white font-medium">
+                          {t.settings.soundEffects}
+                        </p>
                         <p className="text-sm text-gray-400">
                           {t.settings.playSoundsForActions}
                         </p>
