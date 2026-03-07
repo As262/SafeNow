@@ -269,8 +269,35 @@ function MapMoveLoader({ onMove, debounceMs = 1500 }) {
   return null;
 }
 
+// SOS request marker icon (red pulsing)
+const sosRequestIcon = (index) =>
+  L.divIcon({
+    className: "sos-request-marker",
+    html: `<div style="
+      position:relative;width:36px;height:36px;
+    ">
+      <div style="
+        position:absolute;inset:0;background:#dc2626;border-radius:50%;
+        border:3px solid #fff;display:flex;align-items:center;justify-content:center;
+        font-size:14px;font-weight:bold;color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.5);
+        z-index:2;
+      ">${index != null ? index + 1 : '🚨'}</div>
+      <div style="
+        position:absolute;inset:-6px;background:#dc2626;border-radius:50%;
+        opacity:.3;animation:ping 1.5s cubic-bezier(0,0,.2,1) infinite;
+      "></div>
+    </div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20],
+  });
+
 // ════════════════════════════════════════
-const MapView = () => {
+// serviceMode: when true, only show SOS request markers from `requests` prop
+// adminMode: when true, show landmarks (no helpers) + SOS request markers overlaid
+// requests: array of SOS request objects
+// selectedRequest: currently selected request to highlight
+const MapView = ({ serviceMode = false, adminMode = false, requests = [], selectedRequest = null }) => {
   const [userPos, setUserPos] = useState(null);
   const [places, setPlaces] = useState([]);
   const [helpers, setHelpers] = useState([]);
@@ -282,6 +309,7 @@ const MapView = () => {
   const lastLoadCenter = useRef(null);
 
   const loadPlaces = useCallback(async (lat, lng) => {
+    if (serviceMode) return; // Don't load external places in service mode
     // Skip if we already loaded for a nearby centre (< 1 km)
     if (lastLoadCenter.current) {
       const d = haversine(lat, lng, lastLoadCenter.current[0], lastLoadCenter.current[1]);
@@ -311,7 +339,7 @@ const MapView = () => {
     } finally {
       setPlacesLoading(false);
     }
-  }, []);
+  }, [serviceMode]);
 
   // Get exact user location on mount
   useEffect(() => {
@@ -324,8 +352,10 @@ const MapView = () => {
       (pos) => {
         const { latitude, longitude } = pos.coords;
         setUserPos([latitude, longitude]);
-        setHelpers(generateHelperPeople(latitude, longitude));
-        loadPlaces(latitude, longitude);
+        if (!serviceMode) {
+          setHelpers(generateHelperPeople(latitude, longitude));
+          loadPlaces(latitude, longitude);
+        }
         setLoading(false);
       },
       (err) => {
@@ -334,7 +364,325 @@ const MapView = () => {
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
-  }, [loadPlaces]);
+  }, [loadPlaces, serviceMode]);
+
+  // ── Service Mode: only show SOS request markers ──
+  if (serviceMode) {
+    // Build markers from SOS requests
+    const sosMarkers = requests
+      .filter((r) => r.location?.latitude && r.location?.longitude)
+      .map((r, idx) => ({
+        id: r.id,
+        lat: parseFloat(r.location.latitude),
+        lng: parseFloat(r.location.longitude),
+        name: r.userName || "Unknown User",
+        phone: r.userId || "",
+        type: r.type,
+        status: r.status,
+        timestamp: r.timestamp,
+        address: r.location?.address,
+        isSelected: selectedRequest?.id === r.id,
+        index: idx,
+      }));
+
+    // Center on first request or user position
+    const defaultCenter =
+      sosMarkers.length > 0
+        ? [sosMarkers[0].lat, sosMarkers[0].lng]
+        : userPos || [28.6139, 77.209];
+
+    if (loading) {
+      return (
+        <div className="w-full h-full bg-dark-800 rounded-xl flex flex-col items-center justify-center">
+          <Loader className="w-10 h-10 text-primary-500 animate-spin mb-4" />
+          <p className="text-gray-400">Loading map...</p>
+        </div>
+      );
+    }
+
+    if (sosMarkers.length === 0) {
+      return (
+        <div className="w-full h-full bg-dark-800 rounded-xl flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-3">
+            <MapPin className="w-8 h-8 text-green-500" />
+          </div>
+          <p className="text-gray-400 text-sm">No active SOS requests to display</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-full h-full">
+        <div className="rounded-xl overflow-hidden border border-dark-700 shadow-lg" style={{ height: "100%" }}>
+          <MapContainer center={defaultCenter} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+
+            <FlyToUser position={selectedRequest?.location ? [parseFloat(selectedRequest.location.latitude), parseFloat(selectedRequest.location.longitude)] : defaultCenter} />
+
+            {/* Service provider location (You) */}
+            {userPos && (
+              <>
+                <Circle center={userPos} radius={150} pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.1, weight: 1 }} />
+                <Marker position={userPos} icon={userIcon}>
+                  <Popup>
+                    <div className="text-center">
+                      <p className="font-bold text-gray-900">📍 Your Location</p>
+                      <p className="text-xs text-gray-500 mt-1">{userPos[0].toFixed(6)}, {userPos[1].toFixed(6)}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              </>
+            )}
+
+            {/* SOS Request markers */}
+            {sosMarkers.map((marker) => (
+              <Marker
+                key={marker.id}
+                position={[marker.lat, marker.lng]}
+                icon={sosRequestIcon(marker.index)}
+              >
+                <Popup>
+                  <div style={{ minWidth: 220 }}>
+                    <p className="font-bold text-gray-900 text-sm">🚨 {marker.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">📞 {marker.phone}</p>
+                    <p className="text-xs text-gray-500 mt-1">🆘 {marker.type}</p>
+                    {marker.address && (
+                      <p className="text-xs text-gray-500 mt-1">📍 {marker.address}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">
+                      {marker.lat.toFixed(5)}, {marker.lng.toFixed(5)}
+                    </p>
+                    {userPos && (
+                      <p className="text-xs text-blue-600 font-semibold mt-1">
+                        📏 {haversine(userPos[0], userPos[1], marker.lat, marker.lng).toFixed(1)} km away
+                      </p>
+                    )}
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${marker.lat},${marker.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                      style={{ textDecoration: 'none', color: '#fff' }}
+                    >
+                      🧭 Get Directions
+                    </a>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Admin Mode: landmarks + SOS request markers overlaid, no helpers ──
+  if (adminMode) {
+    const sosMarkers = requests
+      .filter((r) => r.location?.latitude && r.location?.longitude)
+      .map((r, idx) => ({
+        id: r.id,
+        lat: parseFloat(r.location.latitude),
+        lng: parseFloat(r.location.longitude),
+        name: r.userName || "Unknown User",
+        phone: r.userId || "",
+        type: r.type,
+        address: r.location?.address,
+        isSelected: selectedRequest?.id === r.id,
+        index: idx,
+      }));
+
+    const allMarkers = [...places, ...helpers];
+    const filtered = filter === "all" ? allMarkers : allMarkers.filter((m) => m.type === filter);
+    const filterButtons = [
+      { key: "all", label: "All", emoji: "📍" },
+      { key: "hospital", label: "Hospitals", emoji: "🏥" },
+      { key: "police", label: "Police", emoji: "🚔" },
+      { key: "fire", label: "Fire", emoji: "🚒" },
+      { key: "ngo", label: "NGO", emoji: "🤝" },
+      { key: "helper", label: "Helpers", emoji: "🙋" },
+    ].map((b) => ({ ...b, count: (b.key === "all" ? allMarkers : allMarkers.filter((m) => m.type === b.key)).length }));
+
+    const defaultCenter = userPos || [28.6139, 77.209];
+
+    if (loading) {
+      return (
+        <div className="w-full h-[500px] bg-dark-800 rounded-xl flex flex-col items-center justify-center">
+          <Loader className="w-10 h-10 text-primary-500 animate-spin mb-4" />
+          <p className="text-gray-400">Getting your exact location...</p>
+        </div>
+      );
+    }
+
+    if (locError) {
+      return (
+        <div className="w-full h-[500px] bg-dark-800 rounded-xl flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+            <MapPin className="w-10 h-10 text-red-500" />
+          </div>
+          <p className="text-red-400 mb-2 font-semibold">Location Error</p>
+          <p className="text-gray-400 text-sm mb-4">{locError}</p>
+          <button onClick={() => window.location.reload()} className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors">
+            Retry
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-full space-y-3">
+        {/* Filter Bar */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {filterButtons.map((btn) => (
+            <button
+              key={btn.key}
+              onClick={() => setFilter(btn.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
+                filter === btn.key
+                  ? "bg-primary-600 text-white shadow-lg shadow-primary-600/30"
+                  : "bg-dark-700 text-gray-300 hover:bg-dark-600"
+              }`}
+            >
+              {btn.emoji} {btn.label}
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${filter === btn.key ? "bg-white/20" : "bg-dark-600"}`}>
+                {btn.count}
+              </span>
+            </button>
+          ))}
+          {sosMarkers.length > 0 && (
+            <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-600/20 text-red-400 border border-red-600/30">
+              🚨 {sosMarkers.length} Active SOS
+            </span>
+          )}
+          {placesLoading && (
+            <span className="flex items-center gap-1 text-xs text-gray-500">
+              <RefreshCw className="w-3 h-3 animate-spin" /> Loading places...
+            </span>
+          )}
+          {placesError && !placesLoading && (
+            <button onClick={() => userPos && loadPlaces(userPos[0], userPos[1])} className="flex items-center gap-1 text-xs text-yellow-400 hover:text-yellow-300">
+              <RefreshCw className="w-3 h-3" /> Retry
+            </button>
+          )}
+        </div>
+
+        {/* Map */}
+        <div className="rounded-xl overflow-hidden border border-dark-700 shadow-lg" style={{ height: "500px" }}>
+          <MapContainer center={defaultCenter} zoom={14} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <FlyToUser position={userPos} />
+            <MapMoveLoader onMove={loadPlaces} />
+
+            {/* Admin marker */}
+            {userPos && (
+              <>
+                <Circle center={userPos} radius={200} pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.08, weight: 1 }} />
+                <Marker position={userPos} icon={userIcon}>
+                  <Popup>
+                    <div className="text-center">
+                      <p className="font-bold text-gray-900">📍 Your Location</p>
+                      <p className="text-xs text-gray-500 mt-1">{userPos[0].toFixed(6)}, {userPos[1].toFixed(6)}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              </>
+            )}
+
+            {/* Landmark & helper markers */}
+            {filtered.map((item) => (
+              <Marker key={item.id} position={[item.lat, item.lng]} icon={helperIcons[item.type] || helperIcons.hospital}>
+                <Popup>
+                  <div style={{ minWidth: 200 }}>
+                    <p className="font-bold text-gray-900 text-sm">{item.name}</p>
+                    {item.type === "helper" ? (
+                      <>
+                        <p className="text-xs text-gray-500 mt-1">{item.skill}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${item.status === "Available" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                            {item.status}
+                          </span>
+                          <span className="text-xs text-gray-500">⭐ {item.rating}</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">📏 {item.distance} away</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-gray-500 capitalize mt-1">
+                          {item.type === "fire" ? "Fire Station" : item.type === "ngo" ? "NGO / Social" : item.type} &bull; {item.distance}
+                        </p>
+                        <p className="text-xs mt-1">
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-medium">{item.status}</span>
+                        </p>
+                        <a href={`tel:${item.phone}`} className="inline-block mt-2 px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors">
+                          📞 Call {item.phone}
+                        </a>
+                      </>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+
+            {/* SOS request markers overlaid */}
+            {sosMarkers.map((marker) => (
+              <Marker
+                key={`sos_${marker.id}`}
+                position={[marker.lat, marker.lng]}
+                icon={sosRequestIcon(marker.index)}
+              >
+                <Popup>
+                  <div style={{ minWidth: 220 }}>
+                    <p className="font-bold text-gray-900 text-sm">🚨 {marker.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">📞 {marker.phone}</p>
+                    <p className="text-xs text-gray-500 mt-1">🆘 {marker.type}</p>
+                    {marker.address && (
+                      <p className="text-xs text-gray-500 mt-1">📍 {marker.address}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">
+                      {marker.lat.toFixed(5)}, {marker.lng.toFixed(5)}
+                    </p>
+                    {userPos && (
+                      <p className="text-xs text-blue-600 font-semibold mt-1">
+                        📏 {haversine(userPos[0], userPos[1], marker.lat, marker.lng).toFixed(1)} km away
+                      </p>
+                    )}
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${marker.lat},${marker.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                      style={{ textDecoration: 'none', color: '#fff' }}
+                    >
+                      🧭 Get Directions
+                    </a>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> You</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-600 inline-block" /> SOS Request</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Hospital</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-700 inline-block" /> Police</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-orange-600 inline-block" /> Fire Station</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-purple-600 inline-block" /> NGO</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-600 inline-block" /> Helper</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Default Mode: show nearby places, helpers, filters ──
 
   // Combine real places + dummy helpers
   const allMarkers = [...places, ...helpers];

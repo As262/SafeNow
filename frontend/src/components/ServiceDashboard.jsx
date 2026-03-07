@@ -18,18 +18,12 @@ import {
   Navigation,
   TrendingUp,
   RefreshCw,
-  Wifi,
-  WifiOff,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
 import { useWebSocket } from "../hooks/useWebSocket";
-import {
-  getAllSOSRequests,
-  updateRequestStatus,
-  getAnalytics,
-} from "../utils/api";
+import { getAllSOSRequests, updateRequestStatus, getAnalytics } from "../utils/api";
 import MapView from "./MapView";
 
 const ServiceDashboard = () => {
@@ -37,7 +31,7 @@ const ServiceDashboard = () => {
   const { language } = useLanguage();
   const t = translations[language];
   const navigate = useNavigate();
-  const { requests: wsRequests, updateRequestStatus: updateWSRequest, connected: wsConnected } =
+  const { requests: wsRequests, updateRequestStatus: updateWSRequest } =
     useWebSocket(user);
 
   const [requests, setRequests] = useState([]);
@@ -94,17 +88,14 @@ const ServiceDashboard = () => {
     loadRequests();
     loadAnalytics();
 
-    // Optimized polling: only when WebSocket disconnected, otherwise every 30 seconds for analytics
+    // Auto-refresh every 5 seconds
     const refreshInterval = setInterval(() => {
-      if (!wsConnected) {
-        console.log("⚠️ WebSocket disconnected, using polling fallback");
-        loadRequests(true);
-      }
-      loadAnalytics(); // Always refresh analytics
-    }, wsConnected ? 30000 : 3000); // 30s when connected, 3s when disconnected
+      loadRequests(true); // Silent refresh
+      loadAnalytics();
+    }, 5000);
 
     return () => clearInterval(refreshInterval);
-  }, [wsConnected]);
+  }, []);
 
   useEffect(() => {
     // Merge WebSocket requests with existing, deduplicating by ID
@@ -210,11 +201,6 @@ const ServiceDashboard = () => {
     (r) => r.status === "accepted",
   );
 
-  // Count completed requests resolved by this service provider
-  const resolvedByMe = filteredRequests.filter(
-    (r) => r.status === "completed" && r.respondedByName === user.name,
-  );
-
   const ServiceIcon = serviceInfo.icon;
 
   return (
@@ -240,25 +226,6 @@ const ServiceDashboard = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Connection Status */}
-              <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-                  wsConnected
-                    ? "bg-green-500/10 border border-green-500/20"
-                    : "bg-red-500/10 border border-red-500/20"
-                }`}
-                title={wsConnected ? "Real-time connected" : "Disconnected - using fallback"}
-              >
-                {wsConnected ? (
-                  <Wifi className="w-4 h-4 text-green-500" />
-                ) : (
-                  <WifiOff className="w-4 h-4 text-red-500 animate-pulse" />
-                )}
-                <span className={`text-xs font-medium ${wsConnected ? "text-green-500" : "text-red-500"}`}>
-                  {wsConnected ? "Live" : "Offline"}
-                </span>
-              </div>
-
               {pendingRequests.length > 0 && (
                 <div className="relative">
                   <Bell className="w-6 h-6 text-red-500 animate-pulse" />
@@ -276,12 +243,8 @@ const ServiceDashboard = () => {
                 className="flex items-center gap-2 px-3 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Refresh data"
               >
-                <RefreshCw
-                  className={`w-4 h-4 text-gray-400 ${refreshing ? "animate-spin" : ""}`}
-                />
-                <span className="text-sm text-white">
-                  {t.common.refresh || "Refresh"}
-                </span>
+                <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="text-sm text-white">{t.common.refresh || 'Refresh'}</span>
               </button>
 
               <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
@@ -308,7 +271,7 @@ const ServiceDashboard = () => {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
@@ -319,9 +282,7 @@ const ServiceDashboard = () => {
             <p className="text-3xl font-bold text-white">
               {pendingRequests.length}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {t.serviceDashboard.awaitingResponse}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">{t.serviceDashboard.awaitingResponse}</p>
           </div>
 
           <div className="card p-6">
@@ -340,22 +301,9 @@ const ServiceDashboard = () => {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
-                Total Resolved
-              </h3>
-              <TrendingUp className="w-5 h-5 text-blue-500" />
-            </div>
-            <p className="text-3xl font-bold text-white">
-              {resolvedByMe.length}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">Successfully completed</p>
-          </div>
-
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-gray-400">
                 Avg Response
               </h3>
-              <Clock className="w-5 h-5 text-cyan-500" />
+              <Clock className="w-5 h-5 text-blue-500" />
             </div>
             <p className="text-3xl font-bold text-white">
               {analytics?.averageResponseTime || "—"}
@@ -395,9 +343,7 @@ const ServiceDashboard = () => {
               {loading ? (
                 <div className="text-center py-8">
                   <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-gray-400 mt-3">
-                    {t.serviceDashboard.loadingRequests}
-                  </p>
+                  <p className="text-gray-400 mt-3">{t.serviceDashboard.loadingRequests}</p>
                 </div>
               ) : pendingRequests.length === 0 ? (
                 <div className="text-center py-8">
@@ -487,7 +433,7 @@ const ServiceDashboard = () => {
                           if (lat && lng) {
                             window.open(
                               `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-                              "_blank",
+                              "_blank"
                             );
                           }
                         }}
@@ -507,8 +453,7 @@ const ServiceDashboard = () => {
               <div className="card p-6">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t.serviceDashboard.acceptedRequests} (
-                  {acceptedRequests.length})
+                  {t.serviceDashboard.acceptedRequests} ({acceptedRequests.length})
                 </h3>
                 <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                   {acceptedRequests.map((request) => (
@@ -546,7 +491,7 @@ const ServiceDashboard = () => {
                               if (lat && lng) {
                                 window.open(
                                   `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-                                  "_blank",
+                                  "_blank"
                                 );
                               }
                             }}
@@ -576,9 +521,7 @@ const ServiceDashboard = () => {
 
                       <div className="flex items-center gap-2 mt-3 text-sm text-green-400">
                         <CheckCircle className="w-4 h-4" />
-                        <span>
-                          {t.serviceDashboard.youRespondedToThisRequest}
-                        </span>
+                        <span>{t.serviceDashboard.youRespondedToThisRequest}</span>
                       </div>
                     </div>
                   ))}
@@ -599,7 +542,8 @@ const ServiceDashboard = () => {
               </h3>
               <div className="h-[calc(100%-3rem)] overflow-hidden">
                 <MapView
-                  requests={pendingRequests}
+                  serviceMode={true}
+                  requests={filteredRequests.filter((r) => r.status === 'pending')}
                   selectedRequest={selectedRequest}
                 />
               </div>
@@ -612,10 +556,7 @@ const ServiceDashboard = () => {
                   <MapPin className="w-5 h-5 text-red-500" />
                   Active Request Locations ({pendingRequests.length})
                 </h3>
-                <div
-                  className="space-y-2 overflow-y-auto"
-                  style={{ maxHeight: "300px" }}
-                >
+                <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "300px" }}>
                   {pendingRequests.map((request, index) => (
                     <div
                       key={request.id}
@@ -628,25 +569,19 @@ const ServiceDashboard = () => {
                     >
                       <div className="flex items-start gap-3">
                         <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-bold text-white">
-                            {index + 1}
-                          </span>
+                          <span className="text-xs font-bold text-white">{index + 1}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white truncate">
-                            {request.userName}
-                          </p>
+                          <p className="text-sm font-semibold text-white truncate">{request.userName}</p>
                           <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
                             <Phone className="w-3 h-3" />
                             {request.userId}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            📍 {request.location?.latitude?.toFixed?.(4) || "—"}
-                            , {request.location?.longitude?.toFixed?.(4) || "—"}
+                            📍 {request.location?.latitude?.toFixed?.(4) || '—'},{" "}
+                            {request.location?.longitude?.toFixed?.(4) || '—'}
                           </p>
-                          <p className="text-xs text-red-400 mt-1 font-semibold">
-                            {request.type}
-                          </p>
+                          <p className="text-xs text-red-400 mt-1 font-semibold">{request.type}</p>
                         </div>
                       </div>
                     </div>
