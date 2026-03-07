@@ -427,18 +427,61 @@ const ServiceDashboard = () => {
           </div>
 
           {/* Map View */}
-          <div
-            className="card p-6 lg:sticky lg:top-24"
-            style={{ height: "600px" }}
-          >
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-primary-500" />
-              Live Location Map
-            </h3>
-            <MapView
-              requests={pendingRequests}
-              selectedRequest={selectedRequest}
-            />
+          <div className="space-y-6 lg:sticky lg:top-24">
+            <div
+              className="card p-6"
+              style={{ height: "350px" }}
+            >
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary-500" />
+                Live Location Map
+              </h3>
+              <MapView
+                requests={pendingRequests}
+                selectedRequest={selectedRequest}
+              />
+            </div>
+
+            {/* Active Request Locations */}
+            {pendingRequests.length > 0 && (
+              <div className="card p-6" style={{ maxHeight: "400px" }}>
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-red-500" />
+                  Active Request Locations ({pendingRequests.length})
+                </h3>
+                <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "300px" }}>
+                  {pendingRequests.map((request, index) => (
+                    <div
+                      key={request.id}
+                      onClick={() => setSelectedRequest(request)}
+                      className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-dark-700 ${
+                        selectedRequest?.id === request.id
+                          ? "bg-primary-600/20 border border-primary-600"
+                          : "bg-dark-800"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-white">{index + 1}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{request.userName}</p>
+                          <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                            <Phone className="w-3 h-3" />
+                            {request.userId}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            📍 {request.location?.latitude?.toFixed?.(4) || '—'},{" "}
+                            {request.location?.longitude?.toFixed?.(4) || '—'}
+                          </p>
+                          <p className="text-xs text-red-400 mt-1 font-semibold">{request.type}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

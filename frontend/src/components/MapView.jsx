@@ -31,62 +31,16 @@ const MapView = ({ requests, selectedRequest }) => {
   ) {
     return (
       <div className="w-full h-full bg-dark-800 rounded-lg flex flex-col items-center justify-center p-6 text-center">
-        <MapPin className="w-16 h-16 text-gray-600 mb-4" />
+        <div className="w-20 h-20 bg-dark-700 rounded-full flex items-center justify-center mb-4">
+          <MapPin className="w-10 h-10 text-gray-500" />
+        </div>
         <h3 className="text-lg font-semibold text-white mb-2">
           Google Maps Integration
         </h3>
         <p className="text-sm text-gray-400 mb-4">
           To enable live map view, add your Google Maps API key
         </p>
-
-        {/* Mock Map Display */}
-        <div className="w-full bg-dark-900 rounded-lg p-4 mt-4">
-          <p className="text-xs text-gray-500 mb-3">
-            Active Request Locations:
-          </p>
-          {requests.length === 0 ? (
-            <p className="text-sm text-gray-400">No active requests</p>
-          ) : (
-            <div className="space-y-2">
-              {requests.map((request, index) => (
-                <div
-                  key={request.id}
-                  className={`p-3 rounded-lg transition-all ${
-                    selectedRequest?.id === request.id
-                      ? "bg-primary-600/20 border border-primary-600"
-                      : "bg-dark-800"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-white">
-                        {index + 1}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">
-                        {request.userName}
-                      </p>
-                      <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                        <Phone className="w-3 h-3" />
-                        {request.userId}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        📍 {request.location?.latitude?.toFixed?.(4) || '—'},{" "}
-                        {request.location?.longitude?.toFixed?.(4) || '—'}
-                      </p>
-                      <p className="text-xs text-red-400 mt-1 font-semibold">
-                        {request.type}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500 rounded-lg">
+        <div className="p-3 bg-blue-500/10 border border-blue-500 rounded-lg">
           <p className="text-xs text-blue-400">
             💡 Add GOOGLE_MAPS_API_KEY in MapView.jsx to enable interactive map
           </p>
