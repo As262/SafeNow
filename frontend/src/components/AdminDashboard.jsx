@@ -37,6 +37,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("requests"); // 'requests' or 'analytics'
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAllAccepted, setShowAllAccepted] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -384,12 +385,35 @@ const AdminDashboard = () => {
               {/* Accepted Requests */}
               {acceptedRequests.length > 0 && (
                 <div className="card p-6">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Accepted Requests ({acceptedRequests.length})
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      Accepted Requests ({acceptedRequests.length})
+                    </h3>
+                    {acceptedRequests.length > 3 && (
+                      <button
+                        onClick={() => setShowAllAccepted(!showAllAccepted)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        {showAllAccepted ? (
+                          <>
+                            <XCircle className="w-4 h-4" />
+                            Show Less
+                          </>
+                        ) : (
+                          <>
+                            <Activity className="w-4 h-4" />
+                            View All
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-3">
-                    {acceptedRequests.map((request) => (
+                    {(showAllAccepted
+                      ? acceptedRequests
+                      : acceptedRequests.slice(0, 3)
+                    ).map((request) => (
                       <div
                         key={request.id}
                         className="p-4 bg-dark-800 rounded-lg opacity-75"
