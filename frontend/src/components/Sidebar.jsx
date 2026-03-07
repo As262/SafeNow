@@ -34,14 +34,6 @@ const Sidebar = ({ onNavigate }) => {
       section: "dashboard",
     },
     {
-      name: t.emergency,
-      icon: AlertCircle,
-      path: "#",
-      section: "emergency",
-      highlight: true,
-      showForAdmin: false, // Hide for admin users
-    },
-    {
       name: t.contacts,
       icon: Phone,
       path: "#",
