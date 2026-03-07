@@ -347,6 +347,23 @@ const AdminDashboard = () => {
                             Reject
                           </button>
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const lat = request.location?.latitude;
+                            const lng = request.location?.longitude;
+                            if (lat && lng) {
+                              window.open(
+                                `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+                                "_blank"
+                              );
+                            }
+                          }}
+                          className="w-full mt-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Navigation className="w-4 h-4" />
+                          Directions
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -383,7 +400,7 @@ const AdminDashboard = () => {
                                 const lng = request.location?.longitude;
                                 if (lat && lng) {
                                   window.open(
-                                    `https://www.google.com/maps?q=${lat},${lng}`,
+                                    `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
                                     "_blank"
                                   );
                                 }
