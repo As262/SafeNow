@@ -78,7 +78,9 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const submittingRef = useRef(false);
+  const countdownIntervalRef = useRef(null);
 
   // Settings states
   const [editingProfile, setEditingProfile] = useState(false);
@@ -165,6 +167,37 @@ const UserDashboard = () => {
     localStorage.setItem("appPreferences", JSON.stringify(appPreferences));
   }, [appPreferences]);
 
+  // Cleanup countdown interval on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Start countdown timer
+  const startCountdown = () => {
+    // Clear any existing interval
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
+    setCountdown(5);
+
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownIntervalRef.current);
+          setSosActive(false);
+          setSuccessMessage("");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   // Calculate statistics
   const statistics = {
     total: requestHistory.length,
@@ -225,7 +258,7 @@ const UserDashboard = () => {
   };
 
   const handleSOSClick = () => {
-    if (submittingRef.current || sosActive || sendingRequest) return;
+    if (submittingRef.current || sosActive || sendingRequest || countdown > 0) return;
 
     // Start the sending process
     setSendingRequest(true);
@@ -276,14 +309,12 @@ const UserDashboard = () => {
       // Reload history
       loadRequestHistory();
 
-      // Reset after 5 seconds
-      setTimeout(() => {
-        setSosActive(false);
-        setSuccessMessage("");
-      }, 5000);
+      // Start 5-second countdown
+      startCountdown();
     } catch (error) {
       alert("Error sending SOS: " + error.message);
       setSosActive(false);
+      setCountdown(0);
     } finally {
       setLoading(false);
       setSendingRequest(false);
@@ -293,7 +324,7 @@ const UserDashboard = () => {
 
   // Handle SOS request triggered from chatbot
   const handleChatbotSOS = async (emergencyType) => {
-    if (submittingRef.current || sosActive || sendingRequest) return;
+    if (submittingRef.current || sosActive || sendingRequest || countdown > 0) return;
 
     if (!location) {
       alert(
@@ -339,14 +370,12 @@ const UserDashboard = () => {
       // Reload history
       loadRequestHistory();
 
-      // Reset after 5 seconds
-      setTimeout(() => {
-        setSosActive(false);
-        setSuccessMessage("");
-      }, 5000);
+      // Start 5-second countdown
+      startCountdown();
     } catch (error) {
       alert("Error sending SOS: " + error.message);
       setSosActive(false);
+      setCountdown(0);
     } finally {
       setLoading(false);
       setSendingRequest(false);
@@ -428,9 +457,9 @@ const UserDashboard = () => {
                     <div className="flex flex-col items-center mb-6">
                       <button
                         onClick={handleSOSClick}
-                        disabled={sosActive || loading}
+                        disabled={sosActive || loading || countdown > 0}
                         className={`relative w-40 h-40 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-300 ${
-                          sosActive || loading
+                          sosActive || loading || countdown > 0
                             ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
                             : "hover:scale-110 hover:shadow-red-500/50 active:scale-95"
                         }`}
@@ -439,19 +468,31 @@ const UserDashboard = () => {
                         <div className="text-center relative z-10">
                           <AlertTriangle className="w-16 h-16 text-white mx-auto mb-2 drop-shadow-lg" />
                           <span className="text-white text-xl font-black tracking-wider">
-                            {loading ? "SENDING" : "SOS"}
+                            {loading ? "SENDING" : countdown > 0 ? countdown : "SOS"}
                           </span>
                         </div>
                       </button>
 
-                      {(sosActive || loading) && (
-                        <div className="mt-4 flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-full">
-                          <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
-                          <span className="font-semibold text-green-400 text-sm">
-                            {loading
-                              ? "Sending emergency alert..."
-                              : "Alert Sent - Help is on the way!"}
-                          </span>
+                      {(sosActive || loading || countdown > 0) && (
+                        <div className="mt-4 flex flex-col items-center gap-3">
+                          {(loading || (sosActive && countdown > 0)) && (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-full">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+                              <span className="font-semibold text-green-400 text-sm">
+                                {loading
+                                  ? "Sending emergency alert..."
+                                  : "Alert Sent - Help is on the way!"}
+                              </span>
+                            </div>
+                          )}
+                          {countdown > 0 && (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 rounded-full">
+                              <Clock className="w-4 h-4 text-blue-400 animate-pulse" />
+                              <span className="font-semibold text-blue-400 text-sm">
+                                Button available in {countdown}s
+                              </span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -822,9 +863,9 @@ const UserDashboard = () => {
                 <div className="flex flex-col items-center mb-12">
                   <button
                     onClick={handleSOSClick}
-                    disabled={sosActive || loading}
+                    disabled={sosActive || loading || countdown > 0}
                     className={`relative w-64 h-64 rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 shadow-2xl flex items-center justify-center transition-all duration-300 ${
-                      sosActive || loading
+                      sosActive || loading || countdown > 0
                         ? "animate-pulse scale-95 opacity-75 cursor-not-allowed"
                         : "hover:scale-110 hover:shadow-red-500/50 active:scale-95"
                     }`}
@@ -833,19 +874,31 @@ const UserDashboard = () => {
                     <div className="text-center relative z-10">
                       <AlertTriangle className="w-28 h-28 text-white mx-auto mb-4 drop-shadow-lg" />
                       <span className="text-white text-2xl font-black tracking-widest">
-                        {loading ? "SENDING" : "SOS"}
+                        {loading ? "SENDING" : countdown > 0 ? countdown : "SOS"}
                       </span>
                     </div>
                   </button>
 
-                  {(sosActive || loading) && (
-                    <div className="mt-8 flex items-center gap-3 px-8 py-4 bg-green-500/20 border border-green-500/50 rounded-full">
-                      <div className="w-4 h-4 bg-green-500 rounded-full animate-ping" />
-                      <span className="font-bold text-green-400">
-                        {loading
-                          ? "Sending emergency alert..."
-                          : "Alert Sent - Help is on the way!"}
-                      </span>
+                  {(sosActive || loading || countdown > 0) && (
+                    <div className="mt-8 flex flex-col items-center gap-4">
+                      {(loading || (sosActive && countdown > 0)) && (
+                        <div className="flex items-center gap-3 px-8 py-4 bg-green-500/20 border border-green-500/50 rounded-full">
+                          <div className="w-4 h-4 bg-green-500 rounded-full animate-ping" />
+                          <span className="font-bold text-green-400">
+                            {loading
+                              ? "Sending emergency alert..."
+                              : "Alert Sent - Help is on the way!"}
+                          </span>
+                        </div>
+                      )}
+                      {countdown > 0 && (
+                        <div className="flex items-center gap-3 px-6 py-3 bg-blue-500/20 border border-blue-500/50 rounded-full">
+                          <Clock className="w-5 h-5 text-blue-400 animate-pulse" />
+                          <span className="font-bold text-blue-400">
+                            Button available in {countdown} second{countdown !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
