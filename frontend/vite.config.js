@@ -16,4 +16,28 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    // Optimize chunk size
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor libraries into separate chunks
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['lucide-react'],
+          'map-vendor': ['leaflet', 'react-leaflet'],
+          'chart-vendor': ['recharts'],
+        },
+      },
+    },
+    // Use esbuild for faster minification (built into Vite)
+    minify: 'esbuild',
+    // Enable source maps for debugging in dev only
+    sourcemap: false,
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'leaflet', 'lucide-react'],
+  },
 })
+

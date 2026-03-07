@@ -29,9 +29,12 @@ import {
   TrendingUp,
   Award,
   ArrowUpRight,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { useWebSocket } from "../hooks/useWebSocket";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
 import {
@@ -80,12 +83,16 @@ const UserDashboard = () => {
     loading: locationLoading,
     getLocation,
   } = useGeolocation();
+  
+  // WebSocket for real-time updates
+  const { requests: wsRequests, connected: wsConnected } = useWebSocket(user);
 
   const [selectedType, setSelectedType] = useState("police");
   const [sosActive, setSosActive] = useState(false);
   const [requestHistory, setRequestHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const submittingRef = useRef(false);
@@ -238,13 +245,36 @@ const UserDashboard = () => {
     // Get location on component mount so it's ready when needed
     getLocation();
     
-    // Auto-refresh request history every 5 seconds
+    // Optimized auto-refresh: only when WebSocket disconnected
     const historyRefreshInterval = setInterval(() => {
-      loadRequestHistory();
-    }, 5000);
+      if (!wsConnected) {
+        console.log("⚠️ WebSocket disconnected, using polling fallback for history");
+        loadRequestHistory();
+      }
+    }, wsConnected ? 30000 : 3000); // 30s when connected, 3s when disconnected
     
     return () => clearInterval(historyRefreshInterval);
-  }, []);
+  }, [wsConnected]);
+  
+  // Merge WebSocket updates with request history
+  useEffect(() => {
+    if (wsRequests.length > 0) {
+      setRequestHistory((prev) => {
+        const merged = new Map();
+        // Existing history first
+        prev.forEach((r) => merged.set(r.id, r));
+        // WebSocket requests for this user (filter by mobile)
+        wsRequests
+          .filter(r => r.user_mobile === user.mobile || r.user === user.mobile)
+          .forEach((r) => merged.set(r.id, r));
+        return Array.from(merged.values()).sort(
+          (a, b) =>
+            new Date(b.timestamp || b.created_at) -
+            new Date(a.timestamp || a.created_at),
+        );
+      });
+    }
+  }, [wsRequests, user.mobile]);
 
   // Watch for location updates when sending request
   useEffect(() => {
@@ -311,14 +341,14 @@ const UserDashboard = () => {
     if (activeSection === "helper" && isHelper && helperAvailable) {
       loadHelperRequestsOptimized();
       
-      // Auto-refresh helper requests every 5 seconds
+      // Optimized auto-refresh: less frequent when connected
       const refreshInterval = setInterval(() => {
         loadHelperRequestsOptimized(true); // Skip cache to get fresh data
-      }, 5000);
+      }, wsConnected ? 15000 : 3000); // 15s when connected, 3s when disconnected
       
       return () => clearInterval(refreshInterval);
     }
-  }, [activeSection, isHelper, helperAvailable, loadHelperRequestsOptimized]);
+  }, [activeSection, isHelper, helperAvailable, loadHelperRequestsOptimized, wsConnected]);
 
   const loadRequestHistory = useCallback(async () => {
     try {
@@ -593,12 +623,32 @@ const UserDashboard = () => {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-              {t.dashboard.welcome},{" "}
-              <span className="text-primary-500">{user.name}</span>
-            </h1>
-            <p className="text-gray-400">{t.dashboard.subtitle}</p>
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                {t.dashboard.welcome},{" "}
+                <span className="text-primary-500">{user.name}</span>
+              </h1>
+              <p className="text-gray-400">{t.dashboard.subtitle}</p>
+            </div>
+            {/* Connection Status */}
+            <div
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                wsConnected
+                  ? "bg-green-500/10 border border-green-500/20"
+                  : "bg-red-500/10 border border-red-500/20"
+              }`}
+              title={wsConnected ? "Real-time connected" : "Disconnected - using fallback"}
+            >
+              {wsConnected ? (
+                <Wifi className="w-4 h-4 text-green-500" />
+              ) : (
+                <WifiOff className="w-4 h-4 text-red-500 animate-pulse" />
+              )}
+              <span className={`text-xs font-medium hidden sm:inline ${wsConnected ? "text-green-500" : "text-red-500"}`}>
+                {wsConnected ? "Live" : "Offline"}
+              </span>
+            </div>
           </div>
 
           {/* Success Message */}
