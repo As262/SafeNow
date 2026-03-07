@@ -48,6 +48,13 @@ const Sidebar = ({ onNavigate }) => {
       showForAdmin: false, // Hide for admin users
     },
     {
+      name: t.helper || "Helper Mode",
+      icon: Users,
+      path: "#",
+      section: "helper",
+      showForAdmin: false, // Hide for admin users
+    },
+    {
       name: t.map,
       icon: Map,
       path: "#",

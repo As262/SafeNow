@@ -233,6 +233,119 @@ export const logoutUser = async () => {
   }
 };
 
+/**
+ * Toggle helper mode
+ * @param {boolean} isHelper - Enable/disable helper mode
+ * @param {string} helperSkills - Helper skills
+ * @param {number} helperRadiusKm - Service radius in km
+ * @returns {Promise}
+ */
+export const toggleHelperMode = async (
+  isHelper,
+  helperSkills = "",
+  helperRadiusKm = 5,
+) => {
+  return apiRequest("/auth/helper/toggle/", {
+    method: "POST",
+    body: JSON.stringify({
+      is_helper: isHelper,
+      helper_skills: helperSkills,
+      helper_radius_km: helperRadiusKm,
+    }),
+  });
+};
+
+/**
+ * Toggle helper availability
+ * @param {boolean} available - Helper availability status
+ * @returns {Promise}
+ */
+export const toggleHelperAvailability = async (available) => {
+  return apiRequest("/auth/helper/availability/", {
+    method: "POST",
+    body: JSON.stringify({ available }),
+  });
+};
+
+/**
+ * Get all SOS requests for helpers
+ * @param {number} latitude - Helper's current latitude
+ * @param {number} longitude - Helper's current longitude
+ * @returns {Promise} - List of nearby SOS requests
+ */
+export const getHelperRequests = async (latitude = null, longitude = null) => {
+  let url = "/sos/helper/requests/";
+  if (latitude && longitude) {
+    url += `?latitude=${latitude}&longitude=${longitude}`;
+  }
+  return apiRequest(url, { method: "GET" });
+};
+
+/**
+ * Get points balance and stats
+ * @returns {Promise} - Points balance and statistics
+ */
+export const getPointsBalance = async () => {
+  return apiRequest("/auth/points/balance/");
+};
+
+/**
+ * Get points transaction history
+ * @returns {Promise} - List of transactions
+ */
+export const getPointsTransactions = async () => {
+  return apiRequest("/auth/points/transactions/");
+};
+
+/**
+ * Withdraw points
+ * @param {number} amount - Amount to withdraw
+ * @returns {Promise} - Withdrawal confirmation
+ */
+export const withdrawPoints = async (amount) => {
+  return apiRequest("/auth/points/withdraw/", {
+    method: "POST",
+    body: JSON.stringify({ amount }),
+  });
+};
+
+/**
+ * Respond to an SOS request as a helper
+ * @param {string} requestId - SOS request ID
+ * @param {string} action - 'accept' or 'reject'
+ * @returns {Promise}
+ */
+export const helperRespondToRequest = async (requestId, action) => {
+  return apiRequest(`/sos/helper/request/${requestId}/respond/`, {
+    method: "POST",
+    body: JSON.stringify({ action }),
+  });
+};
+
+/**
+ * Get all service providers (Admin only)
+ * @param {string} role - Optional filter by role (hospital, fire, ngo, police)
+ * @returns {Promise} - List of service providers
+ */
+export const getServiceProviders = async (role = null) => {
+  let url = "/auth/service-providers/";
+  if (role) {
+    url += `?role=${role}`;
+  }
+  return apiRequest(url, { method: "GET" });
+};
+
+/**
+ * Confirm help received (requesting user marks their own SOS as complete)
+ * @param {string} requestId - SOS request ID
+ * @returns {Promise}
+ */
+export const confirmRequestComplete = async (requestId) => {
+  return apiRequest(`/sos/request/${requestId}/confirm-complete/`, {
+    method: "POST",
+  });
+};
+
 export default {
   sendOTP,
   verifyOTP,
@@ -244,4 +357,9 @@ export default {
   updateRequestStatus,
   getAnalytics,
   logoutUser,
+  toggleHelperMode,
+  toggleHelperAvailability,
+  getHelperRequests,
+  helperRespondToRequest,
+  confirmRequestComplete,
 };

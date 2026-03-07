@@ -14,6 +14,7 @@ import {
   TrendingUp,
   AlertCircle,
   Navigation,
+  Building2,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -52,7 +53,9 @@ const AdminDashboard = () => {
         // WebSocket requests overwrite (fresher data)
         wsRequests.forEach((r) => merged.set(r.id, r));
         return Array.from(merged.values()).sort(
-          (a, b) => new Date(b.timestamp || b.created_at) - new Date(a.timestamp || a.created_at)
+          (a, b) =>
+            new Date(b.timestamp || b.created_at) -
+            new Date(a.timestamp || a.created_at),
         );
       });
     }
@@ -157,6 +160,14 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               )}
+
+              <button
+                onClick={() => navigate("/admin/helpers")}
+                className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors"
+              >
+                <Building2 className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-white">Service Providers</span>
+              </button>
 
               <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
                 <User className="w-4 h-4 text-gray-400" />
@@ -316,7 +327,7 @@ const AdminDashboard = () => {
                           <MapPin className="w-3 h-3" />
                           <span>
                             {request.location?.address ||
-                              `${request.location?.latitude?.toFixed?.(4) || '—'}, ${request.location?.longitude?.toFixed?.(4) || '—'}`}
+                              `${request.location?.latitude?.toFixed?.(4) || "—"}, ${request.location?.longitude?.toFixed?.(4) || "—"}`}
                           </span>
                         </div>
 
@@ -355,7 +366,7 @@ const AdminDashboard = () => {
                             if (lat && lng) {
                               window.open(
                                 `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-                                "_blank"
+                                "_blank",
                               );
                             }
                           }}
@@ -384,13 +395,19 @@ const AdminDashboard = () => {
                         className="p-4 bg-dark-800 rounded-lg opacity-75"
                       >
                         <div className="flex items-start justify-between">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-semibold text-white">
                               {request.userName}
                             </p>
                             <p className="text-sm text-gray-400">
                               {request.type}
                             </p>
+                            {request.respondedByName && (
+                              <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
+                                <User className="w-3 h-3" />
+                                Responded by {request.respondedByName}
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <button
@@ -401,7 +418,7 @@ const AdminDashboard = () => {
                                 if (lat && lng) {
                                   window.open(
                                     `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-                                    "_blank"
+                                    "_blank",
                                   );
                                 }
                               }}
@@ -425,17 +442,19 @@ const AdminDashboard = () => {
             {/* Map View */}
             <div className="space-y-6 lg:sticky lg:top-24">
               <div
-                className="card p-6"
-                style={{ height: "350px" }}
+                className="card p-6 overflow-hidden"
+                style={{ height: "500px" }}
               >
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-primary-500" />
                   Live Location Map
                 </h3>
-                <MapView
-                  requests={pendingRequests}
-                  selectedRequest={selectedRequest}
-                />
+                <div className="h-[calc(100%-3rem)] overflow-hidden">
+                  <MapView
+                    requests={pendingRequests}
+                    selectedRequest={selectedRequest}
+                  />
+                </div>
               </div>
 
               {/* Active Request Locations */}
@@ -445,7 +464,10 @@ const AdminDashboard = () => {
                     <MapPin className="w-5 h-5 text-red-500" />
                     Active Request Locations ({pendingRequests.length})
                   </h3>
-                  <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "300px" }}>
+                  <div
+                    className="space-y-2 overflow-y-auto"
+                    style={{ maxHeight: "300px" }}
+                  >
                     {pendingRequests.map((request, index) => (
                       <div
                         key={request.id}
@@ -458,19 +480,26 @@ const AdminDashboard = () => {
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-white">{index + 1}</span>
+                            <span className="text-xs font-bold text-white">
+                              {index + 1}
+                            </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">{request.userName}</p>
+                            <p className="text-sm font-semibold text-white truncate">
+                              {request.userName}
+                            </p>
                             <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
                               <Phone className="w-3 h-3" />
                               {request.userId}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              📍 {request.location?.latitude?.toFixed?.(4) || '—'},{" "}
-                              {request.location?.longitude?.toFixed?.(4) || '—'}
+                              📍{" "}
+                              {request.location?.latitude?.toFixed?.(4) || "—"},{" "}
+                              {request.location?.longitude?.toFixed?.(4) || "—"}
                             </p>
-                            <p className="text-xs text-red-400 mt-1 font-semibold">{request.type}</p>
+                            <p className="text-xs text-red-400 mt-1 font-semibold">
+                              {request.type}
+                            </p>
                           </div>
                         </div>
                       </div>

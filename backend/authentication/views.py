@@ -18,6 +18,7 @@ from .serializers import (
     ServiceLoginSerializer,
     ServiceProviderSerializer,
     EmergencyContactSerializer,
+    PointsTransactionSerializer,
 )
 from .services import create_otp, verify_otp
 
@@ -285,3 +286,167 @@ def emergency_contact_detail_view(request, contact_id):
     # DELETE
     contact.delete()
     return Response({'success': True, 'message': 'Contact deleted.'}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_helper_mode_view(request):
+    """Toggle helper mode for the authenticated user."""
+    user = request.user
+    
+    # Get data from request
+    is_helper = request.data.get('is_helper', False)
+    helper_skills = request.data.get('helper_skills', '')
+    helper_radius_km = request.data.get('helper_radius_km', 5)
+    
+    # Update user helper fields
+    user.is_helper = is_helper
+    user.helper_available = is_helper  # Set available when enabling helper mode
+    user.helper_skills = helper_skills
+    user.helper_radius_km = helper_radius_km
+    user.save()
+    
+    return Response({
+        'success': True,
+        'message': 'Helper mode updated successfully',
+        'is_helper': user.is_helper,
+        'helper_available': user.helper_available,
+        'helper_skills': user.helper_skills,
+        'helper_radius_km': user.helper_radius_km
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_helper_availability_view(request):
+    """Toggle helper availability status."""
+    user = request.user
+    
+    if not user.is_helper:
+        return Response({
+            'success': False,
+            'message': 'User is not registered as a helper'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    user.helper_available = request.data.get('available', not user.helper_available)
+    user.save()
+    
+    return Response({
+        'success': True,
+        'message': 'Helper availability updated',
+        'helper_available': user.helper_available
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_service_providers_view(request):
+    """Get all service providers (Admin only)."""
+    # Check if user is admin
+    if request.user.role != 'admin':
+        return Response({
+            'success': False,
+            'message': 'Only admins can view service providers'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    # Get optional filter by role
+    role_filter = request.GET.get('role', None)
+    
+    if role_filter:
+        providers = ServiceProvider.objects.filter(role=role_filter, is_active=True)
+    else:
+        providers = ServiceProvider.objects.filter(is_active=True)
+    
+    serializer = ServiceProviderSerializer(providers, many=True)
+    
+    return Response({
+        'success': True,
+        'providers': serializer.data,
+        'count': providers.count()
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def points_balance_view(request):
+    """Get the current points balance and stats for the authenticated user."""
+    user = request.user
+    
+    return Response({
+        'success': True,
+        'points': float(user.points),
+        'total_earnings': float(user.total_earnings),
+        'total_requests_completed': user.total_requests_completed,
+        'is_helper': user.is_helper
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def points_transactions_view(request):
+    """Get points transaction history for the authenticated user."""
+    from .models import PointsTransaction
+    
+    transactions = PointsTransaction.objects.filter(user=request.user)
+    serializer = PointsTransactionSerializer(transactions, many=True)
+    
+    return Response({
+        'success': True,
+        'transactions': serializer.data
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def withdraw_points_view(request):
+    """Request to withdraw points (convert to real money)."""
+    from .points_utils import deduct_points
+    from decimal import Decimal
+    
+    user = request.user
+    amount = request.data.get('amount')
+    
+    if not amount:
+        return Response({
+            'success': False,
+            'message': 'Amount is required'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        amount = Decimal(str(amount))
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        
+        # Minimum withdrawal amount
+        if amount < Decimal('100.00'):
+            return Response({
+                'success': False,
+                'message': 'Minimum withdrawal amount is ₹100'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Attempt to deduct points
+        transaction = deduct_points(
+            user=user,
+            amount=amount,
+            description=f"Withdrawal of ₹{amount}",
+            transaction_type='withdrawn'
+        )
+        
+        return Response({
+            'success': True,
+            'message': 'Withdrawal request submitted successfully',
+            'transaction': PointsTransactionSerializer(transaction).data,
+            'new_balance': float(user.points)
+        })
+        
+    except ValueError as e:
+        return Response({
+            'success': False,
+            'message': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Error processing withdrawal: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'Failed to process withdrawal'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

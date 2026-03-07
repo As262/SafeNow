@@ -11,6 +11,7 @@ import Login from "./components/Login";
 import UserDashboard from "./components/UserDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import ServiceDashboard from "./components/ServiceDashboard";
+import HelpersView from "./components/HelpersView";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SplashScreen from "./components/SplashScreen";
 
@@ -58,6 +59,16 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected Admin Helpers Route */}
+            <Route
+              path="/admin/helpers"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <HelpersView />
                 </ProtectedRoute>
               }
             />

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, OTP, UserSession, ServiceProvider
+from .models import User, OTP, UserSession, ServiceProvider, PointsTransaction
 
 
 @admin.register(User)
@@ -33,3 +33,12 @@ class UserSessionAdmin(admin.ModelAdmin):
     list_filter = ['is_active']
     search_fields = ['user__mobile', 'user__name']
     ordering = ['-created_at']
+
+
+@admin.register(PointsTransaction)
+class PointsTransactionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'transaction_type', 'amount', 'balance_after', 'created_at']
+    list_filter = ['transaction_type', 'created_at']
+    search_fields = ['user__mobile', 'user__name', 'description']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at']

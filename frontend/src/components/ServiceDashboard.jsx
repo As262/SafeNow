@@ -16,13 +16,16 @@ import {
   Users,
   AlertCircle,
   Navigation,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
 import { useWebSocket } from "../hooks/useWebSocket";
-import { getAllSOSRequests, updateRequestStatus, getAnalytics } from "../utils/api";
+import { getAllSOSRequests, updateRequestStatus, getAnalytics, getPointsBalance } from "../utils/api";
 import MapView from "./MapView";
+import PointsWallet from "./PointsWallet";
 
 const ServiceDashboard = () => {
   const { user, logout, isHospital, isFire, isNGO, isPolice } = useAuth();
@@ -36,6 +39,8 @@ const ServiceDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
+  const [pointsData, setPointsData] = useState({ points: 0, total_earnings: 0, total_requests_completed: 0 });
+  const [currentView, setCurrentView] = useState('requests'); // 'requests' or 'wallet'
 
   // Determine service type and filter criteria
   const getServiceInfo = () => {
@@ -84,6 +89,7 @@ const ServiceDashboard = () => {
   useEffect(() => {
     loadRequests();
     loadAnalytics();
+    loadPoints();
   }, []);
 
   useEffect(() => {
@@ -121,6 +127,21 @@ const ServiceDashboard = () => {
       setAnalytics(response.analytics);
     } catch (error) {
       console.error("Error loading analytics:", error);
+    }
+  };
+
+  const loadPoints = async () => {
+    try {
+      const response = await getPointsBalance();
+      if (response.success) {
+        setPointsData({
+          points: response.points || 0,
+          total_earnings: response.total_earnings || 0,
+          total_requests_completed: response.total_requests_completed || 0
+        });
+      }
+    } catch (error) {
+      console.error("Error loading points:", error);
     }
   };
 
@@ -242,8 +263,45 @@ const ServiceDashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Navigation Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setCurrentView('requests')}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              currentView === 'requests'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-dark-800 text-gray-400 hover:bg-dark-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              <span>SOS Requests</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setCurrentView('wallet')}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              currentView === 'wallet'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-dark-800 text-gray-400 hover:bg-dark-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Wallet className="w-5 h-5" />
+              <span>My Earnings</span>
+              {pointsData.points > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-green-500 text-white text-xs rounded-full">
+                  ₹{pointsData.points.toFixed(0)}
+                </span>
+              )}
+            </div>
+          </button>
+        </div>
+
+        {currentView === 'requests' ? (
+          <>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
@@ -300,6 +358,21 @@ const ServiceDashboard = () => {
               {t.serviceDashboard.type}
             </p>
           </div>
+
+          <div className="card p-6 bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-400">
+                Total Earnings
+              </h3>
+              <Wallet className="w-5 h-5 text-green-500" />
+            </div>
+            <p className="text-3xl font-bold text-white">
+              ₹{pointsData.total_earnings.toFixed(0)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {pointsData.total_requests_completed} requests completed
+            </p>
+          </div>
         </div>
 
         {/* Content */}
@@ -340,7 +413,7 @@ const ServiceDashboard = () => {
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-semibold text-white">
                             {request.userName}
                           </p>
@@ -348,6 +421,12 @@ const ServiceDashboard = () => {
                             <Phone className="w-3 h-3" />
                             {request.userId}
                           </p>
+                          {request.respondedByName && (
+                            <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
+                              <User className="w-3 h-3" />
+                              Responded by {request.respondedByName}
+                            </p>
+                          )}
                         </div>
                         <span
                           className={`px-2 py-1 bg-${serviceInfo.color}-500/20 text-${serviceInfo.color}-400 text-xs font-semibold rounded`}
@@ -433,7 +512,7 @@ const ServiceDashboard = () => {
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-semibold text-white">
                             {request.userName}
                           </p>
@@ -441,6 +520,12 @@ const ServiceDashboard = () => {
                             <Phone className="w-3 h-3" />
                             {request.userId}
                           </p>
+                          {request.respondedByName && (
+                            <p className="text-xs text-green-400 flex items-center gap-1 mt-1">
+                              <User className="w-3 h-3" />
+                              Responded by {request.respondedByName}
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -493,17 +578,19 @@ const ServiceDashboard = () => {
           {/* Map View */}
           <div className="space-y-6 lg:sticky lg:top-24">
             <div
-              className="card p-6"
-              style={{ height: "350px" }}
+              className="card p-6 overflow-hidden"
+              style={{ height: "500px" }}
             >
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary-500" />
                 Live Location Map
               </h3>
-              <MapView
-                requests={pendingRequests}
-                selectedRequest={selectedRequest}
-              />
+              <div className="h-[calc(100%-3rem)] overflow-hidden">
+                <MapView
+                  requests={pendingRequests}
+                  selectedRequest={selectedRequest}
+                />
+              </div>
             </div>
 
             {/* Active Request Locations */}
@@ -548,6 +635,13 @@ const ServiceDashboard = () => {
             )}
           </div>
         </div>
+        </>
+        ) : (
+          /* Wallet View */
+          <div className="mt-6">
+            <PointsWallet />
+          </div>
+        )}
       </main>
     </div>
   );

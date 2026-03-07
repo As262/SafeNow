@@ -11,4 +11,11 @@ urlpatterns = [
     path('sessions/', views.sessions_view, name='sessions'),
     path('emergency-contacts/', views.emergency_contacts_view, name='emergency-contacts'),
     path('emergency-contacts/<int:contact_id>/', views.emergency_contact_detail_view, name='emergency-contact-detail'),
+    path('helper/toggle/', views.toggle_helper_mode_view, name='toggle-helper'),
+    path('helper/availability/', views.toggle_helper_availability_view, name='toggle-helper-availability'),
+    path('service-providers/', views.get_service_providers_view, name='service-providers'),
+    # Points/Wallet endpoints
+    path('points/balance/', views.points_balance_view, name='points-balance'),
+    path('points/transactions/', views.points_transactions_view, name='points-transactions'),
+    path('points/withdraw/', views.withdraw_points_view, name='points-withdraw'),
 ]
