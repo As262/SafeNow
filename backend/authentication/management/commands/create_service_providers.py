@@ -8,7 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # 7-digit pin code IDs:
-        # 400xxxx = Admin, 100xxxx = Hospital, 300xxxx = Fire, 200xxxx = NGO
+        # 400xxxx = Admin, 100xxxx = Hospital, 300xxxx = Fire, 200xxxx = NGO, 500xxxx = Police
         service_providers = [
             {
                 'service_id': '4001923',
