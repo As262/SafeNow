@@ -16,8 +16,6 @@ import {
   Navigation,
   Building2,
   RefreshCw,
-  Wifi,
-  WifiOff,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -32,7 +30,7 @@ import AnalyticsCharts from "./AnalyticsCharts";
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { requests: wsRequests, updateRequestStatus: updateWSRequest, connected: wsConnected } =
+  const { requests: wsRequests, updateRequestStatus: updateWSRequest } =
     useWebSocket(user);
 
   const [requests, setRequests] = useState([]);
@@ -47,17 +45,14 @@ const AdminDashboard = () => {
     loadRequests();
     loadAnalytics();
 
-    // Optimized polling: only when WebSocket disconnected, otherwise every 30 seconds for analytics
+    // Auto-refresh every 5 seconds
     const refreshInterval = setInterval(() => {
-      if (!wsConnected) {
-        console.log("⚠️ WebSocket disconnected, using polling fallback");
-        loadRequests(true);
-      }
-      loadAnalytics(); // Always refresh analytics
-    }, wsConnected ? 30000 : 3000); // 30s when connected, 3s when disconnected
+      loadRequests(true); // Silent refresh
+      loadAnalytics();
+    }, 5000);
 
     return () => clearInterval(refreshInterval);
-  }, [wsConnected]);
+  }, []);
 
   useEffect(() => {
     // Merge WebSocket requests with existing, deduplicating by ID
@@ -173,25 +168,6 @@ const AdminDashboard = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Connection Status */}
-              <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-                  wsConnected
-                    ? "bg-green-500/10 border border-green-500/20"
-                    : "bg-red-500/10 border border-red-500/20"
-                }`}
-                title={wsConnected ? "Real-time connected" : "Disconnected - using fallback"}
-              >
-                {wsConnected ? (
-                  <Wifi className="w-4 h-4 text-green-500" />
-                ) : (
-                  <WifiOff className="w-4 h-4 text-red-500 animate-pulse" />
-                )}
-                <span className={`text-xs font-medium ${wsConnected ? "text-green-500" : "text-red-500"}`}>
-                  {wsConnected ? "Live" : "Offline"}
-                </span>
-              </div>
-
               {pendingRequests.length > 0 && (
                 <div className="relative">
                   <Bell className="w-6 h-6 text-red-500 animate-pulse" />
@@ -501,7 +477,8 @@ const AdminDashboard = () => {
                 </h3>
                 <div className="flex-1 overflow-hidden">
                   <MapView
-                    requests={pendingRequests}
+                    adminMode={true}
+                    requests={requests.filter((r) => r.status === 'pending')}
                     selectedRequest={selectedRequest}
                   />
                 </div>

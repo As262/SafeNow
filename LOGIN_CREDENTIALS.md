@@ -32,7 +32,7 @@ All service provider accounts have been created. Use these credentials to log in
 
 ### Fire Departments (Shows all SOS requests)
 
-- **Service ID**: `3006147` | **Password**: `fire123` | **Name**: City Fire Department
+- **Service ID**: `3006147` | **Password**: `x1` | **Name**: City Fire Department
 - **Service ID**: `3008253` | **Password**: `fire123` | **Name**: District Fire Brigade
 
 ---
