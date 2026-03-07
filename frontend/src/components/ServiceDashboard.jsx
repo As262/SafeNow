@@ -21,7 +21,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { translations } from "../utils/translations";
 import { useWebSocket } from "../hooks/useWebSocket";
-import { getAllSOSRequests, updateRequestStatus } from "../utils/api";
+import { getAllSOSRequests, updateRequestStatus, getAnalytics } from "../utils/api";
 import MapView from "./MapView";
 
 const ServiceDashboard = () => {
@@ -35,6 +35,7 @@ const ServiceDashboard = () => {
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(null);
 
   // Determine service type and filter criteria
   const getServiceInfo = () => {
@@ -82,6 +83,7 @@ const ServiceDashboard = () => {
 
   useEffect(() => {
     loadRequests();
+    loadAnalytics();
   }, []);
 
   useEffect(() => {
@@ -110,6 +112,15 @@ const ServiceDashboard = () => {
       console.error("Error loading requests:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      const response = await getAnalytics();
+      setAnalytics(response.analytics);
+    } catch (error) {
+      console.error("Error loading analytics:", error);
     }
   };
 
@@ -232,7 +243,7 @@ const ServiceDashboard = () => {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
@@ -262,9 +273,22 @@ const ServiceDashboard = () => {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-400">
-                {t.serviceDashboard.totalRequests}
+                Avg Response
               </h3>
               <Clock className="w-5 h-5 text-blue-500" />
+            </div>
+            <p className="text-3xl font-bold text-white">
+              {analytics?.averageResponseTime || "—"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Target: &lt;10 min</p>
+          </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-400">
+                {t.serviceDashboard.totalRequests}
+              </h3>
+              <Activity className="w-5 h-5 text-purple-500" />
             </div>
             <p className="text-3xl font-bold text-white">
               {filteredRequests.length}

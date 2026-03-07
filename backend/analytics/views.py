@@ -15,30 +15,50 @@ logger = logging.getLogger('sos')
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def analytics_view(request):
-    """Get analytics data (admin only)."""
-    if request.user.role != 'admin':
+    """Get analytics data for authenticated users."""
+    # Allow all authenticated service providers (admin, hospital, fire, ngo, police)
+    # Regular users don't need analytics
+    if request.user.role == 'user':
         return Response(
-            {'success': False, 'message': 'Admin access required'},
+            {'success': False, 'message': 'Service provider access required'},
             status=status.HTTP_403_FORBIDDEN
         )
 
     now = timezone.now()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    # Filter requests based on user role
+    # Admin sees all, service providers see only their relevant types
+    ROLE_TO_SOS_TYPES = {
+        'hospital': ['Ambulance', 'Medical Help'],
+        'fire': ['Fire Emergency'],
+        'ngo': ['NGO Support'],
+        'police': ['Police'],
+    }
+
+    # Base queryset
+    base_queryset = SOSRequest.objects.all()
+    
+    # Filter by role if not admin
+    if request.user.role != 'admin':
+        allowed_types = ROLE_TO_SOS_TYPES.get(request.user.role)
+        if allowed_types:
+            base_queryset = base_queryset.filter(type__in=allowed_types)
+
     # Total requests
-    total_requests = SOSRequest.objects.count()
+    total_requests = base_queryset.count()
 
     # Active (pending) requests
-    active_requests = SOSRequest.objects.filter(status='pending').count()
+    active_requests = base_queryset.filter(status='pending').count()
 
     # Completed today
-    completed_today = SOSRequest.objects.filter(
+    completed_today = base_queryset.filter(
         status__in=['accepted', 'completed'],
         updated_at__gte=today_start
     ).count()
 
     # Average response time (only for accepted/completed requests with response_time)
-    accepted_requests = SOSRequest.objects.filter(
+    accepted_requests = base_queryset.filter(
         accepted_at__isnull=False,
         created_at__isnull=False,
     )
@@ -56,7 +76,7 @@ def analytics_view(request):
 
     # Requests by type
     requests_by_type = list(
-        SOSRequest.objects.values('type')
+        base_queryset.values('type')
         .annotate(count=Count('id'))
         .order_by('-count')
     )
