@@ -344,27 +344,52 @@ const Login = () => {
                     <Building2 className="w-5 h-5 text-orange-400" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-white font-semibold mb-3 text-sm">Demo Service Provider Accounts</h3>
+                    <h3 className="text-white font-semibold mb-3 text-sm">
+                      Demo Service Provider Accounts
+                    </h3>
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                       <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
                         <p className="text-xs text-gray-400 mb-1">Admin</p>
-                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 4001923 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> admin123</p>
+                        <p className="text-orange-400 font-mono text-xs">
+                          <span className="text-gray-500">ID:</span> 4001923{" "}
+                          <span className="text-gray-500 mx-2">|</span>{" "}
+                          <span className="text-gray-500">Pass:</span> admin123
+                        </p>
                       </div>
                       <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
                         <p className="text-xs text-gray-400 mb-1">Hospital</p>
-                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 1004782 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> hospital123</p>
+                        <p className="text-orange-400 font-mono text-xs">
+                          <span className="text-gray-500">ID:</span> 1004782{" "}
+                          <span className="text-gray-500 mx-2">|</span>{" "}
+                          <span className="text-gray-500">Pass:</span>{" "}
+                          hospital123
+                        </p>
                       </div>
                       <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
-                        <p className="text-xs text-gray-400 mb-1">Fire Department</p>
-                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 3002156 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> fire123</p>
+                        <p className="text-xs text-gray-400 mb-1">
+                          Fire Department
+                        </p>
+                        <p className="text-orange-400 font-mono text-xs">
+                          <span className="text-gray-500">ID:</span> 3002156{" "}
+                          <span className="text-gray-500 mx-2">|</span>{" "}
+                          <span className="text-gray-500">Pass:</span> fire123
+                        </p>
                       </div>
                       <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
                         <p className="text-xs text-gray-400 mb-1">Police</p>
-                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 5003847 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> police123</p>
+                        <p className="text-orange-400 font-mono text-xs">
+                          <span className="text-gray-500">ID:</span> 5003847{" "}
+                          <span className="text-gray-500 mx-2">|</span>{" "}
+                          <span className="text-gray-500">Pass:</span> police123
+                        </p>
                       </div>
                       <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
                         <p className="text-xs text-gray-400 mb-1">NGO</p>
-                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 2001429 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> ngo123</p>
+                        <p className="text-orange-400 font-mono text-xs">
+                          <span className="text-gray-500">ID:</span> 2001429{" "}
+                          <span className="text-gray-500 mx-2">|</span>{" "}
+                          <span className="text-gray-500">Pass:</span> ngo123
+                        </p>
                       </div>
                     </div>
                   </div>

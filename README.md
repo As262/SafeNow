@@ -75,7 +75,7 @@
 ### For Admins
 
 - **Admin Dashboard**: Complete oversight of all platform activities
-- **Analytics & Charts**: 
+- **Analytics & Charts**:
   - Request distribution by type
   - Response time analytics
   - User statistics and trends
@@ -100,28 +100,28 @@
 
 ### Frontend
 
-| Technology | Purpose |
-|------------|---------|
-| React 18 | UI Framework with Hooks |
-| Vite | Fast build tool and dev server |
-| Tailwind CSS | Utility-first styling |
-| React Router | Client-side routing |
-| Lucide React | Modern icon library |
-| Recharts | Data visualization |
-| Context API | State management |
-| WebSocket | Real-time communication |
+| Technology   | Purpose                        |
+| ------------ | ------------------------------ |
+| React 18     | UI Framework with Hooks        |
+| Vite         | Fast build tool and dev server |
+| Tailwind CSS | Utility-first styling          |
+| React Router | Client-side routing            |
+| Lucide React | Modern icon library            |
+| Recharts     | Data visualization             |
+| Context API  | State management               |
+| WebSocket    | Real-time communication        |
 
 ### Backend
 
-| Technology | Purpose |
-|------------|---------|
-| Django 5.0 | Web framework |
-| Django REST Framework | RESTful API |
-| Django Channels | WebSocket support |
-| Daphne | ASGI server |
-| Simple JWT | Token authentication |
-| Twilio | SMS/OTP verification |
-| SQLite/PostgreSQL | Database |
+| Technology            | Purpose              |
+| --------------------- | -------------------- |
+| Django 5.0            | Web framework        |
+| Django REST Framework | RESTful API          |
+| Django Channels       | WebSocket support    |
+| Daphne                | ASGI server          |
+| Simple JWT            | Token authentication |
+| Twilio                | SMS/OTP verification |
+| SQLite/PostgreSQL     | Database             |
 
 ---
 
@@ -282,18 +282,21 @@ VITE_WS_URL=ws://localhost:8000
 ## 👥 User Roles
 
 ### 1. Regular User
+
 - Send SOS alerts
 - View request history
 - Manage emergency contacts
 - Update profile
 
 ### 2. Helper (Volunteer)
+
 - Accept nearby emergency requests
 - Earn points for helping
 - Toggle availability status
 - View earnings and contributions
 
 ### 3. Service Provider
+
 - **Hospital**: Medical emergencies
 - **Police**: Law enforcement assistance
 - **Fire**: Fire and rescue services
@@ -302,6 +305,7 @@ VITE_WS_URL=ws://localhost:8000
 Each type has a dedicated dashboard for managing requests.
 
 ### 4. Admin
+
 - Full platform oversight
 - Analytics and reporting
 - User management
