@@ -167,9 +167,7 @@ const Login = () => {
                 <h2 className="text-2xl font-bold text-white mb-2">
                   {t.login.title}
                 </h2>
-                <p className="text-gray-400 mb-6">
-                  {t.login.subtitle}
-                </p>
+                <p className="text-gray-400 mb-6">{t.login.subtitle}</p>
 
                 {/* Demo Credentials Info */}
                 <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg">
@@ -178,15 +176,25 @@ const Login = () => {
                       <AlertCircle className="w-5 h-5 text-blue-400" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold mb-2 text-sm">Demo Credentials for Testing</h3>
+                      <h3 className="text-white font-semibold mb-2 text-sm">
+                        Demo Credentials for Testing
+                      </h3>
                       <div className="space-y-2">
                         <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
-                          <p className="text-xs text-gray-400 mb-1">Mobile Number:</p>
-                          <p className="text-blue-400 font-mono text-sm font-semibold">1234567890</p>
+                          <p className="text-xs text-gray-400 mb-1">
+                            Mobile Number:
+                          </p>
+                          <p className="text-blue-400 font-mono text-sm font-semibold">
+                            1234567890
+                          </p>
                         </div>
                         <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
-                          <p className="text-xs text-gray-400 mb-1">OTP Code:</p>
-                          <p className="text-blue-400 font-mono text-sm font-semibold">000000</p>
+                          <p className="text-xs text-gray-400 mb-1">
+                            OTP Code:
+                          </p>
+                          <p className="text-blue-400 font-mono text-sm font-semibold">
+                            000000
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -259,7 +267,8 @@ const Login = () => {
                 {demoOtp && (
                   <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500 rounded-lg">
                     <p className="text-blue-400 text-sm font-mono">
-                      <span className="font-semibold">{t.login.demoOtp}:</span> {demoOtp}
+                      <span className="font-semibold">{t.login.demoOtp}:</span>{" "}
+                      {demoOtp}
                     </p>
                   </div>
                 )}
@@ -327,6 +336,40 @@ const Login = () => {
               <p className="text-gray-400 mb-6">
                 {t.login.loginWithCredentials}
               </p>
+
+              {/* Demo Service Provider Credentials */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/30 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Building2 className="w-5 h-5 text-orange-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold mb-3 text-sm">Demo Service Provider Accounts</h3>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                      <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
+                        <p className="text-xs text-gray-400 mb-1">Admin</p>
+                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 4001923 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> admin123</p>
+                      </div>
+                      <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
+                        <p className="text-xs text-gray-400 mb-1">Hospital</p>
+                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 1004782 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> hospital123</p>
+                      </div>
+                      <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
+                        <p className="text-xs text-gray-400 mb-1">Fire Department</p>
+                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 3002156 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> fire123</p>
+                      </div>
+                      <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
+                        <p className="text-xs text-gray-400 mb-1">Police</p>
+                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 5003847 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> police123</p>
+                      </div>
+                      <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
+                        <p className="text-xs text-gray-400 mb-1">NGO</p>
+                        <p className="text-orange-400 font-mono text-xs"><span className="text-gray-500">ID:</span> 2001429 <span className="text-gray-500 mx-2">|</span> <span className="text-gray-500">Pass:</span> ngo123</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {error && (
                 <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-start gap-3">
@@ -414,9 +457,7 @@ const Login = () => {
 
         {/* Footer */}
         <div className="text-center mt-8 mb-12">
-          <p className="text-gray-500 text-sm">
-            {t.login.termsAndPrivacy}
-          </p>
+          <p className="text-gray-500 text-sm">{t.login.termsAndPrivacy}</p>
         </div>
       </div>
     </div>
