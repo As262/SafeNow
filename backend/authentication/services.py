@@ -100,12 +100,37 @@ def is_admin_mobile(mobile):
            User.objects.filter(mobile=mobile, is_staff=True).exists()
 
 
+def get_demo_otp(mobile):
+    """Return the fixed OTP for a demo/judge number, or None if not a demo number."""
+    # Strip country code for comparison if present
+    stripped = mobile.lstrip('+').lstrip('91') if mobile.startswith('+91') else mobile
+    demo = settings.DEMO_PHONE_NUMBERS
+    return demo.get(mobile) or demo.get(stripped)
+
+
 def create_otp(mobile):
     """Create and store a new OTP for the given mobile number."""
     from .models import OTP
 
     # Invalidate any existing unused OTPs for this number
     OTP.objects.filter(mobile=mobile, is_verified=False).delete()
+
+    # Demo/judge numbers — fixed OTP, no Twilio needed
+    demo_otp_code = get_demo_otp(mobile)
+    if demo_otp_code:
+        otp_code = demo_otp_code
+        expires_at = timezone.now() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
+        otp = OTP.objects.create(
+            mobile=mobile,
+            otp_code=otp_code,
+            expires_at=expires_at,
+        )
+        logger.info(f"Demo OTP issued for judge number {mobile}")
+        return otp, {
+            'success': True,
+            'message': 'Demo OTP ready (use 000000)',
+            'demo_otp': otp_code,
+        }
 
     # Admin accounts use a fixed demo OTP — no Twilio needed
     if is_admin_mobile(mobile):

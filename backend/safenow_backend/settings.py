@@ -180,6 +180,12 @@ OTP_EXPIRY_MINUTES = 5
 OTP_LENGTH = 6
 # Fixed OTP used for admin accounts (bypasses Twilio)
 ADMIN_DEMO_OTP = os.environ.get('ADMIN_DEMO_OTP', '000000')
+# Demo/dummy phone numbers for judges — bypasses Twilio, no real SMS sent
+# Format: { 'mobile': 'otp_code' }
+DEMO_PHONE_NUMBERS = {
+    '1234567890': '000000',
+    '9876543210': '123456',
+}
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
