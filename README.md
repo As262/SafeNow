@@ -391,9 +391,9 @@ See [LOGIN_CREDENTIALS.md](LOGIN_CREDENTIALS.md) for test account details:
 
 - **Admin**: Service ID `4001923`
 - **Hospital**: Service ID `1004782`
-- **Fire**: Service ID `3002156`
-- **Police**: Service ID `5003847`
-- **NGO**: Service ID `2001429`
+- **Fire**: Service ID `3006147`
+- **Police**: Service ID `5001234`
+- **NGO**: Service ID `2003891`
 
 All service passwords: `hospital123`, `fire123`, etc.
 
