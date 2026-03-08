@@ -131,7 +131,11 @@ const EmergencyContacts = () => {
     try {
       if (editingContact) {
         const res = await updateEmergencyContact(editingContact.id, formData);
-        setCustomContacts(customContacts.map((c) => c.id === editingContact.id ? res.contact : c));
+        setCustomContacts(
+          customContacts.map((c) =>
+            c.id === editingContact.id ? res.contact : c,
+          ),
+        );
       } else {
         const res = await addEmergencyContact(formData);
         setCustomContacts([...customContacts, res.contact]);
@@ -154,18 +158,17 @@ const EmergencyContacts = () => {
 
   return (
     <div className="space-y-6">
-      {/* Mobile Menu Spacer - Reserve space for hamburger button */}
-      <div className="h-14 lg:hidden" />
-      
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">{t.title}</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+            {t.title}
+          </h2>
           <p className="text-sm sm:text-base text-gray-400">{t.subtitle}</p>
         </div>
         <button
           onClick={handleAddContact}
           disabled={customContacts.length >= 3}
-          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base whitespace-nowrap flex-shrink-0 self-end sm:self-auto"
+          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base whitespace-nowrap flex-shrink-0"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           {t.addNew}
