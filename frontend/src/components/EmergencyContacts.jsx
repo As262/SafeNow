@@ -165,7 +165,7 @@ const EmergencyContacts = () => {
         <button
           onClick={handleAddContact}
           disabled={customContacts.length >= 3}
-          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base whitespace-nowrap flex-shrink-0"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base whitespace-nowrap flex-shrink-0 self-end sm:self-auto"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           {t.addNew}
