@@ -171,6 +171,28 @@ const Login = () => {
                   {t.login.subtitle}
                 </p>
 
+                {/* Demo Credentials Info */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <AlertCircle className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-white font-semibold mb-2 text-sm">Demo Credentials for Testing</h3>
+                      <div className="space-y-2">
+                        <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
+                          <p className="text-xs text-gray-400 mb-1">Mobile Number:</p>
+                          <p className="text-blue-400 font-mono text-sm font-semibold">1234567890</p>
+                        </div>
+                        <div className="bg-dark-800/50 px-3 py-2 rounded border border-dark-700">
+                          <p className="text-xs text-gray-400 mb-1">OTP Code:</p>
+                          <p className="text-blue-400 font-mono text-sm font-semibold">000000</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {error && (
                   <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
