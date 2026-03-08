@@ -635,45 +635,50 @@ const UserDashboard = () => {
       {/* Sidebar */}
       <Sidebar onNavigate={handleNavigation} />
 
-      {/* Main Content */}
+      {/* Main Content - Improved spacing for mobile hamburger menu */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-          {/* Header */}
-          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex-1 min-w-0 pl-12 sm:pl-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 truncate">
-                {t.dashboard.welcome},{" "}
-                <span className="text-primary-500">{user.name}</span>
-              </h1>
-              <p className="text-sm sm:text-base text-gray-400">
-                {t.dashboard.subtitle}
-              </p>
-            </div>
-            {/* Connection Status */}
-            <div
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg flex-shrink-0 ${
-                wsConnected
-                  ? "bg-green-500/10 border border-green-500/20"
-                  : "bg-red-500/10 border border-red-500/20"
-              }`}
-              title={
-                wsConnected
-                  ? "Real-time connected"
-                  : "Disconnected - using fallback"
-              }
-            >
-              {wsConnected ? (
-                <Wifi className="w-4 h-4 text-green-500" />
-              ) : (
-                <WifiOff className="w-4 h-4 text-red-500 animate-pulse" />
-              )}
-              <span
-                className={`text-xs font-medium ${wsConnected ? "text-green-500" : "text-red-500"}`}
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8 lg:pl-8">
+          {/* Mobile Menu Spacer - Reserve space for hamburger button */}
+          <div className="h-14 lg:hidden" />
+          
+          {/* Header - Only show on dashboard */}
+          {activeSection === "dashboard" && (
+            <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2 truncate">
+                  {t.dashboard.welcome},{" "}
+                  <span className="text-primary-500">{user.name}</span>
+                </h1>
+                <p className="text-sm sm:text-base text-gray-400">
+                  {t.dashboard.subtitle}
+                </p>
+              </div>
+              {/* Connection Status */}
+              <div
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg flex-shrink-0 ${
+                  wsConnected
+                    ? "bg-green-500/10 border border-green-500/20"
+                    : "bg-red-500/10 border border-red-500/20"
+                }`}
+                title={
+                  wsConnected
+                    ? "Real-time connected"
+                    : "Disconnected - using fallback"
+                }
               >
-                {wsConnected ? "Live" : "Offline"}
-              </span>
+                {wsConnected ? (
+                  <Wifi className="w-4 h-4 text-green-500" />
+                ) : (
+                  <WifiOff className="w-4 h-4 text-red-500 animate-pulse" />
+                )}
+                <span
+                  className={`text-xs font-medium ${wsConnected ? "text-green-500" : "text-red-500"}`}
+                >
+                  {wsConnected ? "Live" : "Offline"}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Success Message */}
           {successMessage && (
@@ -995,8 +1000,8 @@ const UserDashboard = () => {
                         key={request.id}
                         className="p-3 sm:p-5 bg-dark-800 border border-dark-700 rounded-xl hover:border-primary-500/50 hover:shadow-lg transition-all duration-200 group"
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start gap-2 sm:gap-4 flex-1">
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
                             <div
                               className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${
                                 request.status === "completed"
@@ -1037,7 +1042,7 @@ const UserDashboard = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-start gap-1 sm:gap-2">
+                          <div className="flex items-start gap-1 sm:gap-2 flex-shrink-0">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1056,7 +1061,7 @@ const UserDashboard = () => {
                               <Navigation className="w-3 h-3 sm:w-4 sm:h-4" />
                             </button>
                             <span
-                              className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 ${
+                              className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap ${
                                 request.status === "completed"
                                   ? "bg-green-500/20 text-green-400 border border-green-500/30"
                                   : request.status === "accepted"
@@ -1318,8 +1323,8 @@ const UserDashboard = () => {
                       key={request.id}
                       className="p-3 sm:p-5 bg-dark-800 border border-dark-700 rounded-xl hover:border-primary-500/50 hover:shadow-lg transition-all duration-200 group"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-start gap-2 sm:gap-4 flex-1">
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
                           <div
                             className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${
                               request.status === "completed"
@@ -1361,7 +1366,7 @@ const UserDashboard = () => {
                           </div>
                         </div>
                         <span
-                          className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider shrink-0 ${
+                          className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap flex-shrink-0 ${
                             request.status === "completed"
                               ? "bg-green-500/20 text-green-400 border border-green-500/30"
                               : request.status === "accepted"
@@ -1970,8 +1975,8 @@ const UserDashboard = () => {
             <div className="space-y-4 sm:space-y-6">
               {/* Helper Status Card */}
               <div className="card p-4 sm:p-6 lg:p-8">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
-                  <div>
+                <div className="flex items-start justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="flex-1 min-w-0">
                     <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
                       <Users className="w-6 h-6 sm:w-8 sm:h-8 text-primary-500" />
                       Helper Mode
@@ -2004,7 +2009,7 @@ const UserDashboard = () => {
                         setShowHelperConsent(true);
                       }
                     }}
-                    className={`px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${
+                    className={`px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${
                       isHelper
                         ? "bg-red-500 hover:bg-red-600 text-white"
                         : "bg-green-600 hover:bg-green-700 text-white"
@@ -2217,15 +2222,15 @@ const UserDashboard = () => {
 
               {/* Active Requests */}
               {isHelper && helperAvailable && (
-                <div className="card p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                      <AlertCircle className="w-6 h-6 text-red-500" />
-                      Nearby Emergency Requests
+                <div className="card p-4 sm:p-6 lg:p-8">
+                  <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                    <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 flex-1 min-w-0">
+                      <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 flex-shrink-0" />
+                      <span className="truncate">Nearby Emergency Requests</span>
                     </h3>
                     <button
                       onClick={() => loadHelperRequestsOptimized(true)}
-                      className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2"
+                      className="px-3 py-2 sm:px-4 sm:py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2 text-sm sm:text-base whitespace-nowrap flex-shrink-0"
                       disabled={helperLoading}
                     >
                       {helperLoading ? "Loading..." : "Refresh"}
@@ -2233,18 +2238,18 @@ const UserDashboard = () => {
                   </div>
 
                   {helperLoading ? (
-                    <div className="text-center py-8">
+                    <div className="text-center py-6 sm:py-8">
                       <div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
-                      <p className="text-gray-400 mt-4">Loading requests...</p>
+                      <p className="text-gray-400 mt-4 text-sm sm:text-base">Loading requests...</p>
                     </div>
                   ) : helperRequests.filter((req) => req.userId !== user.mobile)
                       .length === 0 ? (
-                    <div className="text-center py-8">
-                      <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-400">
+                    <div className="text-center py-6 sm:py-8">
+                      <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600 mx-auto mb-3 sm:mb-4" />
+                      <p className="text-gray-400 text-sm sm:text-base">
                         No emergency requests nearby
                       </p>
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-xs sm:text-sm text-gray-500 mt-2">
                         {helperRequests.length > 0
                           ? "Your own requests are not shown here"
                           : "Check back later or increase your service radius"}
@@ -2378,28 +2383,28 @@ const UserDashboard = () => {
                     {acceptedRequests.map((req) => (
                       <div
                         key={req.id}
-                        className="p-4 bg-gradient-to-r from-blue-900/30 to-blue-800/20 rounded-lg border-2 border-blue-500/50"
+                        className="p-3 sm:p-4 bg-gradient-to-r from-blue-900/30 to-blue-800/20 rounded-lg border-2 border-blue-500/50"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="px-3 py-1 bg-blue-500/30 text-blue-300 rounded-full text-sm font-semibold">
+                        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                          <div className="flex-1 min-w-0 w-full">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className="px-2 sm:px-3 py-1 bg-blue-500/30 text-blue-300 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap">
                                 {req.type}
                               </span>
-                              <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-semibold">
+                              <span className="px-2 sm:px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-semibold whitespace-nowrap">
                                 IN PROGRESS
                               </span>
                               {req.distance && (
-                                <span className="text-sm text-gray-400">
-                                  <MapPin className="w-4 h-4 inline" />{" "}
+                                <span className="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
+                                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 inline" />{" "}
                                   {req.distance} km away
                                 </span>
                               )}
                             </div>
-                            <p className="text-white font-medium mb-1">
+                            <p className="text-white font-medium mb-1 text-sm sm:text-base">
                               User: {req.userName || "Anonymous"}
                             </p>
-                            <p className="text-sm text-gray-400 mb-2">
+                            <p className="text-xs sm:text-sm text-gray-400 mb-2 truncate">
                               {req.address || "Location shared"}
                             </p>
                             <p className="text-xs text-gray-500">
@@ -2409,18 +2414,19 @@ const UserDashboard = () => {
                               ).toLocaleString()}
                             </p>
                           </div>
-                          <div className="flex flex-col gap-2">
-                            <div className="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm font-semibold flex items-center gap-2 border border-yellow-500/30">
-                              <Clock className="w-4 h-4" />
-                              Waiting for user to confirm
+                          <div className="flex sm:flex-col gap-2 w-full sm:w-auto flex-shrink-0">
+                            <div className="px-3 sm:px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-2 border border-yellow-500/30 flex-1 sm:flex-initial justify-center sm:whitespace-nowrap">
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                              <span className="hidden sm:inline">Waiting for user to confirm</span>
+                              <span className="sm:hidden">Waiting</span>
                             </div>
                             <a
                               href={`https://www.google.com/maps/dir/?api=1&destination=${req.location.latitude},${req.location.longitude}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold text-center flex items-center gap-2 justify-center"
+                              className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold text-center flex items-center gap-2 justify-center flex-1 sm:flex-initial whitespace-nowrap"
                             >
-                              <MapPin className="w-4 h-4" />
+                              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                               Navigate
                             </a>
                           </div>

@@ -92,34 +92,40 @@ const Sidebar = ({ onNavigate }) => {
 
   return (
     <>
-      {/* Mobile Hamburger Menu */}
+      {/* Mobile Hamburger Menu - Improved Design */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-dark-900 border border-dark-800 rounded-lg text-white hover:bg-dark-800 transition-colors shadow-lg"
+        className={`lg:hidden fixed top-4 left-4 z-[60] p-2.5 rounded-xl transition-all duration-300 shadow-xl ${
+          isMobileMenuOpen
+            ? "bg-red-600 text-white border-2 border-red-500"
+            : "bg-gradient-to-br from-dark-900 to-dark-800 text-white border-2 border-dark-700 hover:border-primary-500 hover:shadow-primary-500/30"
+        }`}
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? (
-          <CloseIcon className="w-6 h-6" />
+          <CloseIcon className="w-6 h-6 transition-transform duration-300 rotate-90" />
         ) : (
-          <Menu className="w-6 h-6" />
+          <Menu className="w-6 h-6 transition-transform duration-300" />
         )}
       </button>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - Improved */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Improved */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-dark-900 border-r border-dark-800 transition-all duration-300 z-50 flex flex-col ${
+        className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-dark-900 via-dark-900 to-dark-950 border-r-2 border-dark-700 transition-all duration-300 ease-in-out shadow-2xl flex flex-col ${
           isCollapsed ? "w-20" : "w-64"
         } ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
+        } lg:translate-x-0 ${
+          isMobileMenuOpen ? "z-50" : "z-30"
+        }`}
       >
         {/* Logo Section */}
         <div className="p-4 border-b border-dark-800">

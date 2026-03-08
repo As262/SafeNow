@@ -207,30 +207,30 @@ const ServiceDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950">
       {/* Header */}
       <header className="bg-dark-900/80 backdrop-blur-sm border-b border-dark-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div
-                className={`w-10 h-10 bg-gradient-to-br from-${serviceInfo.color}-500 to-${serviceInfo.color}-700 rounded-full flex items-center justify-center`}
+                className={`w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-${serviceInfo.color}-500 to-${serviceInfo.color}-700 rounded-full flex items-center justify-center flex-shrink-0`}
               >
-                <ServiceIcon className="w-6 h-6 text-white" />
+                <ServiceIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-white truncate">
                   SafeNow {serviceInfo.name}
                 </h1>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-400 hidden sm:block">
                   {t.serviceDashboard.emergencyResponseDashboard}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
               {pendingRequests.length > 0 && (
-                <div className="relative">
-                  <Bell className="w-6 h-6 text-red-500 animate-pulse" />
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">
+                <div className="relative mr-1 sm:mr-0">
+                  <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 animate-pulse" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-600 rounded-full flex items-center justify-center">
+                    <span className="text-[10px] sm:text-xs font-bold text-white">
                       {pendingRequests.length}
                     </span>
                   </div>
@@ -240,14 +240,14 @@ const ServiceDashboard = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="flex items-center gap-2 px-3 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Refresh data"
               >
                 <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
-                <span className="text-sm text-white">{t.common.refresh || 'Refresh'}</span>
+                <span className="text-sm text-white hidden sm:inline">{t.common.refresh || 'Refresh'}</span>
               </button>
 
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
+              <div className="hidden lg:flex items-center gap-2 px-3 md:px-4 py-2 bg-dark-800 rounded-lg">
                 <User className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-white font-medium">
                   {user.name || user.service_id}
@@ -259,10 +259,11 @@ const ServiceDashboard = () => {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2 bg-dark-800 hover:bg-dark-700 rounded-lg transition-colors"
+                title="Logout"
               >
                 <LogOut className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-white">{t.common.logout}</span>
+                <span className="text-sm text-white hidden sm:inline">{t.common.logout}</span>
               </button>
             </div>
           </div>
@@ -367,8 +368,8 @@ const ServiceDashboard = () => {
                           : ""
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex-1 min-w-0">
                           <p className="font-semibold text-white">
                             {request.userName}
                           </p>
@@ -384,7 +385,7 @@ const ServiceDashboard = () => {
                           )}
                         </div>
                         <span
-                          className={`px-2 py-1 bg-${serviceInfo.color}-500/20 text-${serviceInfo.color}-400 text-xs font-semibold rounded`}
+                          className={`px-2 py-1 bg-${serviceInfo.color}-500/20 text-${serviceInfo.color}-400 text-[10px] sm:text-xs font-semibold rounded whitespace-nowrap flex-shrink-0`}
                         >
                           {request.type}
                         </span>
@@ -466,8 +467,8 @@ const ServiceDashboard = () => {
                           : ""
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex-1 min-w-0">
                           <p className="font-semibold text-white">
                             {request.userName}
                           </p>
@@ -482,7 +483,7 @@ const ServiceDashboard = () => {
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -500,7 +501,7 @@ const ServiceDashboard = () => {
                           >
                             <Navigation className="w-3.5 h-3.5" />
                           </button>
-                          <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded">
+                          <span className="px-2 py-1 bg-green-500/20 text-green-400 text-[10px] sm:text-xs font-semibold rounded whitespace-nowrap">
                             {t.common.accepted}
                           </span>
                         </div>

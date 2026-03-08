@@ -154,17 +154,20 @@ const EmergencyContacts = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-2">{t.title}</h2>
-          <p className="text-gray-400">{t.subtitle}</p>
+      {/* Mobile Menu Spacer - Reserve space for hamburger button */}
+      <div className="h-14 lg:hidden" />
+      
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">{t.title}</h2>
+          <p className="text-sm sm:text-base text-gray-400">{t.subtitle}</p>
         </div>
         <button
           onClick={handleAddContact}
           disabled={customContacts.length >= 3}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base whitespace-nowrap flex-shrink-0"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           {t.addNew}
         </button>
       </div>
@@ -172,7 +175,7 @@ const EmergencyContacts = () => {
       {/* Custom Emergency Contacts */}
       {customContacts.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-white mb-3">
+          <h3 className="text-base sm:text-lg font-bold text-white mb-3">
             My Emergency Contacts ({customContacts.length}/3)
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -236,7 +239,7 @@ const EmergencyContacts = () => {
 
       {/* Default Emergency Services */}
       <div>
-        <h3 className="text-lg font-bold text-white mb-3">
+        <h3 className="text-base sm:text-lg font-bold text-white mb-3">
           Emergency Services
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
