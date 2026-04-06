@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "SafeNow",
+    "slug": "safenow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#030712"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.safenow.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "SafeNow needs your location to send emergency SOS requests with your current location",
+        "NSLocationAlwaysUsageDescription": "SafeNow needs background location access to provide emergency services even when the app is in the background",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "SafeNow needs location access to provide emergency services",
+        "NSMicrophoneUsageDescription": "SafeNow needs microphone access for voice commands in the safety chatbot",
+        "NSSpeechRecognitionUsageDescription": "SafeNow uses speech recognition for voice-based emergency assistance"
+      },
+      "config": {
+        "googleMapsApiKey": "YOUR_GOOGLE_MAPS_IOS_API_KEY"
+      }
+    },
+    "android": {
+      "package": "com.safenow.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#030712",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECORD_AUDIO",
+        "INTERNET"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_ANDROID_API_KEY"
+        }
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiUrl": "http://10.0.2.2:8000/api",
+      "wsUrl": "ws://10.0.2.2:8000/ws"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "SafeNow needs your location to send emergency SOS requests."
+        }
+      ]
+    ]
+  }
+}
