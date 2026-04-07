@@ -17,7 +17,7 @@ const getApiBaseUrl = () => {
   if (__DEV__) {
     if (Platform.OS === 'android') {
       // Use actual network IP for Android emulator (better than 10.0.2.2 for WebSockets)
-      return 'http://10.49.250.225:8000/api';
+      return 'http://10.49.250.163:8000/api';
     } else if (Platform.OS === 'ios') {
       // iOS simulator uses localhost
       return 'http://localhost:8000/api';
@@ -25,7 +25,7 @@ const getApiBaseUrl = () => {
   }
 
   // Production fallback (should be set via app.json extra.apiUrl)
-  return 'http://10.49.250.225:8000/api';
+  return 'http://10.49.250.163:8000/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();

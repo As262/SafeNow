@@ -51,8 +51,8 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiUrl": "http://10.49.250.225:8000/api",
-      "wsUrl": "ws://10.49.250.225:8000/ws"
+      "apiUrl": "http://10.49.250.163:8000/api",
+      "wsUrl": "ws://10.49.250.163:8000/ws"
     },
     "plugins": [
       [

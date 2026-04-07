@@ -166,7 +166,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
-    'http://10.49.250.225:8081',  # Expo Metro bundler
+    'http://10.49.250.163:8081',  # Expo Metro bundler
 ] + [o.rstrip('/') for o in _extra_origins.split(',') if o]
 CORS_ALLOW_CREDENTIALS = True
 
