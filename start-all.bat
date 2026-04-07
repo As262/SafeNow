@@ -15,39 +15,56 @@ timeout /t 5 /nobreak >nul
 
 echo.
 echo [2/3] Starting Android Emulator...
-echo ========================================
-REM Check if emulator exists
-where emulator >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo Listing available Android Virtual Devices...
-    emulator -list-avds > avds.tmp
-    
-    REM Read first AVD name
-    set /p AVD_NAME=<avds.tmp
-    del avds.tmp
-    
-    if not "%AVD_NAME%"=="" (
-        echo Starting emulator: %AVD_NAME%
-        start "Android Emulator" emulator -avd %AVD_NAME%
-        echo Waiting for emulator to boot... ^(this may take 30-60 seconds^)
-        timeout /t 15 /nobreak >nul
+echo.
+
+REM Preferred AVD name fragment (override with SAFENOW_AVD env var)
+set "PREFERRED_AVD=Pixel_9"
+if defined SAFENOW_AVD set "PREFERRED_AVD=%SAFENOW_AVD%"
+set "PREFERRED_AVD_ALT=%PREFERRED_AVD: =_%"
+
+REM Resolve emulator executable (PATH first, then default SDK location)
+set "EMULATOR_EXE="
+for /f "delims=" %%I in ('where emulator 2^>nul') do (
+    if not defined EMULATOR_EXE set "EMULATOR_EXE=%%I"
+)
+if not defined EMULATOR_EXE (
+    if exist "%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe" (
+        set "EMULATOR_EXE=%LOCALAPPDATA%\Android\Sdk\emulator\emulator.exe"
+    )
+)
+
+if defined EMULATOR_EXE (
+    set "FIRST_AVD="
+    set "TARGET_AVD="
+    for /f "delims=" %%A in ('"!EMULATOR_EXE!" -list-avds 2^>nul') do (
+        if not defined FIRST_AVD set "FIRST_AVD=%%A"
+        echo %%A | findstr /I /C:"!PREFERRED_AVD!" /C:"!PREFERRED_AVD_ALT!" >nul && if not defined TARGET_AVD set "TARGET_AVD=%%A"
+    )
+
+    if defined TARGET_AVD (
+        echo Launching preferred AVD: !TARGET_AVD!
+        start "Android Emulator" "!EMULATOR_EXE!" -avd "!TARGET_AVD!" -no-snapshot-load
+        timeout /t 10 /nobreak >nul
+        echo [✓] Emulator launched: !TARGET_AVD!
+    ) else if defined FIRST_AVD (
+        echo [!] Preferred AVD "!PREFERRED_AVD!" not found
+        echo Launching fallback AVD: !FIRST_AVD!
+        start "Android Emulator" "!EMULATOR_EXE!" -avd "!FIRST_AVD!" -no-snapshot-load
+        timeout /t 10 /nobreak >nul
+        echo [✓] Emulator launched: !FIRST_AVD!
     ) else (
-        echo WARNING: No Android Virtual Devices found!
-        echo Please create one in Android Studio ^(Tools ^> Device Manager^)
-        echo.
-        echo Continuing anyway...
+        echo [✗] No Android Virtual Device found
+        echo     Please create one in Android Studio ^> Tools ^> Device Manager
     )
 ) else (
-    echo WARNING: Android emulator not found in PATH
-    echo Make sure Android SDK is installed and ANDROID_HOME is set
-    echo.
-    echo Continuing anyway...
+    echo [✗] Emulator executable not found
+    echo     Install Android SDK emulator or add to PATH
 )
 
 echo.
 echo [3/3] Starting Expo Mobile App...
 echo ========================================
-start "SafeNow Mobile" cmd /k "cd /d %ROOT_DIR%mobile && npm start"
+start "SafeNow Mobile" cmd /k "cd /d %ROOT_DIR%mobile && npx expo start -c --lan"
 
 echo.
 echo ========================================

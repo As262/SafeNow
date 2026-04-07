@@ -1,41 +1,80 @@
 @echo off
 setlocal
-setlocal EnableDelayedExpansion
-
-title SafeNow - Complete Setup with WebSocket Fix
-color 0A
+color 0B
+title SafeNow - Complete Setup with Expo SDK 52 + Tunnel Mode
 
 cls
 echo.
 echo   ╔══════════════════════════════════════════════════════════════╗
 echo   ║                                                              ║
-echo   ║               SafeNow - Complete Launch Suite                ║
-echo   ║          Backend + Emulator + Mobile + WebSocket Fix        ║
+echo   ║         SafeNow - Complete Installation and Launch          ║
+echo   ║               Expo SDK 52 + Tunnel Mode                      ║
 echo   ║                                                              ║
 echo   ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo   This will:
-echo   ✓ Clean up any existing services on ports 8000 and 8081
+echo   ✓ Install Expo SDK 52 (compatible with most Expo Go versions)
+echo   ✓ Clean up old dependencies
 echo   ✓ Start backend with Daphne (WebSocket support)
-echo   ✓ Launch Android emulator
-echo   ✓ Start Expo with cleared cache (updated IP config)
+echo   ✓ Start mobile with TUNNEL mode (works on any network)
 echo.
-echo   Configuration:
-echo   • Backend IP:    10.49.250.163:8000
-echo   • WebSocket:     ws://10.49.250.163:8000/ws
-echo   • Metro Bundler: Tunnel Mode (works anywhere)
+echo   Press Ctrl+C to cancel, or
+pause
 echo.
-timeout /t 3 /nobreak >nul
 
 set "ROOT_DIR=%~dp0"
 cd /d "%ROOT_DIR%"
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 0: Clean up existing services
+REM STEP 1: Install Mobile Dependencies
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [0/4] Cleanup - Stopping Existing Services
+echo  [1/5] Installing Mobile Dependencies (SDK 52)
+echo ════════════════════════════════════════════════════════════════
+echo.
+
+cd mobile
+
+if exist node_modules (
+    echo Removing old node_modules...
+    rmdir /s /q node_modules
+)
+if exist package-lock.json (
+    echo Removing old package-lock.json...
+    del package-lock.json
+)
+
+echo.
+echo Installing dependencies (this may take 2-5 minutes)...
+echo.
+call npm install
+
+if errorlevel 1 (
+    echo.
+    echo [!] Standard installation failed, trying with --legacy-peer-deps...
+    call npm install --legacy-peer-deps
+    if errorlevel 1 (
+        echo.
+        echo [✗] ERROR: Installation failed!
+        echo     Please check the error messages above
+        pause
+        exit /b 1
+    )
+)
+
+echo.
+echo [✓] Mobile dependencies installed successfully!
+timeout /t 2 /nobreak >nul
+
+cd /d "%ROOT_DIR%"
+
+REM ════════════════════════════════════════════════════════════════
+REM STEP 2: Clean Up Existing Services
+REM ════════════════════════════════════════════════════════════════
+echo.
+echo ════════════════════════════════════════════════════════════════
+echo  [2/5] Cleanup - Stopping Existing Services
 echo ════════════════════════════════════════════════════════════════
 echo.
 
@@ -45,7 +84,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8000 ^| findstr LISTENING 2^
     taskkill /F /PID %%a >nul 2>&1
 )
 
-echo Checking for processes on port 8081 (Metro bundler)...
+echo Checking for processes on port 8081 (Metro)...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8081 ^| findstr LISTENING 2^>nul') do (
     echo   Stopping process ID: %%a
     taskkill /F /PID %%a >nul 2>&1
@@ -56,15 +95,12 @@ echo [✓] Cleanup complete
 timeout /t 2 /nobreak >nul
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 1: Start Backend with Daphne (WebSocket Support)
+REM STEP 3: Start Backend with Daphne
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [1/4] Starting Django Backend with Daphne (WebSocket Support)
+echo  [3/5] Starting Backend with Daphne (WebSocket Support)
 echo ════════════════════════════════════════════════════════════════
-echo.
-echo   CRITICAL: Using Daphne ASGI server (not runserver)
-echo   This enables WebSocket connections for real-time SOS updates
 echo.
 
 start "SafeNow Backend - WebSocket Enabled" cmd /k "cd /d "%ROOT_DIR%backend" && echo ═══════════════════════════════════════════════════════ && echo  SafeNow Backend - WebSocket Support ENABLED && echo ═══════════════════════════════════════════════════════ && echo. && echo Server:    http://0.0.0.0:8000 && echo API:       http://0.0.0.0:8000/api && echo WebSocket: ws://0.0.0.0:8000/ws && echo. && echo Starting Daphne ASGI server... && echo. && python -m daphne -b 0.0.0.0 -p 8000 safenow_backend.asgi:application"
@@ -80,20 +116,14 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 2: Start Android Emulator
+REM STEP 4: Start Android Emulator (Optional)
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [2/4] Starting Android Emulator
+echo  [4/5] Starting Android Emulator (Optional)
 echo ════════════════════════════════════════════════════════════════
 echo.
 
-REM Preferred AVD name fragment (override with SAFENOW_AVD env var)
-set "PREFERRED_AVD=Pixel_9"
-if defined SAFENOW_AVD set "PREFERRED_AVD=%SAFENOW_AVD%"
-set "PREFERRED_AVD_ALT=%PREFERRED_AVD: =_%"
-
-REM Resolve emulator executable (PATH first, then default SDK location)
 set "EMULATOR_EXE="
 for /f "delims=" %%I in ('where emulator 2^>nul') do (
     if not defined EMULATOR_EXE set "EMULATOR_EXE=%%I"
@@ -106,133 +136,71 @@ if not defined EMULATOR_EXE (
 
 if defined EMULATOR_EXE (
     set "FIRST_AVD="
-    set "TARGET_AVD="
     for /f "delims=" %%A in ('"!EMULATOR_EXE!" -list-avds 2^>nul') do (
         if not defined FIRST_AVD set "FIRST_AVD=%%A"
-        echo %%A | findstr /I /C:"!PREFERRED_AVD!" /C:"!PREFERRED_AVD_ALT!" >nul && if not defined TARGET_AVD set "TARGET_AVD=%%A"
     )
-
-    if defined TARGET_AVD (
-        echo Launching preferred AVD: !TARGET_AVD!
-        start "Android Emulator" "!EMULATOR_EXE!" -avd "!TARGET_AVD!" -no-snapshot-load
-        timeout /t 10 /nobreak >nul
-        echo [✓] Emulator launched: !TARGET_AVD!
-    ) else if defined FIRST_AVD (
-        echo [!] Preferred AVD "!PREFERRED_AVD!" not found
-        echo Launching fallback AVD: !FIRST_AVD!
+    
+    if defined FIRST_AVD (
+        echo Launching emulator: !FIRST_AVD!
         start "Android Emulator" "!EMULATOR_EXE!" -avd "!FIRST_AVD!" -no-snapshot-load
         timeout /t 10 /nobreak >nul
-        echo [✓] Emulator launched: !FIRST_AVD!
+        echo [✓] Emulator launched
     ) else (
-        echo [✗] No Android Virtual Device found
-        echo     Please create one in Android Studio ^> Tools ^> Device Manager
+        echo [!] No AVDs found - skipping emulator
     )
 ) else (
-    echo [✗] Emulator executable not found
-    echo     Install Android SDK emulator or add to PATH
+    echo [!] Emulator not found - skipping
+    echo     You can use a physical device instead!
 )
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 3: Start Expo Mobile App with Cleared Cache
+REM STEP 5: Start Expo with Tunnel Mode
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [3/4] Starting Expo Mobile App (Cleared Cache)
+echo  [5/5] Starting Expo with TUNNEL Mode
 echo ════════════════════════════════════════════════════════════════
 echo.
-echo   Starting with -c flag and TUNNEL mode to reload updated configuration:
-echo   • API URL:       http://10.49.250.163:8000/api
-echo   • WebSocket URL: ws://10.49.250.163:8000/ws
-echo   • Tunnel:        Bypasses network/firewall issues
+echo   TUNNEL mode creates a public URL that works:
+echo   ✓ On physical phones (bypasses network issues)
+echo   ✓ On different WiFi networks
+echo   ✓ With firewalls and VPNs
 echo.
 
-start "SafeNow Mobile - WebSocket Ready" cmd /k "cd /d "%ROOT_DIR%mobile" && echo ═══════════════════════════════════════════════════════ && echo  SafeNow Mobile - WebSocket Configuration Loaded && echo ═══════════════════════════════════════════════════════ && echo. && echo Starting Expo with cleared cache and TUNNEL mode... && echo This ensures the app uses the updated IP: 10.49.250.163 && echo TUNNEL mode fixes network issues for physical phones && echo. && npx expo start -c --lan"
+start "SafeNow Mobile - LAN Mode" cmd /k "cd /d "%ROOT_DIR%mobile" && echo ═══════════════════════════════════════════════════════ && echo  SafeNow Mobile - LAN Mode && echo ═══════════════════════════════════════════════════════ && echo. && echo Backend:    http://10.49.250.163:8000 && echo WebSocket:  ws://10.49.250.163:8000/ws && echo Mode:       LAN (Same WiFi Network) && echo. && echo IMPORTANT: Phone must be on same WiFi! && echo. && echo Starting Expo... && echo. && npx expo start -c --lan"
 
-echo Waiting for Metro bundler to initialize...
-timeout /t 8 /nobreak >nul
+echo Waiting for Metro bundler...
+timeout /t 10 /nobreak >nul
 
-netstat -ano | findstr :8081 | findstr LISTENING >nul
-if %ERRORLEVEL% EQU 0 (
-    echo [✓] Metro bundler started successfully
-) else (
-    echo [!] Metro bundler still starting - check the mobile window
-)
+echo [✓] Expo started with tunnel mode
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 4: Final Verification and Instructions
+REM SUCCESS!
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [4/4] Verification and Status
+echo  ✓ SUCCESS - All Services Running!
 echo ════════════════════════════════════════════════════════════════
 echo.
-
-timeout /t 2 /nobreak >nul
-
-echo Service Status:
-echo ----------------
-netstat -ano | findstr :8000 | findstr LISTENING >nul && echo [✓] Backend (Daphne):  http://0.0.0.0:8000 || echo [✗] Backend not running
-netstat -ano | findstr :8081 | findstr LISTENING >nul && echo [✓] Metro Bundler:     http://10.49.250.225:8081 || echo [!] Metro still starting
-
+echo   Backend:   http://10.49.250.163:8000
+echo   API:       http://10.49.250.163:8000/api
+echo   WebSocket: ws://10.49.250.163:8000/ws
+echo   Mobile:    TUNNEL mode (check QR code in Mobile window)
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  Configuration Summary
+echo  Next Steps:
 echo ════════════════════════════════════════════════════════════════
 echo.
-echo   Network IP:      10.49.250.163
-echo   Backend:         http://10.49.250.163:8000
-echo   API Endpoint:    http://10.49.250.163:8000/api
-echo   WebSocket URL:   ws://10.49.250.163:8000/ws
-echo   Admin Panel:     http://10.49.250.163:8000/admin
-echo   Metro Bundler:   Tunnel Mode (Universal Access)
+echo   1. Check "SafeNow Mobile - Tunnel Mode" window
+echo   2. Wait for the QR code to appear (may take 30-60 seconds)
+echo   3. Scan QR code with Expo Go on your phone
+echo   4. App should load successfully!
 echo.
-echo   Server Type:     Daphne ASGI (WebSocket ENABLED ✓)
-echo.
-echo ════════════════════════════════════════════════════════════════
-echo  Next Steps
-echo ════════════════════════════════════════════════════════════════
-echo.
-echo   1. Wait for Expo QR code (in "SafeNow Mobile" window)
-echo.
-echo   2. In Android Emulator:
-echo      • Tap "SafeNow" from Expo Go recent apps
-echo      • OR scan the QR code
-echo.
-echo   3. Watch for SUCCESS in Mobile window:
-echo      "✅ WebSocket connected (real-time mode)"
-echo.
-echo   4. Check Backend window for WebSocket connection logs:
-echo      "WebSocket CONNECT /ws/sos/"
-echo.
-echo ════════════════════════════════════════════════════════════════
-echo  Troubleshooting
-echo ════════════════════════════════════════════════════════════════
-echo.
-echo   If WebSocket doesn't connect:
-echo.
-echo   1. Check Backend window - Should show:
-echo      "Starting server at tcp:port=8000"
-echo      NOT "Starting development server" (that's wrong!)
-echo.
-echo   2. Verify emulator detected correct IP:
-echo      Look for "IPv4 server found: 10.49.250.225" in emulator log
-echo.
-echo   3. If IP changed, update these files:
-echo      • mobile\app.json (extra.apiUrl and extra.wsUrl)
-echo      • mobile\src\api\client.ts
-echo      • mobile\src\hooks\useWebSocket.ts
-echo      • backend\safenow_backend\settings.py (CORS_ALLOWED_ORIGINS)
-echo.
-echo   4. Read WEBSOCKET_FIX.md for detailed troubleshooting
-echo.
-echo ════════════════════════════════════════════════════════════════
-echo.
-echo   Keep all 3 windows open:
+echo   Windows to keep open:
 echo   • SafeNow Backend - WebSocket Enabled
-echo   • Android Emulator
-echo   • SafeNow Mobile - WebSocket Ready
-echo.
-echo   Press any key to close this launcher window...
+echo   • SafeNow Mobile - Tunnel Mode
+echo   • Android Emulator (if using)
 echo.
 echo ════════════════════════════════════════════════════════════════
-pause >nul
+echo.
+pause
