@@ -8,9 +8,9 @@ REM Get current directory
 set ROOT_DIR=%~dp0
 cd /d %ROOT_DIR%
 
-echo [1/3] Starting Django Backend Server...
+echo [1/3] Starting Django Backend Server with WebSocket support...
 echo ========================================
-start "SafeNow Backend" cmd /k "cd /d %ROOT_DIR%backend && python manage.py runserver 0.0.0.0:8000"
+start "SafeNow Backend" cmd /k "cd /d %ROOT_DIR%backend && python -m daphne -b 0.0.0.0 -p 8000 safenow_backend.asgi:application"
 timeout /t 5 /nobreak >nul
 
 echo.

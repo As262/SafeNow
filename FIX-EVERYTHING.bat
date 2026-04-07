@@ -1,41 +1,212 @@
 @echo off
-setlocal
+chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
-title SafeNow - Complete Setup with WebSocket Fix
-color 0A
+title SafeNow - Complete Fix and Launch
+color 0B
 
 cls
 echo.
 echo   ╔══════════════════════════════════════════════════════════════╗
 echo   ║                                                              ║
-echo   ║               SafeNow - Complete Launch Suite                ║
-echo   ║          Backend + Emulator + Mobile + WebSocket Fix        ║
+echo   ║              SafeNow - COMPLETE FIX ^& LAUNCH                 ║
+echo   ║     Installs Dependencies + Fixes Everything + Starts All    ║
 echo   ║                                                              ║
 echo   ╚══════════════════════════════════════════════════════════════╝
 echo.
-echo   This will:
-echo   ✓ Clean up any existing services on ports 8000 and 8081
+echo   This script will:
+echo   ✓ Install Python dependencies (Daphne, Django, etc.)
+echo   ✓ Install Node.js dependencies (Expo, React Native, etc.)
+echo   ✓ Clean up any running services on ports 8000 and 8081
 echo   ✓ Start backend with Daphne (WebSocket support)
 echo   ✓ Launch Android emulator
-echo   ✓ Start Expo with cleared cache (updated IP config)
+echo   ✓ Start Expo mobile app with cleared cache
 echo.
-echo   Configuration:
-echo   • Backend IP:    10.49.250.225:8000
-echo   • WebSocket:     ws://10.49.250.225:8000/ws
-echo   • Metro Bundler: 10.49.250.225:8081
-echo.
-timeout /t 3 /nobreak >nul
+echo   Press any key to start the complete fix...
+pause >nul
 
 set "ROOT_DIR=%~dp0"
 cd /d "%ROOT_DIR%"
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 0: Clean up existing services
+REM STEP 1: Check Prerequisites
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [0/4] Cleanup - Stopping Existing Services
+echo  [1/7] Checking Prerequisites
+echo ════════════════════════════════════════════════════════════════
+echo.
+
+echo Checking Python installation...
+python --version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [✗] Python is not installed or not in PATH
+    echo     Please install Python 3.8+ from python.org
+    echo     Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+python --version
+echo [✓] Python found
+
+echo.
+echo Checking Node.js installation...
+node --version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [✗] Node.js is not installed or not in PATH
+    echo     Please install Node.js from nodejs.org
+    echo     Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+node --version
+echo [✓] Node.js found
+
+echo.
+echo Checking npm installation...
+npm --version >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo [✗] npm is not installed or not in PATH
+    echo     npm should come with Node.js
+    echo     Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+npm --version
+echo [✓] npm found
+
+echo.
+echo [✓] All prerequisites met
+timeout /t 2 /nobreak >nul
+
+REM ════════════════════════════════════════════════════════════════
+REM STEP 2: Install Python Dependencies
+REM ════════════════════════════════════════════════════════════════
+echo.
+echo ════════════════════════════════════════════════════════════════
+echo  [2/7] Installing Python Dependencies
+echo ════════════════════════════════════════════════════════════════
+echo.
+
+cd /d "%ROOT_DIR%backend"
+
+if not exist "requirements.txt" (
+    echo [✗] requirements.txt not found in backend folder
+    echo     Press any key to exit...
+    pause >nul
+    exit /b 1
+)
+
+echo Installing Python packages from requirements.txt...
+echo This may take a few minutes...
+echo.
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [!] Some packages may have failed to install
+    echo     Attempting to install critical packages manually...
+    echo.
+    python -m pip install Django djangorestframework django-cors-headers daphne channels channels-redis
+)
+
+echo.
+echo Verifying Daphne installation...
+python -c "import daphne; print('[✓] Daphne version:', daphne.__version__)"
+if %ERRORLEVEL% NEQ 0 (
+    echo [✗] Daphne installation failed
+    echo     Trying one more time...
+    python -m pip install daphne --force-reinstall
+)
+
+echo.
+echo [✓] Python dependencies installed
+timeout /t 2 /nobreak >nul
+
+REM ════════════════════════════════════════════════════════════════
+REM STEP 3: Install Node.js Dependencies
+REM ════════════════════════════════════════════════════════════════
+echo.
+echo ════════════════════════════════════════════════════════════════
+echo  [3/7] Installing Node.js Dependencies
+echo ════════════════════════════════════════════════════════════════
+echo.
+
+cd /d "%ROOT_DIR%mobile"
+
+if exist "package.json" (
+    echo Installing mobile app dependencies...
+    echo This may take a few minutes...
+    echo.
+    call npm install
+    
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo [!] npm install encountered errors
+        echo     Trying with --legacy-peer-deps...
+        call npm install --legacy-peer-deps
+    )
+    
+    echo.
+    echo [✓] Mobile dependencies installed
+) else (
+    echo [!] package.json not found in mobile folder
+    echo     Skipping mobile dependencies...
+)
+
+timeout /t 2 /nobreak >nul
+
+cd /d "%ROOT_DIR%frontend"
+
+if exist "package.json" (
+    echo.
+    echo Installing frontend dependencies...
+    echo This may take a few minutes...
+    echo.
+    call npm install
+    
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo [!] npm install encountered errors
+        echo     Trying with --legacy-peer-deps...
+        call npm install --legacy-peer-deps
+    )
+    
+    echo.
+    echo [✓] Frontend dependencies installed
+) else (
+    echo [!] package.json not found in frontend folder
+    echo     Skipping frontend dependencies...
+)
+
+timeout /t 2 /nobreak >nul
+
+REM ════════════════════════════════════════════════════════════════
+REM STEP 4: Run Django Migrations
+REM ════════════════════════════════════════════════════════════════
+echo.
+echo ════════════════════════════════════════════════════════════════
+echo  [4/7] Running Django Migrations
+echo ════════════════════════════════════════════════════════════════
+echo.
+
+cd /d "%ROOT_DIR%backend"
+
+echo Running database migrations...
+python manage.py makemigrations
+python manage.py migrate
+
+echo.
+echo [✓] Migrations complete
+timeout /t 2 /nobreak >nul
+
+REM ════════════════════════════════════════════════════════════════
+REM STEP 5: Clean Up Existing Services
+REM ════════════════════════════════════════════════════════════════
+echo.
+echo ════════════════════════════════════════════════════════════════
+echo  [5/7] Cleanup - Stopping Existing Services
 echo ════════════════════════════════════════════════════════════════
 echo.
 
@@ -56,11 +227,11 @@ echo [✓] Cleanup complete
 timeout /t 2 /nobreak >nul
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 1: Start Backend with Daphne (WebSocket Support)
+REM STEP 6: Start Backend with Daphne (WebSocket Support)
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [1/4] Starting Django Backend with Daphne (WebSocket Support)
+echo  [6/7] Starting Django Backend with Daphne (WebSocket Support)
 echo ════════════════════════════════════════════════════════════════
 echo.
 echo   CRITICAL: Using Daphne ASGI server (not runserver)
@@ -80,11 +251,11 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 2: Start Android Emulator
+REM STEP 7: Start Android Emulator
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [2/4] Starting Android Emulator
+echo  [7/7] Starting Android Emulator
 echo ════════════════════════════════════════════════════════════════
 echo.
 
@@ -133,19 +304,20 @@ if defined EMULATOR_EXE (
 )
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 3: Start Expo Mobile App with Cleared Cache
+REM STEP 8: Start Expo Mobile App with Cleared Cache
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [3/4] Starting Expo Mobile App (Cleared Cache)
+echo  [8/7] Starting Expo Mobile App (Cleared Cache)
 echo ════════════════════════════════════════════════════════════════
 echo.
-echo   Starting with -c flag to reload updated configuration:
-echo   • API URL:       http://10.49.250.225:8000/api
-echo   • WebSocket URL: ws://10.49.250.225:8000/ws
+
+cd /d "%ROOT_DIR%mobile"
+
+echo   Starting with -c flag to reload updated configuration
 echo.
 
-start "SafeNow Mobile - WebSocket Ready" cmd /k "cd /d "%ROOT_DIR%mobile" && echo ═══════════════════════════════════════════════════════ && echo  SafeNow Mobile - WebSocket Configuration Loaded && echo ═══════════════════════════════════════════════════════ && echo. && echo Starting Expo with cleared cache... && echo This ensures the app uses the updated IP: 10.49.250.225 && echo. && npx expo start -c"
+start "SafeNow Mobile - WebSocket Ready" cmd /k "cd /d "%ROOT_DIR%mobile" && echo ═══════════════════════════════════════════════════════ && echo  SafeNow Mobile - WebSocket Configuration Loaded && echo ═══════════════════════════════════════════════════════ && echo. && echo Starting Expo with cleared cache... && echo. && npx expo start -c"
 
 echo Waiting for Metro bundler to initialize...
 timeout /t 8 /nobreak >nul
@@ -158,11 +330,11 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 REM ════════════════════════════════════════════════════════════════
-REM STEP 4: Final Verification and Instructions
+REM FINAL: Verification and Instructions
 REM ════════════════════════════════════════════════════════════════
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  [4/4] Verification and Status
+echo  FINAL VERIFICATION ^& STATUS
 echo ════════════════════════════════════════════════════════════════
 echo.
 
@@ -171,65 +343,29 @@ timeout /t 2 /nobreak >nul
 echo Service Status:
 echo ----------------
 netstat -ano | findstr :8000 | findstr LISTENING >nul && echo [✓] Backend (Daphne):  http://0.0.0.0:8000 || echo [✗] Backend not running
-netstat -ano | findstr :8081 | findstr LISTENING >nul && echo [✓] Metro Bundler:     http://10.49.250.225:8081 || echo [!] Metro still starting
+netstat -ano | findstr :8081 | findstr LISTENING >nul && echo [✓] Metro Bundler:     Running on port 8081 || echo [!] Metro still starting
 
 echo.
 echo ════════════════════════════════════════════════════════════════
-echo  Configuration Summary
+echo  ✅ SETUP COMPLETE
 echo ════════════════════════════════════════════════════════════════
 echo.
-echo   Network IP:      10.49.250.225
-echo   Backend:         http://10.49.250.225:8000
-echo   API Endpoint:    http://10.49.250.225:8000/api
-echo   WebSocket URL:   ws://10.49.250.225:8000/ws
-echo   Admin Panel:     http://10.49.250.225:8000/admin
-echo   Metro Bundler:   http://10.49.250.225:8081
-echo.
-echo   Server Type:     Daphne ASGI (WebSocket ENABLED ✓)
-echo.
-echo ════════════════════════════════════════════════════════════════
-echo  Next Steps
-echo ════════════════════════════════════════════════════════════════
-echo.
-echo   1. Wait for Expo QR code (in "SafeNow Mobile" window)
-echo.
-echo   2. In Android Emulator:
-echo      • Tap "SafeNow" from Expo Go recent apps
-echo      • OR scan the QR code
-echo.
-echo   3. Watch for SUCCESS in Mobile window:
-echo      "✅ WebSocket connected (real-time mode)"
-echo.
-echo   4. Check Backend window for WebSocket connection logs:
-echo      "WebSocket CONNECT /ws/sos/"
-echo.
-echo ════════════════════════════════════════════════════════════════
-echo  Troubleshooting
-echo ════════════════════════════════════════════════════════════════
-echo.
-echo   If WebSocket doesn't connect:
-echo.
-echo   1. Check Backend window - Should show:
-echo      "Starting server at tcp:port=8000"
-echo      NOT "Starting development server" (that's wrong!)
-echo.
-echo   2. Verify emulator detected correct IP:
-echo      Look for "IPv4 server found: 10.49.250.225" in emulator log
-echo.
-echo   3. If IP changed, update these files:
-echo      • mobile\app.json (extra.apiUrl and extra.wsUrl)
-echo      • mobile\src\api\client.ts
-echo      • mobile\src\hooks\useWebSocket.ts
-echo      • backend\safenow_backend\settings.py (CORS_ALLOWED_ORIGINS)
-echo.
-echo   4. Read WEBSOCKET_FIX.md for detailed troubleshooting
-echo.
-echo ════════════════════════════════════════════════════════════════
+echo   All dependencies installed and services started!
 echo.
 echo   Keep all 3 windows open:
 echo   • SafeNow Backend - WebSocket Enabled
 echo   • Android Emulator
 echo   • SafeNow Mobile - WebSocket Ready
+echo.
+echo   Next Steps:
+echo   1. Wait for Expo QR code (in "SafeNow Mobile" window)
+echo   2. In Android Emulator, tap "SafeNow" or scan QR code
+echo   3. Watch for WebSocket connection success
+echo.
+echo   Troubleshooting:
+echo   • If Daphne error: Check backend window for details
+echo   • If Metro error: Check mobile window and restart Expo
+echo   • If emulator won't start: Open Android Studio first
 echo.
 echo   Press any key to close this launcher window...
 echo.

@@ -43,7 +43,7 @@ interface ChatbotModalProps {
   userLocation?: { latitude: number; longitude: number } | null;
 }
 
-const API_BASE_URL = 'http://192.168.1.100:8000'; // Update with your backend URL
+const API_BASE_URL = 'http://10.49.250.225:8000'; // Update with your backend URL
 
 const ChatbotModal: React.FC<ChatbotModalProps> = ({
   visible,

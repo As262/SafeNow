@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Constants from 'expo-constants';
 import { User, SOSRequest } from '../types';
 
-const WS_BASE_URL = Constants.expoConfig?.extra?.wsUrl || 'ws://192.168.1.100:8000/ws';
+const WS_BASE_URL = Constants.expoConfig?.extra?.wsUrl || 'ws://10.49.250.225:8000/ws';
 
 interface UseWebSocketReturn {
   connected: boolean;

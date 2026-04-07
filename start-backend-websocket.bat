@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo Starting SafeNow Backend Server
+echo Starting SafeNow Backend with WebSocket Support
 echo ========================================
 echo.
 
@@ -29,15 +29,15 @@ if exist venv (
 
 echo.
 echo Starting Django ASGI server with Daphne (WebSocket support)...
-echo Server will be accessible at: http://localhost:8000
-echo API endpoint: http://localhost:8000/api
-echo WebSocket endpoint: ws://localhost:8000/ws
+echo Server will be accessible at: http://0.0.0.0:8000
+echo API endpoint: http://0.0.0.0:8000/api
+echo WebSocket endpoint: ws://0.0.0.0:8000/ws
 echo.
 echo Press Ctrl+C to stop the server
 echo ========================================
 echo.
 
-REM Use Daphne for ASGI/WebSocket support instead of runserver
+REM Use Daphne for ASGI/WebSocket support
 python -m daphne -b 0.0.0.0 -p 8000 safenow_backend.asgi:application
 
 pause
